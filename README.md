@@ -3,7 +3,7 @@
 **Mission:** Empower ethical, open research into GSM SMS, TLV, WAP Push, and STK smartcard technologies.
 
 **License:** GPL v3
-**Dedication:** To O-B-I-E Patrick Moore, 101st Airborne, trained Green Beret (1967, Dac To, Silver Star recipient), and all who stand for freedom.
+**Dedication:** To MOORE, 101st Airborne, trained Green Beret (1967, Dac To, Silver Star recipient), and all who stand for freedom.
 
 ---
 
