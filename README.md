@@ -7,28 +7,6 @@
 
 ---
 
-## Modules
-
-- **lib/PDU.pm** — Build GSM SMS PDUs from number and message.
-- **lib/Multipart.pm** — Split long SMS into multipart concatenated PDUs.
-- **lib/WAP.pm** — Build simple binary WAP push/provisioning messages.
-- **lib/STK.pm** — Build simple sample SIM Toolkit command payloads.
-- **lib/TLV.pm** — Parse TLV-formatted (Tag-Length-Value) hex streams for SIM/OTA/EMV.
-
----
-
-
-## Usage Examples
-
-### Perl Library Example
-
-```perl
-use lib './lib';
-use PDU qw(build);
-my $pdu = build('+1234567890', 'Hello World!');
-print "$pdu\n";
-```
-
 ---
 
 ### Python Unified CLI: greenwire.py
