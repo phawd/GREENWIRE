@@ -1629,24 +1629,63 @@ def parse_arguments():
     return args
 
 def main():
-    """Main entry point for the GREENWIRE CLI"""
-    args = parse_arguments()
+    """Main execution flow"""
+    args = parse_args()
+    init_logging(args)
     
-    # Setup logging
-    setup_logging(args.verbose)
-    
-    logging.info("GREENWIRE CLI Interface - Starting")
-    
-    # Initialize and run the fuzzer
-    fuzzer = SmartcardFuzzerBrute(args, None)
-    success = fuzzer.run()
-    
-    if success:
-        logging.info("Fuzzing completed successfully")
-    else:
-        logging.error("Fuzzing encountered errors")
-    
-    logging.info("GREENWIRE CLI Interface - Exiting")
+    try:
+        logging.info(f"Starting GREENWIRE in {args.mode} mode")
+        logging.info(f"Card type: {args.type}")
+        
+        # Initialize fuzzer
+        fuzzer = SmartcardFuzzer()
+        
+        if args.timing or args.mode == 'standard':
+            timing_results = run_timing_analysis(
+                fuzzer,
+                CARD_OS_COMMANDS['EMV'],
+                args.count
+            )
+            
+        if args.power:
+            power_results = run_power_analysis(
+                fuzzer,
+                CARD_OS_COMMANDS['EMV'],
+                ANALYSIS_THRESHOLDS['POWER_TRACE_SAMPLES']
+            )
+            
+        if args.glitch:
+            glitch_results = run_glitch_detection(
+                fuzzer,
+                CARD_OS_COMMANDS['EMV'],
+                args.count
+            )
+            
+        if args.combined:
+            combined_results = run_combined_analysis(fuzzer, args)
+            
+        if args.export:
+            results = {
+                'timing': timing_results if args.timing else None,
+                'power': power_results if args.power else None,
+                'glitch': glitch_results if args.glitch else None,
+                'combined': combined_results if args.combined else None,
+                'metadata': {
+                    'timestamp': datetime.now().isoformat(),
+                    'mode': args.mode,
+                    'card_type': args.type,
+                    'iterations': args.count
+                }
+            }
+            
+            with open(args.export, 'w') as f:
+                json.dump(results, f, indent=2)
+                
+        logging.info("Testing complete")
+        
+    except Exception as e:
+        logging.error(f"Error during execution: {str(e)}", exc_info=True)
+        sys.exit(1)
 
 def run_timing_analysis(fuzzer: SmartcardFuzzer, commands: Dict, iterations: int) -> Dict:
     """
