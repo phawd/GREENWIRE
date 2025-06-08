@@ -1,4 +1,4 @@
-# Operation Greenwire — Swiss army knife of ISO7xxx Tools Modules
+# Operation Greenwire — Swiss army knife of (Not)smartcards and related technologies
 
 **Mission:** Empower ethical, open research into GSM SMS, TLV, WAP Push, and STK smartcard technologies.
 
@@ -18,11 +18,7 @@
 - Python 3.x
 - Perl (for SMS CLI)
 - OpenSSL (for EMV PKI)
-- Google Drive API dependencies (for upload):
-  - `google-api-python-client`
-  - `google-auth-httplib2`
-  - `google-auth-oauthlib`
-- `service-account.json` (for Google Drive upload, if used)
+
 
 #### Usage
 
