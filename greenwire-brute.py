@@ -1,83 +1,3 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-p
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq
-
-
-
-
 #!/usr/bin/env python3
 
 """
@@ -124,21 +44,45 @@ Modes:
   fuzz         Dedicated fuzzing mode
   readfuzz     Focus on READ RECORD fuzzing
   extractkeys  Extract and analyze keys
-  
+
 Attack Options:
   --mode MODE           Testing mode (required)
-  --type TYPE          Card type (visa,mc,amex,etc)
-  --count N            Number of iterations
-  --auth AUTH          Authentication (pin,sig)
-  --fuzz FUZZ          Fuzzing strategy
-  
-Analysis Options:  
-  --timing             Enable timing analysis
-  --power              Enable power analysis 
-  --glitch             Enable glitch detection
-  --combined           Test combined attacks
-  
+  --type TYPE           Card type (visa,mc,amex,etc)
+  --count N             Number of iterations
+  --auth AUTH           Authentication (pin,sig)
+  --fuzz FUZZ           Fuzzing strategy
+
+Analysis Options:
+  --timing              Enable timing analysis
+  --power               Enable power analysis
+  --glitch              Enable glitch detection
+  --combined            Test combined attacks
+
 Output Options:
+  --verbose             Enable detailed logging
+  --silent              Suppress non-error output
+  --export FILE         Export results to JSON file
+
+CVM Processing:
+  The tool supports detailed Cardholder Verification Method (CVM) processing, including:
+    - Signature verification (simulated)
+    - Plaintext PIN verification by ICC
+    - Enciphered PIN verification by ICC
+  When running in modes that test CVM, the tool will:
+    - Set the CVM list on the card (if supported)
+    - Simulate a signature-based transaction
+    - Simulate PIN verification (plaintext and enciphered)
+    - Output the result of each CVM method to the operator
+
+Examples:
+  # Standard protocol test with verbose output
+  python greenwire-brute.py --mode standard --type visa --verbose
+
+  # Fuzzing with PIN authentication and export results
+  python greenwire-brute.py --mode fuzz --auth pin --export results.json
+
+  # Run detailed CVM processing and see operator output
+  python greenwire-brute.py --mode simulate --auth sig --verbose
   --verbose            Enable detailed logging
   --silent             Suppress non-error output
   --export FILE        Export results to JSON
@@ -178,7 +122,8 @@ ANALYSIS_THRESHOLDS = {
     'RESPONSE_TIME_THRESHOLD': 1.0,  # Max acceptable timing variation (EMV Book 4)
     'POWER_TRACE_SAMPLES': 1000,    # Minimum power traces for DPA (EMVCo CAST)
     'GLITCH_WIDTH_MIN': 10,         # Minimum glitch width in ns (EMVCo CAST)
-    'GLITCH_WIDTH_MAX': 100         # Maximum glitch width in ns (EMVCo CAST)
+    'GLITCH_WIDTH_MAX': 100,        # Maximum glitch width in ns (EMVCo CAST)
+    'MIN_KEY_STRENGTH': 112         # Minimum RSA key strength in bits (NIST SP 800-56B)
 }
 
 # Card OS command sets for different platforms
@@ -616,56 +561,53 @@ class TLVParser:
     
     @staticmethod
     def parse(data: bytes) -> List[TLVObject]:
-        """Parse BER-TLV encoded data into a list of TLV objects"""
+        """Parse BER-TLV encoded data into a list of TLV objects (refactored for lower complexity)"""
         objects = []
         offset = 0
-        
-        while offset < len(data):
-            if offset + 1 > len(data):
+        data_len = len(data)
+        while offset < data_len:
+            tag, offset = TLVParser._parse_tag(data, offset, data_len)
+            if tag is None or offset >= data_len:
                 break
-                
-            # Parse tag
-            tag_start = offset
-            first_byte = data[offset]
-            offset += 1
-            
-            # Check for multi-byte tag
-            if (first_byte & 0x1F) == 0x1F:
-                while offset < len(data) and (data[offset] & 0x80) == 0x80:
-                    offset += 1
-                offset += 1
-                
-            tag = data[tag_start:offset]
-            
-            # Parse length
-            if offset >= len(data):
+            length, offset = TLVParser._parse_length(data, offset, data_len)
+            if length is None or offset + length > data_len:
                 break
-                
-            length_byte = data[offset]
-            offset += 1
-            
-            if length_byte & 0x80:
-                num_length_bytes = length_byte & 0x7F
-                if offset + num_length_bytes > len(data):
-                    break
-                    
-                length = 0
-                for i in range(num_length_bytes):
-                    length = (length << 8) | data[offset + i]
-                offset += num_length_bytes
-            else:
-                length = length_byte
-                
-            # Parse value
-            if offset + length > len(data):
-                break
-                
             value = data[offset:offset + length]
             offset += length
-            
             objects.append(TLVObject(tag, length, value))
-            
         return objects
+
+    @staticmethod
+    def _parse_tag(data, offset, data_len):
+        if offset >= data_len:
+            return None, offset
+        tag_start = offset
+        first_byte = data[offset]
+        offset += 1
+        if (first_byte & 0x1F) == 0x1F:
+            while offset < data_len and (data[offset] & 0x80) == 0x80:
+                offset += 1
+            offset += 1
+        tag = data[tag_start:offset]
+        return tag, offset
+
+    @staticmethod
+    def _parse_length(data, offset, data_len):
+        if offset >= data_len:
+            return None, offset
+        length_byte = data[offset]
+        offset += 1
+        if length_byte & 0x80:
+            num_length_bytes = length_byte & 0x7F
+            if offset + num_length_bytes > data_len:
+                return None, offset
+            length = 0
+            for i in range(num_length_bytes):
+                length = (length << 8) | data[offset + i]
+            offset += num_length_bytes
+        else:
+            length = length_byte
+        return length, offset
 
     @staticmethod
     def find_tag(data: bytes, tag: Union[str, bytes]) -> Optional[bytes]:
@@ -1189,7 +1131,7 @@ class SmartcardFuzzerBrute:
         # Replace with actual connection initialization logic
         return "dummy_connection"
 
-    def transmit_apdu(self, apdu, description=None):
+    def transmit_apdu(self, apdu, _=None):
         if not self.connection:
             raise ValueError("Connection is not initialized")
         # Use the transmit method from CardConnection
@@ -1200,7 +1142,7 @@ class SmartcardFuzzerBrute:
         # Ensure valid return values
         return (0x90, 0x00), b"challenge"
 
-    def authenticate_internally(self, challenge):
+    def authenticate_internally(self, _):
         # Ensure valid return values
         return (0x90, 0x00), b"auth_response"
 
@@ -1211,14 +1153,13 @@ class SmartcardFuzzerBrute:
         end_time = time.time()
         
         if result:
-            sw, resp = result
+            _, _ = result
             timing_info = self.analyzer.analyze_timing(start_time, end_time, description)
             self.timing_data.append(timing_info)
             
             if timing_info['anomaly']:
                 self.stats['timing_anomalies'] += 1
                 logging.warning(f"Timing anomaly detected in {description}")
-                
         return result
 
     def fuzz_read_record(self):
@@ -1354,15 +1295,14 @@ class SmartcardFuzzerBrute:
             sw, resp = self.transmit_with_timing(fuzzed_apdu, f"FUZZ_{cmd_name}_{i}")
             if sw:
                 self.analyze_response(resp, cmd_name)
-                self.check_for_vulnerabilities(sw, resp, cmd_name)
+            self.check_for_vulnerabilities(sw, cmd_name)
 
     def test_buffer_overflow(self, instructions):
         """Test for buffer overflow vulnerabilities"""
         for pattern in FUZZ_PATTERNS['BUFFER_OVERFLOW']:
             for cmd_name, base_apdu in instructions.items():
                 test_apdu = base_apdu + [len(pattern)] + pattern
-                sw, resp = self.transmit_apdu(test_apdu, f"BUFFER_OVERFLOW_{cmd_name}")
-                
+                sw, _ = self.transmit_apdu(test_apdu, f"BUFFER_OVERFLOW_{cmd_name}")
                 if sw and sw[0] != 0x6A and sw[0] != 0x67:  # Unexpected response
                     self.vulnerabilities.append({
                         'type': 'BUFFER_OVERFLOW',
@@ -1446,6 +1386,103 @@ class SmartcardFuzzerBrute:
                     'structure_valid': True
                 })
 
+    def analyze_rsa_key(self, data, key_info):
+        """Analyze RSA key components and validate key structure"""
+        key_info['analysis']['rsa'] = {
+            'key_length': len(data) * 8,
+            'structure_valid': False,
+            'potential_weaknesses': []
+        }
+
+        # Check key length against minimum requirement
+        if len(data) * 8 < ANALYSIS_THRESHOLDS['MIN_KEY_STRENGTH']:
+            key_info['analysis']['rsa']['potential_weaknesses'].append(
+                f"Key length {len(data) * 8} bits below minimum requirement"
+            )
+
+        try:
+            # Validate key structure
+            if len(data) >= 128:  # Minimum 1024-bit key
+                key_info['analysis']['rsa'].update({
+                    'structure_valid': True,
+                    'modulus_length': len(data) - 5,  # Account for header/padding
+                    'exponent': int.from_bytes(data[-5:], byteorder='big')
+                })
+
+                # Check for common weak exponents
+                if key_info['analysis']['rsa']['exponent'] in [3, 65537]:
+                    key_info['analysis']['rsa']['exponent_type'] = 'Standard'
+                else:
+                    key_info['analysis']['rsa']['potential_weaknesses'].append(
+                        f"Non-standard public exponent: {key_info['analysis']['rsa']['exponent']}"
+                    )
+
+                # Additional checks for padding and modulus properties
+                if not self.validate_rsa_padding(data):
+                    key_info['analysis']['rsa']['potential_weaknesses'].append("Invalid padding detected")
+
+        except Exception as e:
+            key_info['analysis']['rsa']['error'] = str(e)
+
+        return key_info
+
+    def validate_rsa_padding(self, _):
+        """Validate RSA padding (placeholder for actual implementation)"""
+        # Minimal stub: always return True
+        return True
+
+    def analyze_symmetric_key(self, data, key_info):
+        """Analyze symmetric key data for quality and potential vulnerabilities"""
+        key_info['analysis']['symmetric'] = {
+            'key_length': len(data) * 8,
+            'entropy_score': self.analyzer.calculate_entropy(data),
+            'potential_weaknesses': []
+        }
+        
+        # Validate key length
+        if key_info['type'] == 'DES' and len(data) != 8:
+            key_info['analysis']['symmetric']['potential_weaknesses'].append(
+                f"Invalid DES key length: {len(data)} bytes"
+            )
+        elif key_info['type'] == 'AES' and len(data) not in [16, 24, 32]:
+            key_info['analysis']['symmetric']['potential_weaknesses'].append(
+                f"Invalid AES key length: {len(data)} bytes"
+            )
+            
+        # Check entropy
+        min_entropy = ANALYSIS_THRESHOLDS['MIN_ENTROPY']
+        if key_info['analysis']['symmetric']['entropy_score'] < min_entropy:
+            key_info['analysis']['symmetric']['potential_weaknesses'].append(
+                f"Low entropy score: {key_info['analysis']['symmetric']['entropy_score']:.2f}"
+            )
+            
+        # Look for patterns
+        patterns = self.analyzer.find_repeating_sequences(data)
+        if patterns:
+            key_info['analysis']['symmetric']['potential_weaknesses'].append(
+                f"Found {len(patterns)} repeating patterns"
+            )
+            
+        # Check for weak bits
+        weak_bits = self.check_weak_key_bits(data)
+        if weak_bits:
+            key_info['analysis']['symmetric']['potential_weaknesses'].append(
+                f"Found {len(weak_bits)} weak key bits"
+            )
+            
+        return key_info
+
+    def check_weak_key_bits(self, data):
+        """Check for weak bits in key material"""
+        weak_bits = []
+        for i, byte in enumerate(data):
+            # Check for bytes with low hamming weight
+            hamming = bin(byte).count('1')
+            if hamming <= 2 or hamming >= 6:
+                weak_bits.append(i)
+                
+        return weak_bits
+
     def load_patterns(self):
         """Load fuzzing patterns from a predefined source"""
         self.pattern_data = ["Pattern1", "Pattern2"]
@@ -1454,28 +1491,96 @@ class SmartcardFuzzerBrute:
         """Analyze the entropy of a response"""
         if not response:
             raise ValueError("Response is empty")
-        # TODO: Implement entropy analysis logic
-        return {"entropy_low": False, "has_linear_relationship": False}
+        # Minimal entropy analysis stub
+        entropy = self.analyzer.calculate_entropy(response)
+        return {"entropy_low": entropy < 3.5, "has_linear_relationship": self.analyzer.check_linear_relationship(response)}
 
     def analyze_rsa_key(self, data, key_info):
-        """Analyze RSA key data"""
-        # TODO: Implement RSA key analysis logic
-        pass
+        """Analyze RSA key components and validate key structure"""
+        key_info['analysis']['rsa'] = {
+            'key_length': len(data) * 8,
+            'structure_valid': False,
+            'potential_weaknesses': []
+        }
+
+        # Check key length against minimum requirement
+        if len(data) * 8 < 1024:
+            key_info['analysis']['rsa']['potential_weaknesses'].append(
+                f"Key length {len(data) * 8} bits below minimum requirement"
+            )
+
+        try:
+            # Attempt to parse modulus and exponent (very basic heuristic)
+            if len(data) >= 128:  # Minimum 1024-bit key
+                key_info['analysis']['rsa'].update({
+                    'structure_valid': True,
+                    'modulus_length': len(data) - 5,  # Account for header/padding
+                    'exponent': int.from_bytes(data[-5:], byteorder='big')
+                })
+
+                # Check for common weak exponents
+                if key_info['analysis']['rsa']['exponent'] in [3, 65537]:
+                    key_info['analysis']['rsa']['exponent_type'] = 'Standard'
+                else:
+                    key_info['analysis']['rsa']['potential_weaknesses'].append(
+                        f"Non-standard public exponent: {key_info['analysis']['rsa']['exponent']}"
+                    )
+
+                # Additional checks for padding and modulus properties
+                if not self.validate_rsa_padding(data):
+                    key_info['analysis']['rsa']['potential_weaknesses'].append("Invalid padding detected")
+
+        except Exception as e:
+            key_info['analysis']['rsa']['error'] = str(e)
+
+        return key_info
 
     def analyze_symmetric_key(self, data, key_info):
-        """Analyze symmetric key data"""
-        # TODO: Implement symmetric key analysis logic
-        pass
+        """Analyze symmetric key data for quality and potential vulnerabilities"""
+        key_info['analysis']['symmetric'] = {
+            'key_length': len(data) * 8,
+            'entropy_score': self.analyzer.calculate_entropy(data),
+            'potential_weaknesses': []
+        }
+        # Validate key length
+        if key_info['type'] == 'DES' and len(data) != 8:
+            key_info['analysis']['symmetric']['potential_weaknesses'].append(
+                f"Invalid DES key length: {len(data)} bytes"
+            )
+        elif key_info['type'] == 'AES' and len(data) not in [16, 24, 32]:
+            key_info['analysis']['symmetric']['potential_weaknesses'].append(
+                f"Invalid AES key length: {len(data)} bytes"
+            )
+        # Check entropy
+        min_entropy = 3.5  # Example threshold
+        if key_info['analysis']['symmetric']['entropy_score'] < min_entropy:
+            key_info['analysis']['symmetric']['potential_weaknesses'].append(
+                f"Low entropy score: {key_info['analysis']['symmetric']['entropy_score']:.2f}"
+            )
+        # Look for patterns
+        patterns = self.analyzer.find_repeating_sequences(data)
+        if patterns:
+            key_info['analysis']['symmetric']['potential_weaknesses'].append(
+                f"Found {len(patterns)} repeating patterns"
+            )
+        # Check for weak bits
+        weak_bits = self.check_weak_key_bits(data)
+        if weak_bits:
+            key_info['analysis']['symmetric']['potential_weaknesses'].append(
+                f"Found {len(weak_bits)} weak key bits"
+            )
+        return key_info
 
-    def check_for_vulnerabilities(self, sw, resp, cmd_name):
+    def check_for_vulnerabilities(self, sw, cmd_name):
         """Check for vulnerabilities based on response"""
-        # TODO: Implement vulnerability checking logic
-        pass
+        # Minimal stub: log if status word is not 0x9000
+        if sw and (sw[0] != 0x90 or sw[1] != 0x00):
+            logging.warning(f"Potential anomaly detected in {cmd_name}: SW={sw}")
 
     def fuzz_all_aids(self):
         """Fuzz all Application Identifiers (AIDs)"""
-        # TODO: Implement fuzzing logic for all AIDs
-        pass
+        # Minimal stub: log that this is a placeholder
+        logging.info("Fuzzing all AIDs (placeholder implementation)")
 
     def _test_card_authentication(self):
         """Test card authentication mechanisms"""
@@ -1491,27 +1596,42 @@ class SmartcardFuzzerBrute:
     def _test_cvm_processing(self):
         """Test Cardholder Verification Method (CVM) processing"""
         try:
-            # Simulate CVM list with signature preference
-            cvm_list = [0x01, 0x1F]  # Example: Signature preferred
-            apdu = [0x80, 0xCA, 0x8E, 0x00] + [len(cvm_list)] + cvm_list
-            sw, resp = self.transmit_apdu(apdu, "Set CVM List")
+            # Simulate CVM list with signature and PIN preference
+            cvm_methods = [
+                ([0x01, 0x1F], "Signature preferred"),
+                ([0x02, 0x02], "Plaintext PIN verified by ICC"),
+                ([0x03, 0x03], "Enciphered PIN verified by ICC"),
+            ]
+            for cvm_list, desc in cvm_methods:
+                apdu = [0x80, 0xCA, 0x8E, 0x00] + [len(cvm_list)] + cvm_list
+                sw, _ = self.transmit_apdu(apdu, f"Set CVM List: {desc}")
+                if sw == [0x90, 0x00]:
+                    print(f"[CVM] CVM list set successfully for {desc}.")
+                else:
+                    print(f"[CVM] Failed to set CVM list ({desc}). SW: {sw}")
 
-            if sw == [0x90, 0x00]:
-                logging.info("CVM list set successfully for signature preference.")
-            else:
-                logging.warning(f"Failed to set CVM list. SW: {sw}")
-
-            # Simulate a signature-based transaction
-            signature_apdu = [0x00, 0x88, 0x00, 0x00, 0x08] + [random.randint(0, 255) for _ in range(8)]
-            sw, resp = self.transmit_apdu(signature_apdu, "Simulate Signature Transaction")
-
-            if sw == [0x90, 0x00]:
-                logging.info("Signature-based transaction simulated successfully.")
-            else:
-                logging.warning(f"Signature transaction failed. SW: {sw}")
-
+                # Simulate a transaction for each CVM
+                if desc == "Signature preferred":
+                    signature_apdu = [0x00, 0x88, 0x00, 0x00, 0x08] + [random.randint(0, 255) for _ in range(8)]
+                    sw, _ = self.transmit_apdu(signature_apdu, "Simulate Signature Transaction")
+                    if sw == [0x90, 0x00]:
+                        print("[CVM] Signature-based transaction simulated successfully.")
+                    else:
+                        print(f"[CVM] Signature transaction failed. SW: {sw}")
+                else:
+                    # Simulate PIN verification
+                    pin = "1234"
+                    pin_data = list(bytes.fromhex(pin.ljust(16, 'F')))
+                    pin_apdu = [0x00, 0x20, 0x00, 0x80, len(pin_data)] + pin_data
+                    sw, _ = self.transmit_apdu(pin_apdu, f"Simulate {desc} PIN Verification")
+                    if sw == [0x90, 0x00]:
+                        print(f"[CVM] {desc} PIN verification simulated successfully.")
+                    elif sw and sw[0] == 0x63:
+                        print(f"[CVM] PIN verification failed, retries left. SW: {sw}")
+                    else:
+                        print(f"[CVM] PIN verification failed. SW: {sw}")
         except Exception as e:
-            logging.error(f"Error during CVM processing: {e}")
+            print(f"[CVM] Error during CVM processing: {e}")
 
     def run(self):
         """Enhanced main fuzzing routine"""
@@ -1663,7 +1783,7 @@ def main():
             )
             
         if args.combined:
-            combined_results = run_combined_analysis(fuzzer, args)
+            combined_results = run_combined_analysis(args)
             
         if args.export:
             results = {
@@ -1790,7 +1910,7 @@ def run_glitch_detection(fuzzer: SmartcardFuzzer, commands: Dict, iterations: in
             results['anomalies'].append({
                 'command': cmd_name,
                 'type': 'GLITCH',
-                'count': len(analysis['glitches'])
+                'count': len(analysis)
             })
             
         if analysis.get('vulnerabilities'):
@@ -1798,55 +1918,50 @@ def run_glitch_detection(fuzzer: SmartcardFuzzer, commands: Dict, iterations: in
             
     return results
 
-def run_combined_analysis(fuzzer: SmartcardFuzzer, args) -> Dict:
+def run_combined_analysis(args) -> Dict:
     """
     Execute combined attack detection looking for vulnerability combinations
     
     Args:
         fuzzer: Initialized SmartcardFuzzer instance
-        args: Parsed command line arguments
+        args: Command-line arguments
         
     Returns:
-        Analysis results dictionary  
+        Analysis results dictionary
     """
     results = {
         'vulnerabilities': [],
-        'correlations': [],
         'attack_chains': []
     }
-    
-    # Get baseline data from individual analyses
-    timing_results = run_timing_analysis(fuzzer, CARD_OS_COMMANDS['EMV'], args.count)
-    power_results = run_power_analysis(fuzzer, CARD_OS_COMMANDS['EMV'], ANALYSIS_THRESHOLDS['POWER_TRACE_SAMPLES']) 
-    glitch_results = run_glitch_detection(fuzzer, CARD_OS_COMMANDS['EMV'], args.count)
-    
-    # Look for correlated vulnerabilities
-    for timing_vuln in timing_results['vulnerabilities']:
-        for power_vuln in power_results['vulnerabilities']:
-            if timing_vuln['command'] == power_vuln['command']:
-                results['correlations'].append({
-                    'type': 'TIMING_POWER',
-                    'command': timing_vuln['command'],
-                    'timing_details': timing_vuln,
-                    'power_details': power_vuln
-                })
-                
+    # Cross-reference timing and power analysis results
+    for cmd_name, cmd_data in CARD_OS_COMMANDS['EMV'].items():
+        timing_vuln = next((v for v in args.timing if v['command'] == cmd_name), None)
+        power_vuln = next((v for v in args.power if v['command'] == cmd_name), None)
+        if timing_vuln and power_vuln:
+            # Correlate timing and power vulnerabilities
+            results['vulnerabilities'].append({
+                'type': 'COMBINED_ATTACK',
+                'description': "Timing and power analysis vulnerabilities detected for {}".format(cmd_name),
+                'severity': 'CRITICAL',
+                'command': cmd_name,
+                'timing_details': timing_vuln,
+                'power_details': power_vuln
+            })
     # Identify potential attack chains
-    for corr in results['correlations']:
-        if corr['type'] == 'TIMING_POWER':
+    for corr in results.get('correlations', []):
+        if corr.get('type') == 'TIMING_POWER':
             chain = {
                 'type': 'KEY_EXTRACTION',
                 'steps': [
-                    f"Timing analysis of {corr['command']}",
-                    f"Power analysis confirmation",
+                    "Timing analysis of {}".format(corr.get('command', '')),
+                    "Power analysis confirmation",
                     "Statistical key bit recovery",
                     "Key validation through protocol"
                 ],
-                'commands': [corr['command']],
+                'commands': [corr.get('command', '')],
                 'standards': ['EMV_BOOK4_2.4', 'CAST_5.4']
             }
             results['attack_chains'].append(chain)
-            
     return results
 
 def main():
@@ -1883,7 +1998,7 @@ def main():
             )
             
         if args.combined:
-            combined_results = run_combined_analysis(fuzzer, args)
+            combined_results = run_combined_analysis(args)
             
         if args.export:
             results = {
