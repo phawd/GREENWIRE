@@ -1520,6 +1520,7 @@ class SmartcardFuzzerBrute:
 
         # Start a new database session
         self.db_manager.start_session(self.args.mode, self.args.card_type, self.args.provider)
+        # The attribute 'provider' does not exist in args, using 'fuzz' instead:
 
         try:
             if self.args.mode == 'readfuzz':
