@@ -10,6 +10,16 @@
 I ditched the perl version for python, for now.
 ---
 
+## Installation
+
+1. Ensure Python 3 is installed on your system.
+2. Install the required packages using pip:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+
 ### Python Unified CLI: greenwire.py
 
 `greenwire.py` is a unified command-line tool for both EMV card issuing and SMS PDU building. It wraps the Python EMV issuer and the Perl SMS CLI.
