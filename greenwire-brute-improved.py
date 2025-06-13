@@ -679,3 +679,71 @@ class VulnerabilityDetector:
             findings: List to append findings to
         """
         if command_type not in self.command_timing_history:
+            self.command_timing_history[command_type] = []
+
+        history = self.command_timing_history[command_type]
+        history.append(execution_time)
+
+        if len(history) > 10:
+            mean = sum(history) / len(history)
+            std_dev = (sum((x - mean) ** 2 for x in history) / len(history)) ** 0.5
+
+            if abs(execution_time - mean) > self.anomaly_thresholds['timing_deviation'] * std_dev:
+                findings.append({
+                    'type': 'TIMING_ANOMALY',
+                    'description': f'Unusual timing detected for {command_type}',
+                    'severity': 'MEDIUM',
+                    'details': {
+                        'execution_time': execution_time,
+                        'mean': mean,
+                        'std_dev': std_dev
+                    }
+                })
+
+    def _analyze_response(self, response: bytes, findings: List[Dict[str, Any]]) -> None:
+        """Analyze response data for potential vulnerabilities"""
+        if not response:
+            return
+
+        patterns = {
+            'PAN': r'5[1-5][0-9]{14}',
+            'CVV': r'^\\d{3,4}$',
+            'TRACK_DATA': r'%B\\d{13,19}\\^[\\w\\s/]{2,26}\\^[0-9]{12}',
+            'KEY_COMPONENT': r'[0-9A-F]{32,48}'
+        }
+
+        for pattern_name, pattern in patterns.items():
+            if re.search(pattern, response.hex()):
+                findings.append({
+                    'type': 'DATA_LEAKAGE',
+                    'description': f'Potential {pattern_name} data found in response',
+                    'severity': 'HIGH'
+                })
+
+    def _analyze_status_words(self, sw1: int, sw2: int, findings: List[Dict[str, Any]]) -> None:
+        """Analyze status words for security implications"""
+        sw = (sw1 << 8) | sw2
+
+        if sw in self.anomaly_thresholds['suspicious_sw_codes']:
+            findings.append({
+                'type': 'SUSPICIOUS_STATUS',
+                'description': f'Suspicious status word: {self.anomaly_thresholds["suspicious_sw_codes"][sw]}',
+                'severity': 'MEDIUM' if sw != 0x6983 else 'HIGH'
+            })
+
+    def _analyze_patterns(self, command_type: str, apdu: bytes, response: bytes, findings: List[Dict[str, Any]]) -> None:
+        """Analyze command/response patterns for potential vulnerabilities"""
+        if command_type not in self.response_patterns:
+            self.response_patterns[command_type] = {}
+
+        pattern_key = f"{apdu.hex()}:{response.hex() if response else ''}"
+        if pattern_key in self.response_patterns[command_type]:
+            if self.response_patterns[command_type][pattern_key] != response:
+                findings.append({
+                    'type': 'NON_DETERMINISTIC',
+                    'description': 'Non-deterministic response detected',
+                    'severity': 'HIGH'
+                })
+        else:
+            self.response_patterns[command_type][pattern_key] = response
+
