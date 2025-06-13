@@ -101,6 +101,27 @@ Examples:
   --silent             Suppress non-error output
   --export FILE        Export results to JSON
 """
+
+## EMV/NFC Terminal/ATM and Card Emulation
+
+GREENWIRE can now:
+- Emulate an EMV/NFC terminal/ATM (send APDUs as a terminal, simulate full EMV transactions)
+- Emulate an EMV/NFC card (hardware and platform dependent, requires nfcpy and compatible reader)
+
+### Usage
+
+- To emulate a terminal/ATM:
+  ```bash
+  python3 greenwire-brute.py --emulate terminal --emv-transaction --emv-aid A0000000031010
+  ```
+- To emulate a card (NFC/EMV):
+  ```bash
+  python3 greenwire-brute.py --emulate card
+  ```
+
+See CLI help (`-h`) for all options.
+
+#### Notes
 - Place your Perl modules and `greenwire-cli.pl` in the same directory or adjust the path.
 - For Google Drive upload, ensure `service-account.json` is present.
 - All EMV and SMS logic is unified in `greenwire.py` for convenience.

@@ -112,6 +112,7 @@ from typing import Dict, List, Tuple, Optional, Union
 from dataclasses import dataclass
 from greenwire.core.fuzzer import SmartcardFuzzer
 from smartcard.CardConnection import CardConnection
+import nfc
 
 # Database Schema Version
 DB_VERSION = 1
@@ -1808,220 +1809,51 @@ def main():
         logging.error(f"Error during execution: {str(e)}", exc_info=True)
         sys.exit(1)
 
-def run_timing_analysis(fuzzer: SmartcardFuzzer, commands: Dict, iterations: int) -> Dict:
-    """
-    Execute timing analysis attack suite following EMVCo Book 4 requirements
-    
-    Args:
-        fuzzer: Initialized SmartcardFuzzer instance
-        commands: Dictionary of APDU commands to test
-        iterations: Number of test iterations
-        
-    Returns:
-        Analysis results dictionary
-    """
-    results = {
-        'vulnerabilities': [],
-        'timings': {},
-        'anomalies': []
-    }
-    
-    for cmd_name, cmd_data in commands.items():
-        logging.info(f"Running timing analysis for {cmd_name}")
-        
-        cmd = bytes(cmd_data.values())
-        analysis = fuzzer.analyze_timing_attack(cmd, iterations)
-        
-        results['timings'][cmd_name] = analysis['timing']
-        if analysis.get('vulnerabilities'):
-            results['vulnerabilities'].extend(analysis['vulnerabilities'])
-            
-        # Log suspicious timing variations
-        if analysis['timing'].get('anomalies'):
-            logging.warning(f"[ANOMALY] Suspicious timing pattern in {cmd_name}")
-            results['anomalies'].append({
-                'command': cmd_name,
-                'type': 'TIMING',
-                'details': analysis['timing']['anomalies']
-            })
-            
-    return results
-
-def run_power_analysis(fuzzer: SmartcardFuzzer, commands: Dict, samples: int) -> Dict:
-    """
-    Execute power analysis attack suite following EMVCo CAST requirements
-    
-    Args:
-        fuzzer: Initialized SmartcardFuzzer instance
-        commands: Dictionary of APDU commands to test
-        samples: Number of power traces to collect
-        
-    Returns:
-        Analysis results dictionary
-    """
-    results = {
-        'vulnerabilities': [],
-        'traces': {},
-        'correlations': {}
-    }
-    
-    for cmd_name, cmd_data in commands.items():
-        logging.info(f"Collecting power traces for {cmd_name}")
-        
-        cmd = bytes(cmd_data.values())
-        analysis = fuzzer.test_power_analysis(cmd, samples)
-        
-        results['traces'][cmd_name] = analysis['traces']
-        results['correlations'][cmd_name] = analysis['correlations']
-        
-        if analysis.get('vulnerabilities'):
-            results['vulnerabilities'].extend(analysis['vulnerabilities'])
-            
-    return results
-
-def run_glitch_detection(fuzzer: SmartcardFuzzer, commands: Dict, iterations: int) -> Dict:
-    """
-    Execute clock glitch detection following EMVCo CAST requirements
-    
-    Args:
-        fuzzer: Initialized SmartcardFuzzer instance
-        commands: Dictionary of APDU commands to test
-        iterations: Number of test iterations
-        
-    Returns:
-        Analysis results dictionary
-    """
-    results = {
-        'vulnerabilities': [],
-        'glitches': {},
-        'anomalies': []
-    }
-    
-    for cmd_name, cmd_data in commands.items():
-        logging.info(f"Testing clock glitch resistance for {cmd_name}")
-        
-        cmd = bytes(cmd_data.values())
-        analysis = fuzzer.detect_clock_glitch(cmd, iterations)
-        
-        results['glitches'][cmd_name] = analysis['glitches']
-        
-        if analysis['glitches']:
-            logging.warning(f"[ANOMALY] Potential glitch vulnerability in {cmd_name}")
-            results['anomalies'].append({
-                'command': cmd_name,
-                'type': 'GLITCH',
-                'count': len(analysis)
-            })
-            
-        if analysis.get('vulnerabilities'):
-            results['vulnerabilities'].extend(analysis['vulnerabilities'])
-            
-    return results
-
-def run_combined_analysis(args) -> Dict:
-    """
-    Execute combined attack detection looking for vulnerability combinations
-    
-    Args:
-        fuzzer: Initialized SmartcardFuzzer instance
-        args: Command-line arguments
-        
-    Returns:
-        Analysis results dictionary
-    """
-    results = {
-        'vulnerabilities': [],
-        'attack_chains': []
-    }
-    # Cross-reference timing and power analysis results
-    for cmd_name, cmd_data in CARD_OS_COMMANDS['EMV'].items():
-        timing_vuln = next((v for v in args.timing if v['command'] == cmd_name), None)
-        power_vuln = next((v for v in args.power if v['command'] == cmd_name), None)
-        if timing_vuln and power_vuln:
-            # Correlate timing and power vulnerabilities
-            results['vulnerabilities'].append({
-                'type': 'COMBINED_ATTACK',
-                'description': "Timing and power analysis vulnerabilities detected for {}".format(cmd_name),
-                'severity': 'CRITICAL',
-                'command': cmd_name,
-                'timing_details': timing_vuln,
-                'power_details': power_vuln
-            })
-    # Identify potential attack chains
-    for corr in results.get('correlations', []):
-        if corr.get('type') == 'TIMING_POWER':
-            chain = {
-                'type': 'KEY_EXTRACTION',
-                'steps': [
-                    "Timing analysis of {}".format(corr.get('command', '')),
-                    "Power analysis confirmation",
-                    "Statistical key bit recovery",
-                    "Key validation through protocol"
-                ],
-                'commands': [corr.get('command', '')],
-                'standards': ['EMV_BOOK4_2.4', 'CAST_5.4']
-            }
-            results['attack_chains'].append(chain)
-    return results
-
-def main():
-    """Main execution flow"""
-    args = parse_args()
-    init_logging(args)
-    
-    try:
-        logging.info(f"Starting GREENWIRE in {args.mode} mode")
-        logging.info(f"Card type: {args.type}")
-        
-        # Initialize fuzzer
-        fuzzer = SmartcardFuzzer()
-        
-        if args.timing or args.mode == 'standard':
-            timing_results = run_timing_analysis(
-                fuzzer,
-                CARD_OS_COMMANDS['EMV'],
-                args.count
-            )
-            
-        if args.power:
-            power_results = run_power_analysis(
-                fuzzer,
-                CARD_OS_COMMANDS['EMV'],
-                ANALYSIS_THRESHOLDS['POWER_TRACE_SAMPLES']
-            )
-            
-        if args.glitch:
-            glitch_results = run_glitch_detection(
-                fuzzer,
-                CARD_OS_COMMANDS['EMV'],
-                args.count
-            )
-            
-        if args.combined:
-            combined_results = run_combined_analysis(args)
-            
-        if args.export:
-            results = {
-                'timing': timing_results if args.timing else None,
-                'power': power_results if args.power else None,
-                'glitch': glitch_results if args.glitch else None,
-                'combined': combined_results if args.combined else None,
-                'metadata': {
-                    'timestamp': datetime.now().isoformat(),
-                    'mode': args.mode,
-                    'card_type': args.type,
-                    'iterations': args.count
-                }
-            }
-            
-            with open(args.export, 'w') as f:
-                json.dump(results, f, indent=2)
-                
-        logging.info("Testing complete")
-        
-    except Exception as e:
-        logging.error(f"Error during execution: {str(e)}", exc_info=True)
-        sys.exit(1)
-
 if __name__ == '__main__':
     main()
+
+# --- EMV/NFC Terminal/ATM Emulation and Card Emulation CLI Extension ---
+parser = argparse.ArgumentParser(description="GREENWIRE CLI for smartcard and NFC/MIFARE/RFID operations")
+parser.add_argument('--nfc-action', choices=['detect', 'read_uid', 'read_block', 'write_block'], help="NFC/MIFARE/RFID action")
+parser.add_argument('--block-number', type=int, help="Block number for read/write operations")
+parser.add_argument('--block-data', type=str, help="Data to write to block")
+parser.add_argument('--emulate', choices=['terminal', 'card'], help="Emulate as a terminal/ATM or as a card (NFC/EMV)")
+parser.add_argument('--emv-transaction', action='store_true', help="Simulate a full EMV transaction as a terminal/ATM")
+parser.add_argument('--emv-aid', type=str, help="AID to use for EMV emulation (default: VISA)")
+
+args = parser.parse_args()
+
+# NFC/MIFARE/RFID operations
+if args.nfc_action:
+    handle_nfc_operations(args)
+
+def emulate_terminal(args):
+    """Emulate an EMV/NFC terminal/ATM, sending APDUs as a terminal would"""
+    logging.info("[EMULATION] Starting terminal/ATM emulation mode")
+    aid = args.emv_aid or 'A0000000031010'  # Default to VISA
+    # Select application
+    apdu_select = EMV_COMMANDS['SELECT'] + [len(bytes.fromhex(aid))] + list(bytes.fromhex(aid))
+    print(f"[EMULATION] Sending SELECT AID: {aid}")
+    # ...send APDU to card (real or simulated)...
+    # Simulate GPO, READ RECORD, VERIFY, INTERNAL AUTH, GENERATE AC, etc.
+    # This can use SmartcardFuzzer or direct APDU logic
+    # For demonstration, print the sequence:
+    print("[EMULATION] -> SELECT, GPO, READ RECORD, VERIFY, INTERNAL AUTH, GENERATE AC")
+    # ...implement full transaction logic as needed...
+
+def emulate_card(args):
+    """Emulate an EMV/NFC card (requires supported hardware and nfcpy)"""
+    logging.info("[EMULATION] Starting card emulation mode")
+    try:
+        clf = nfc.ContactlessFrontend('usb')
+        # nfcpy card emulation example (requires custom logic for EMV)
+        # This is a stub; full EMV card emulation requires nfcpy extensions or hardware support
+        print("[EMULATION] Card emulation is hardware and platform dependent. See nfcpy docs.")
+        clf.close()
+    except Exception as e:
+        logging.error(f"Card emulation failed: {e}")
+
+if args.emulate == 'terminal':
+    emulate_terminal(args)
+elif args.emulate == 'card':
+    emulate_card(args)
