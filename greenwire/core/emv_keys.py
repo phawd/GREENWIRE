@@ -1,3 +1,5 @@
+from typing import Optional
+
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import padding
@@ -18,9 +20,33 @@ def generate_rsa_keypair(key_size: int = 1024):
     return private_bytes, public_bytes
 
 
-def generate_emv_keyset(key_size: int = 1024):
-    """Generate CA, issuer, and ICC key pairs for EMV SDA/DDA."""
-    ca_priv, ca_pub = generate_rsa_keypair(key_size)
+def generate_emv_keyset(
+    key_size: int = 1024,
+    ca_private_path: Optional[str] = None,
+    ca_public_path: Optional[str] = None,
+):
+    """Generate CA, issuer, and ICC key pairs for EMV SDA/DDA.
+
+    If ``ca_private_path`` (and optionally ``ca_public_path``) are provided,
+    the CA key pair is loaded from those files. Otherwise a new CA key pair is
+    generated.
+    """
+
+    if ca_private_path:
+        with open(ca_private_path, "rb") as f:
+            ca_priv = f.read()
+        if ca_public_path:
+            with open(ca_public_path, "rb") as f:
+                ca_pub = f.read()
+        else:
+            ca_key = serialization.load_pem_private_key(ca_priv, password=None)
+            ca_pub = ca_key.public_key().public_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo,
+            )
+    else:
+        ca_priv, ca_pub = generate_rsa_keypair(key_size)
+
     issuer_priv, issuer_pub = generate_rsa_keypair(key_size)
     icc_priv, icc_pub = generate_rsa_keypair(key_size)
     return {

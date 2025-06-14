@@ -178,7 +178,7 @@ def parse_args():
     
     # Required arguments
     parser.add_argument('--mode', required=True,
-                       choices=['standard', 'simulate', 'fuzz', 'readfuzz', 'extractkeys'],
+                       choices=['standard', 'simulate', 'fuzz', 'readfuzz', 'extractkeys', 'generatekeys'],
                        help='Testing mode')
                        
     # Card options
@@ -220,6 +220,12 @@ def parse_args():
                        
     parser.add_argument('--export',
                        help='Export results to JSON file')
+    parser.add_argument('--key-output',
+                       help='Write generated EMV keys to JSON file')
+    parser.add_argument('--ca-private',
+                       help='Path to existing CA private key (PEM)')
+    parser.add_argument('--ca-public',
+                       help='Path to existing CA public key (PEM)')
                        
     # Advanced options
     parser.add_argument('--pattern-depth', type=int, default=3,
@@ -1763,7 +1769,10 @@ def main():
 
         if args.mode == 'generatekeys':
             from greenwire.core.emv_keys import generate_emv_keyset
-            keyset = generate_emv_keyset()
+            keyset = generate_emv_keyset(
+                ca_private_path=args.ca_private,
+                ca_public_path=args.ca_public,
+            )
             if args.key_output:
                 with open(args.key_output, 'w') as f:
                     json.dump({k: v.decode('utf-8') for k, v in keyset.items()}, f, indent=2)

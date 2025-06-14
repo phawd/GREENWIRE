@@ -33,3 +33,18 @@ def test_sign_sda_data():
     assert len(signature) > 0
 
 
+def test_generate_emv_keyset_with_existing_ca(tmp_path):
+    ca_priv, ca_pub = generate_rsa_keypair(1024)
+    priv_path = tmp_path / "ca_priv.pem"
+    pub_path = tmp_path / "ca_pub.pem"
+    priv_path.write_bytes(ca_priv)
+    pub_path.write_bytes(ca_pub)
+
+    keys = generate_emv_keyset(
+        ca_private_path=str(priv_path), ca_public_path=str(pub_path)
+    )
+
+    assert keys["ca_private"] == ca_priv
+    assert keys["ca_public"] == ca_pub
+
+

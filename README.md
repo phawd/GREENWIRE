@@ -59,6 +59,7 @@ Modes:
   readfuzz     Focus on READ RECORD fuzzing
   extractkeys  Extract and analyze keys
   generatekeys Generate EMV key hierarchy (SDA/DDA)
+               (use --ca-private/--ca-public to supply your own CA keys)
 
 Attack Options:
   --mode MODE           Testing mode (required)
@@ -77,6 +78,9 @@ Output Options:
   --verbose             Enable detailed logging
   --silent              Suppress non-error output
   --export FILE         Export results to JSON file
+  --key-output FILE     Write generated EMV keys to JSON
+  --ca-private FILE     Use existing CA private key
+  --ca-public FILE      Use existing CA public key
 
 CVM Processing:
   The tool supports detailed Cardholder Verification Method (CVM) processing, including:
