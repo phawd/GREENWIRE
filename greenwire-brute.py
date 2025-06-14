@@ -97,18 +97,14 @@ from smartcard.System import readers
 from smartcard.util import toHexString, toBytes
 from datetime import datetime
 import random
-import struct
 from math import log2
-import hashlib
 from collections import Counter
-import threading
 from concurrent.futures import ThreadPoolExecutor
-import csv
 import sqlite3
 import os
 import re
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional, Union
+from typing import List, Optional, Union
 from dataclasses import dataclass
 from greenwire.core.fuzzer import SmartcardFuzzer
 from smartcard.CardConnection import CardConnection
@@ -1496,81 +1492,6 @@ class SmartcardFuzzerBrute:
         entropy = self.analyzer.calculate_entropy(response)
         return {"entropy_low": entropy < 3.5, "has_linear_relationship": self.analyzer.check_linear_relationship(response)}
 
-    def analyze_rsa_key(self, data, key_info):
-        """Analyze RSA key components and validate key structure"""
-        key_info['analysis']['rsa'] = {
-            'key_length': len(data) * 8,
-            'structure_valid': False,
-            'potential_weaknesses': []
-        }
-
-        # Check key length against minimum requirement
-        if len(data) * 8 < 1024:
-            key_info['analysis']['rsa']['potential_weaknesses'].append(
-                f"Key length {len(data) * 8} bits below minimum requirement"
-            )
-
-        try:
-            # Attempt to parse modulus and exponent (very basic heuristic)
-            if len(data) >= 128:  # Minimum 1024-bit key
-                key_info['analysis']['rsa'].update({
-                    'structure_valid': True,
-                    'modulus_length': len(data) - 5,  # Account for header/padding
-                    'exponent': int.from_bytes(data[-5:], byteorder='big')
-                })
-
-                # Check for common weak exponents
-                if key_info['analysis']['rsa']['exponent'] in [3, 65537]:
-                    key_info['analysis']['rsa']['exponent_type'] = 'Standard'
-                else:
-                    key_info['analysis']['rsa']['potential_weaknesses'].append(
-                        f"Non-standard public exponent: {key_info['analysis']['rsa']['exponent']}"
-                    )
-
-                # Additional checks for padding and modulus properties
-                if not self.validate_rsa_padding(data):
-                    key_info['analysis']['rsa']['potential_weaknesses'].append("Invalid padding detected")
-
-        except Exception as e:
-            key_info['analysis']['rsa']['error'] = str(e)
-
-        return key_info
-
-    def analyze_symmetric_key(self, data, key_info):
-        """Analyze symmetric key data for quality and potential vulnerabilities"""
-        key_info['analysis']['symmetric'] = {
-            'key_length': len(data) * 8,
-            'entropy_score': self.analyzer.calculate_entropy(data),
-            'potential_weaknesses': []
-        }
-        # Validate key length
-        if key_info['type'] == 'DES' and len(data) != 8:
-            key_info['analysis']['symmetric']['potential_weaknesses'].append(
-                f"Invalid DES key length: {len(data)} bytes"
-            )
-        elif key_info['type'] == 'AES' and len(data) not in [16, 24, 32]:
-            key_info['analysis']['symmetric']['potential_weaknesses'].append(
-                f"Invalid AES key length: {len(data)} bytes"
-            )
-        # Check entropy
-        min_entropy = 3.5  # Example threshold
-        if key_info['analysis']['symmetric']['entropy_score'] < min_entropy:
-            key_info['analysis']['symmetric']['potential_weaknesses'].append(
-                f"Low entropy score: {key_info['analysis']['symmetric']['entropy_score']:.2f}"
-            )
-        # Look for patterns
-        patterns = self.analyzer.find_repeating_sequences(data)
-        if patterns:
-            key_info['analysis']['symmetric']['potential_weaknesses'].append(
-                f"Found {len(patterns)} repeating patterns"
-            )
-        # Check for weak bits
-        weak_bits = self.check_weak_key_bits(data)
-        if weak_bits:
-            key_info['analysis']['symmetric']['potential_weaknesses'].append(
-                f"Found {len(weak_bits)} weak key bits"
-            )
-        return key_info
 
     def check_for_vulnerabilities(self, sw, cmd_name):
         """Check for vulnerabilities based on response"""
@@ -1700,55 +1621,29 @@ FUZZ_PATTERNS = {
     ]
 }
 
-def parse_arguments():
-    """Parse command-line arguments"""
-    parser = argparse.ArgumentParser(description='GREENWIRE CLI Interface')
-    
-    # Attack mode and options
-    parser.add_argument('--mode', required=True, choices=['standard', 'simulate', 'fuzz', 'readfuzz', 'extractkeys'],
-                        help='Testing mode')
-    parser.add_argument('--type', choices=['visa', 'mc', 'amex', 'jcb', 'discover', 'unionpay'],
-                        help='Card type')
-    parser.add_argument('--count', type=int, default=1,
-                        help='Number of iterations')
-    parser.add_argument('--auth', choices=['pin', 'sig'],
-                        help='Authentication method')
-    parser.add_argument('--fuzz', choices=['basic', 'advanced'],
-                        help='Fuzzing strategy')
-    
-    # Analysis options
-    parser.add_argument('--timing', action='store_true',
-                        help='Enable timing analysis')
-    parser.add_argument('--power', action='store_true',
-                        help='Enable power analysis')
-    parser.add_argument('--glitch', action='store_true',
-                        help='Enable glitch detection')
-    parser.add_argument('--combined', action='store_true',
-                        help='Test combined attacks')
-    
-    # Output options
-    parser.add_argument('--verbose', action='store_true',
-                        help='Enable detailed logging')
-    parser.add_argument('--silent', action='store_true',
-                        help='Suppress non-error output')
-    parser.add_argument('--export', type=str,
-                        help='Export results to JSON file')
-    
-    # Advanced options
-    parser.add_argument('--pattern-depth', type=int, default=3,
-                        help='Maximum recursion depth for pattern fuzzing')
-    parser.add_argument('--pattern-tags', type=str,
-                        help='Comma-separated list of EMV tags to target')
-    parser.add_argument('--max-retries', type=int, default=3,
-                        help='Maximum retry attempts per command')
+# ---------------------------------------------------------------------------
+# Placeholder analysis functions (TODO: implement full logic)
 
-    args = parser.parse_args()
-    
-    # Post-processing of arguments
-    if args.silent:
-        args.verbose = False
-    
-    return args
+def run_timing_analysis(fuzzer, commands, iterations):
+    """Stub timing analysis."""
+    return []
+
+def run_power_analysis(fuzzer, commands, sample_count):
+    """Stub power analysis."""
+    return []
+
+def run_glitch_detection(fuzzer, commands, iterations):
+    """Stub glitch detection."""
+    return []
+
+def run_combined_analysis(_args):
+    """Stub combined attack analysis."""
+    return []
+
+def handle_nfc_operations(_args):
+    """Stub for NFC/MIFARE/RFID operations."""
+    logging.info("NFC operations are not implemented in this environment")
+
 
 def main():
     """Main execution flow"""
@@ -1833,7 +1728,7 @@ def emulate_terminal(args):
     aid = args.emv_aid or 'A0000000031010'  # Default to VISA
     # Select application
     apdu_select = EMV_COMMANDS['SELECT'] + [len(bytes.fromhex(aid))] + list(bytes.fromhex(aid))
-    print(f"[EMULATION] Sending SELECT AID: {aid}")
+    print(f"[EMULATION] Sending SELECT AID: {aid} -> {apdu_select}")
     # ...send APDU to card (real or simulated)...
     # Simulate GPO, READ RECORD, VERIFY, INTERNAL AUTH, GENERATE AC, etc.
     # This can use SmartcardFuzzer or direct APDU logic
