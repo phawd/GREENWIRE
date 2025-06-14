@@ -60,6 +60,7 @@ Modes:
   extractkeys  Extract and analyze keys
   generatekeys Generate EMV key hierarchy (SDA/DDA)
                (use --ca-private/--ca-public to supply your own CA keys)
+  hardware     Direct smartcard/NFC reader operations
 
 Attack Options:
   --mode MODE           Testing mode (required)
@@ -81,6 +82,9 @@ Output Options:
   --key-output FILE     Write generated EMV keys to JSON
   --ca-private FILE     Use existing CA private key
   --ca-public FILE      Use existing CA public key
+  --list-readers        List connected smartcard readers
+  --send-apdu APDU      Send hex APDU to first reader
+  --nfc-uid             Read NFC tag UID
 
 CVM Processing:
   The tool supports detailed Cardholder Verification Method (CVM) processing, including:
@@ -102,6 +106,10 @@ Examples:
 
   # Run detailed CVM processing and see operator output
   python greenwire-brute.py --mode simulate --auth sig --verbose
+
+  # Check connected readers and read an NFC UID
+  python greenwire-brute.py --mode hardware --list-readers
+  python greenwire-brute.py --mode hardware --nfc-uid
   --verbose            Enable detailed logging
   --silent             Suppress non-error output
   --export FILE        Export results to JSON

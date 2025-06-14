@@ -178,7 +178,7 @@ def parse_args():
     
     # Required arguments
     parser.add_argument('--mode', required=True,
-                       choices=['standard', 'simulate', 'fuzz', 'readfuzz', 'extractkeys', 'generatekeys'],
+                       choices=['standard', 'simulate', 'fuzz', 'readfuzz', 'extractkeys', 'generatekeys', 'hardware'],
                        help='Testing mode')
                        
     # Card options
@@ -236,6 +236,14 @@ def parse_args():
                        
     parser.add_argument('--max-retries', type=int, default=3,
                        help='Maximum retry attempts per command')
+
+    # Hardware / reader options
+    parser.add_argument('--list-readers', action='store_true',
+                       help='List connected smartcard readers')
+    parser.add_argument('--send-apdu', type=str,
+                       help='Send APDU (hex) to the first reader and exit')
+    parser.add_argument('--nfc-uid', action='store_true',
+                       help='Read NFC tag UID and exit')
 
     args = parser.parse_args()
     
@@ -1766,6 +1774,27 @@ def main():
     try:
         logging.info(f"Starting GREENWIRE in {args.mode} mode")
         logging.info(f"Card type: {args.type}")
+
+        if args.mode == 'hardware':
+            from greenwire.core import hardware
+            if args.list_readers:
+                for r in hardware.list_pcsc_readers():
+                    print(r)
+                return
+            if args.send_apdu:
+                apdu = bytes.fromhex(args.send_apdu)
+                data, sw1, sw2 = hardware.send_apdu(apdu)
+                print(f"{toHexString(data)} {sw1:02X} {sw2:02X}")
+                return
+            if args.nfc_uid:
+                uid = hardware.read_nfc_uid()
+                if uid:
+                    print(f"UID: {toHexString(uid)}")
+                else:
+                    print("No NFC tag detected")
+                return
+            print("No hardware action specified")
+            return
 
         if args.mode == 'generatekeys':
             from greenwire.core.emv_keys import generate_emv_keyset
