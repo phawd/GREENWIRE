@@ -137,8 +137,14 @@ class TLVParser:
 
 class VulnerabilityDetector:
     def __init__(self, db_conn):
-        self.db = db_conn; self.timing_hist={} ; self.patterns={}
-        self.suspicious_sw = {0x6283:"Selected file invalidated",...}
+        self.db = db_conn
+        self.timing_hist = {}
+        self.patterns = {}
+        self.suspicious_sw = {
+            0x6283: "Selected file invalidated",
+            0x6700: "Wrong length",
+            0x6982: "Security status not satisfied",
+        }
     def analyze_command(self, typ, apdu, resp, sw1, sw2, exec_time):
         findings=[]
         # timing
