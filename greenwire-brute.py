@@ -178,7 +178,7 @@ def parse_args():
     
     # Required arguments
     parser.add_argument('--mode', required=True,
-                       choices=['standard', 'simulate', 'fuzz', 'readfuzz', 'extractkeys'],
+                       choices=['standard', 'simulate', 'fuzz', 'readfuzz', 'extractkeys', 'generatekeys', 'hardware'],
                        help='Testing mode')
                        
     # Card options
@@ -220,6 +220,12 @@ def parse_args():
                        
     parser.add_argument('--export',
                        help='Export results to JSON file')
+    parser.add_argument('--key-output',
+                       help='Write generated EMV keys to JSON file')
+    parser.add_argument('--ca-private',
+                       help='Path to existing CA private key (PEM)')
+    parser.add_argument('--ca-public',
+                       help='Path to existing CA public key (PEM)')
                        
     # Advanced options
     parser.add_argument('--pattern-depth', type=int, default=3,
@@ -231,13 +237,21 @@ def parse_args():
     parser.add_argument('--max-retries', type=int, default=3,
                        help='Maximum retry attempts per command')
 
+    # Hardware / reader options
+    parser.add_argument('--list-readers', action='store_true',
+                       help='List connected smartcard readers')
+    parser.add_argument('--send-apdu', type=str,
+                       help='Send APDU (hex) to the first reader and exit')
+    parser.add_argument('--nfc-uid', action='store_true',
+                       help='Read NFC tag UID and exit')
+
     args = parser.parse_args()
     
     # Validate arguments
     if args.mode in ['fuzz', 'simulate'] and not args.fuzz:
         parser.error("--fuzz strategy required for fuzz/simulate modes")
-        
-    if args.mode != 'standard' and not args.auth:
+
+    if args.mode not in ['standard', 'generatekeys'] and not args.auth:
         parser.error("--auth method required for non-standard modes")
         
     if args.silent and args.verbose:
@@ -1705,7 +1719,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='GREENWIRE CLI Interface')
     
     # Attack mode and options
-    parser.add_argument('--mode', required=True, choices=['standard', 'simulate', 'fuzz', 'readfuzz', 'extractkeys'],
+    parser.add_argument('--mode', required=True, choices=['standard', 'simulate', 'fuzz', 'readfuzz', 'extractkeys', 'generatekeys'],
                         help='Testing mode')
     parser.add_argument('--type', choices=['visa', 'mc', 'amex', 'jcb', 'discover', 'unionpay'],
                         help='Card type')
@@ -1733,6 +1747,8 @@ def parse_arguments():
                         help='Suppress non-error output')
     parser.add_argument('--export', type=str,
                         help='Export results to JSON file')
+    parser.add_argument('--key-output', type=str,
+                        help='Write generated EMV keys to JSON file')
     
     # Advanced options
     parser.add_argument('--pattern-depth', type=int, default=3,
@@ -1758,7 +1774,41 @@ def main():
     try:
         logging.info(f"Starting GREENWIRE in {args.mode} mode")
         logging.info(f"Card type: {args.type}")
-        
+
+        if args.mode == 'hardware':
+            from greenwire.core import hardware
+            if args.list_readers:
+                for r in hardware.list_pcsc_readers():
+                    print(r)
+                return
+            if args.send_apdu:
+                apdu = bytes.fromhex(args.send_apdu)
+                data, sw1, sw2 = hardware.send_apdu(apdu)
+                print(f"{toHexString(data)} {sw1:02X} {sw2:02X}")
+                return
+            if args.nfc_uid:
+                uid = hardware.read_nfc_uid()
+                if uid:
+                    print(f"UID: {toHexString(uid)}")
+                else:
+                    print("No NFC tag detected")
+                return
+            print("No hardware action specified")
+            return
+
+        if args.mode == 'generatekeys':
+            from greenwire.core.emv_keys import generate_emv_keyset
+            keyset = generate_emv_keyset(
+                ca_private_path=args.ca_private,
+                ca_public_path=args.ca_public,
+            )
+            if args.key_output:
+                with open(args.key_output, 'w') as f:
+                    json.dump({k: v.decode('utf-8') for k, v in keyset.items()}, f, indent=2)
+            else:
+                print(json.dumps({k: v.decode('utf-8') for k, v in keyset.items()}, indent=2))
+            return
+
         # Initialize fuzzer
         fuzzer = SmartcardFuzzer()
         
