@@ -58,6 +58,7 @@ Modes:
   fuzz         Dedicated fuzzing mode
   readfuzz     Focus on READ RECORD fuzzing
   extractkeys  Extract and analyze keys
+  generatekeys Generate EMV key hierarchy (SDA/DDA)
 
 Attack Options:
   --mode MODE           Testing mode (required)
