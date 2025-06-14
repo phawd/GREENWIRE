@@ -1588,7 +1588,7 @@ class SmartcardFuzzerBrute:
         sw, resp = None, None  # Initialize variables
         try:
             challenge_sw, challenge = self.get_challenge()
-            if challenge_sw == 0x9000:
+            if challenge_sw == (0x90, 0x00):
                 sw, resp = self.internal_authenticate(challenge)
         except Exception as e:
             logging.error(f"Error during offline authentication: {e}")
