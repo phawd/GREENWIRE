@@ -1,0 +1,37 @@
+name: Deploy AI Model to Azure ML
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install azure-ai-ml
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          # Use secrets for your Azure credentials (see notes below)
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Model to Azure ML
+        env:
+          AZURE_ML_WORKSPACE: "<your-ml-workspace-name>"
+          AZURE_ML_RESOURCE_GROUP: "<your-resource-group>"
+        run: |
+          python deploy_to_azureml.py

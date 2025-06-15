@@ -11,17 +11,17 @@ Attack Capabilities:
   - PIN verification timing
   - Cryptographic operation analysis
   - Memory access patterns
-  
-- Power Analysis (EMVCo CAST §5.4)  
+
+- Power Analysis (EMVCo CAST §5.4)
   - Simple Power Analysis (SPA)
   - Differential Power Analysis (DPA)
   - Correlation Power Analysis (CPA)
-  
+
 - Clock Glitch (EMVCo CAST §4.2)
   - Instruction skip attacks
   - Data corruption
   - Crypto fault injection
-  
+
 - Combined Channel Attacks
   - Timing + power analysis
   - Protocol + timing vulnerabilities
@@ -30,7 +30,7 @@ Attack Capabilities:
 Standards Compliance:
 - EMVCo Books 1-4
 - Mastercard CQM
-- Visa PTP 
+- Visa PTP
 - Amex AEIPS
 - NIST FIPS 140-3
 - Common Criteria EAL4+
@@ -99,21 +99,16 @@ from smartcard.System import readers
 from smartcard.util import toHexString, toBytes
 from datetime import datetime
 import random
-import struct
 from math import log2
-import hashlib
 from collections import Counter
-import threading
 from concurrent.futures import ThreadPoolExecutor
-import csv
 import sqlite3
 import os
 import re
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional, Union
+from typing import Dict, List, Optional, Union
 from dataclasses import dataclass
 from greenwire.core.fuzzer import SmartcardFuzzer
-from smartcard.CardConnection import CardConnection
 
 # Database Schema Version
 DB_VERSION = 1
@@ -175,86 +170,99 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter
-    )
-    
-    # Required arguments
-    parser.add_argument('--mode', required=True,
-                       choices=['standard', 'simulate', 'fuzz', 'readfuzz', 'extractkeys', 'issue', 'search-ca'],
-                       help='Testing mode')
-                       
+    )    # Required arguments
+    parser.add_argument(
+        '--mode', required=True,
+        choices=['standard', 'simulate', 'fuzz', 'readfuzz', 'extractkeys',
+                'issue', 'search-ca'],
+        help='Testing mode')
+
     # Card options
-    parser.add_argument('--type',
-                       choices=['visa', 'mc', 'amex', 'maestro', 'discover', 'jcb', 'all', 'auto'],
-                       default='auto',
-                       help='Card type (default: auto)')
-                       
-    parser.add_argument('--count', type=int, default=1,
-                       help='Number of iterations (default: 1)')
-                       
-    parser.add_argument('--auth',
-                       choices=['pin', 'signature'],
-                       help='Authentication method')
-                       
-    # Attack options
-    parser.add_argument('--fuzz',
-                       choices=['random', 'param', 'crypto', 'entropy'],
-                       help='Fuzzing strategy')
-                       
-    parser.add_argument('--timing', action='store_true',
-                       help='Enable timing analysis')
-                       
-    parser.add_argument('--power', action='store_true',
-                       help='Enable power analysis')
-                       
-    parser.add_argument('--glitch', action='store_true',
-                       help='Enable clock glitch detection')
-                       
-    parser.add_argument('--combined', action='store_true',
-                       help='Test combined attack vectors')
-                       
+    parser.add_argument(
+        '--type',
+        choices=['visa', 'mc', 'amex', 'maestro', 'discover', 'jcb', 'all',
+                'auto'],
+        default='auto',
+        help='Card type (default: auto)')
+
+    parser.add_argument(
+        '--count', type=int, default=1,
+        help='Number of iterations (default: 1)')
+
+    parser.add_argument(
+        '--auth',
+        choices=['pin', 'signature'],
+        help='Authentication method')    # Attack options
+    parser.add_argument(
+        '--fuzz',
+        choices=['random', 'param', 'crypto', 'entropy'],
+        help='Fuzzing strategy')
+
+    parser.add_argument(
+        '--timing', action='store_true',
+        help='Enable timing analysis')
+
+    parser.add_argument(
+        '--power', action='store_true',
+        help='Enable power analysis')
+
+    parser.add_argument(
+        '--glitch', action='store_true',
+        help='Enable clock glitch detection')
+
+    parser.add_argument(
+        '--combined', action='store_true',
+        help='Test combined attack vectors')
+
     # Output options
-    parser.add_argument('--verbose', action='store_true',
-                       help='Enable detailed logging')
-                       
-    parser.add_argument('--silent', action='store_true',
-                       help='Suppress non-error output')
-                       
-    parser.add_argument('--export',
-                       help='Export results to JSON file')
-                       
+    parser.add_argument(
+        '--verbose', action='store_true',
+        help='Enable detailed logging')
+
+    parser.add_argument(
+        '--silent', action='store_true',
+        help='Suppress non-error output')
+
+    parser.add_argument(
+        '--export',
+        help='Export results to JSON file')
+
     # Advanced options
-    parser.add_argument('--pattern-depth', type=int, default=3,
-                       help='Maximum recursion depth for pattern fuzzing')
-                       
-    parser.add_argument('--pattern-tags', type=str,
-                       help='Comma-separated list of EMV tags to target')
-                       
-    parser.add_argument('--max-retries', type=int, default=3,
-                       help='Maximum retry attempts per command')
+    parser.add_argument(
+        '--pattern-depth', type=int, default=3,
+        help='Maximum recursion depth for pattern fuzzing')
+
+    parser.add_argument(
+        '--pattern-tags', type=str,
+        help='Comma-separated list of EMV tags to target')
+
+    parser.add_argument(
+        '--max-retries', type=int, default=3,
+        help='Maximum retry attempts per command')
 
     args = parser.parse_args()
-    
+
     # Validate arguments
     if args.mode in ['fuzz', 'simulate'] and not args.fuzz:
         parser.error("--fuzz strategy required for fuzz/simulate modes")
-        
+
     if args.mode != 'standard' and not args.auth:
         parser.error("--auth method required for non-standard modes")
-        
+
     if args.silent and args.verbose:
         parser.error("--silent and --verbose are mutually exclusive")
-        
+
     return args
 
 def init_logging(args):
     """Initialize logging based on verbosity settings"""
     handlers = []
-    
+
     # Always log to file
     file_handler = logging.FileHandler('greenwire-brute.log')
     file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
     handlers.append(file_handler)
-    
+
     if not args.silent:
         # Console output unless silent
         console = logging.StreamHandler()
@@ -263,13 +271,13 @@ def init_logging(args):
         else:
             console.setFormatter(logging.Formatter(LOG_FORMAT))
         handlers.append(console)
-        
+
     # Anomaly log for suspicious events
     anomaly_handler = logging.FileHandler('greenwire-anomaly.log')
     anomaly_handler.setFormatter(logging.Formatter(VERBOSE_FORMAT))
     anomaly_handler.addFilter(lambda r: '[ANOMALY]' in r.msg)
     handlers.append(anomaly_handler)
-    
+
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,
         handlers=handlers
@@ -280,7 +288,7 @@ def init_database():
     db_path = Path('greenwire.db')
     conn = sqlite3.connect(str(db_path))
     c = conn.cursor()
-    
+
     # Create tables if they don't exist
     c.executescript('''
         -- Sessions table to track testing runs
@@ -350,7 +358,7 @@ def init_database():
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     ''')
-    
+
     # Insert/update version
     c.execute('INSERT OR REPLACE INTO db_version (version) VALUES (?)', (DB_VERSION,))
     conn.commit()
@@ -360,33 +368,33 @@ def setup_logging(verbose=False):
     """Configure logging with multiple handlers and formats"""
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG if verbose else logging.INFO)
-    
+
     # Clear existing handlers
     root_logger.handlers = []
-    
+
     # File handler for all logs
     file_handler = logging.FileHandler('greenwire-brute.log')
     file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
     root_logger.addHandler(file_handler)
-    
+
     # Console handler with different format based on verbose mode
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(logging.Formatter(VERBOSE_FORMAT if verbose else LOG_FORMAT))
     root_logger.addHandler(console_handler)
-    
+
     # Separate handlers for different types of data
     os.makedirs('logs', exist_ok=True)
-    
+
     vuln_handler = logging.FileHandler('logs/vulnerabilities.log')
     vuln_handler.setFormatter(logging.Formatter(LOG_FORMAT))
     vuln_handler.addFilter(lambda record: 'VULNERABILITY' in record.getMessage())
     root_logger.addHandler(vuln_handler)
-    
+
     key_handler = logging.FileHandler('logs/keys.log')
     key_handler.setFormatter(logging.Formatter(LOG_FORMAT))
     key_handler.addFilter(lambda record: 'KEY' in record.getMessage())
     root_logger.addHandler(key_handler)
-    
+
     timing_handler = logging.FileHandler('logs/timing.log')
     timing_handler.setFormatter(logging.Formatter(LOG_FORMAT))
     timing_handler.addFilter(lambda record: 'TIMING' in record.getMessage())
@@ -546,24 +554,25 @@ class TLVObject:
     tag: bytes
     length: int
     value: bytes
-    
+
     @property
     def tag_str(self) -> str:
         return self.tag.hex().upper()
-    
+
     @property
     def name(self) -> str:
         return EMV_TAGS.get(self.tag_str, 'Unknown')
-    
-    def __str__(self) -> str:
+
+def __str__(self) -> str:
         return f"{self.tag_str} ({self.name}): {self.value.hex().upper()}"
 
 class TLVParser:
-    """BER-TLV parser for EMV data objects"""
-    
-    @staticmethod
+    """BER-TLV parser for EMV data objects"""    @staticmethod
     def parse(data: bytes) -> List[TLVObject]:
-        """Parse BER-TLV encoded data into a list of TLV objects (refactored for lower complexity)"""
+        """Parse BER-TLV encoded data into a list of TLV objects.
+        
+        Refactored for lower complexity.
+        """
         objects = []
         offset = 0
         data_len = len(data)
@@ -616,7 +625,7 @@ class TLVParser:
         """Find the value of a specific tag in BER-TLV encoded data"""
         if isinstance(tag, str):
             tag = bytes.fromhex(tag)
-            
+
         objects = TLVParser.parse(data)
         for obj in objects:
             if obj.tag == tag:
@@ -625,7 +634,7 @@ class TLVParser:
 
 class VulnerabilityDetector:
     """Enhanced vulnerability detection system"""
-    
+
     def __init__(self, db_manager):
         self.db_manager = db_manager
         self.command_timing_history = {}
@@ -643,25 +652,24 @@ class VulnerabilityDetector:
                 0x6986: 'Command not allowed',
                 0x6987: 'Expected SM data objects missing',
                 0x6988: 'SM data objects incorrect'
-            }
-        }
+            }        }
 
     def analyze_command(self, command_type, apdu, response, sw1, sw2, execution_time):
         """Analyze a command for potential vulnerabilities"""
         findings = []
-        
+
         # Timing analysis
         self._analyze_timing(command_type, execution_time, findings)
-        
+
         # Response analysis
         self._analyze_response(response, findings)
-        
+
         # Status word analysis
         self._analyze_status_words(sw1, sw2, findings)
-        
+
         # Pattern analysis
         self._analyze_patterns(command_type, apdu, response, findings)
-        
+
         # Log any findings
         for finding in findings:
             self.db_manager.log_vulnerability(
@@ -671,21 +679,21 @@ class VulnerabilityDetector:
                 apdu,
                 response
             )
-        
+
         return findings
 
     def _analyze_timing(self, command_type, execution_time, findings):
         """Analyze command timing for anomalies"""
         if command_type not in self.command_timing_history:
             self.command_timing_history[command_type] = []
-        
+
         history = self.command_timing_history[command_type]
         history.append(execution_time)
-        
+
         if len(history) > 10:  # Need enough samples for meaningful analysis
             mean = sum(history) / len(history)
             std_dev = (sum((x - mean) ** 2 for x in history) / len(history)) ** 0.5
-            
+
             if abs(execution_time - mean) > self.anomaly_thresholds['timing_deviation'] * std_dev:
                 findings.append({
                     'type': 'TIMING_ANOMALY',
@@ -698,11 +706,11 @@ class VulnerabilityDetector:
                     }
                 })
 
-    def _analyze_response(self, response, findings):
+def _analyze_response(self, response, findings):
         """Analyze response data for potential vulnerabilities"""
         if not response:
             return
-        
+
         # Check for potentially sensitive data patterns
         patterns = {
             'PAN': r'5[1-5][0-9]{14}',
@@ -710,32 +718,33 @@ class VulnerabilityDetector:
             'TRACK_DATA': r'%B\d{13,19}\^[\w\s/]{2,26}\^[0-9]{12}',
             'KEY_COMPONENT': r'[0-9A-F]{32,48}'
         }
-        
+
         for pattern_name, pattern in patterns.items():
-            if re.search(pattern, response.hex()):
-                findings.append({
+            if re.search(pattern, response.hex()):                findings.append({
                     'type': 'DATA_LEAKAGE',
                     'description': f'Potential {pattern_name} data found in response',
                     'severity': 'HIGH'
                 })
 
-    def _analyze_status_words(self, sw1, sw2, findings):
+def _analyze_status_words(self, sw1, sw2, findings):
         """Analyze status words for security implications"""
         sw = (sw1 << 8) | sw2
         
         if sw in self.anomaly_thresholds['suspicious_sw_codes']:
+            sw_desc = self.anomaly_thresholds["suspicious_sw_codes"][sw]
             findings.append({
                 'type': 'SUSPICIOUS_STATUS',
-                'description': f'Suspicious status word: {self.anomaly_thresholds["suspicious_sw_codes"][sw]}',
+                'description': f'Suspicious status word: {sw_desc}',
                 'severity': 'MEDIUM' if sw != 0x6983 else 'HIGH'
             })
 
-    def _analyze_patterns(self, command_type, apdu, response, findings):
+def _analyze_patterns(self, command_type, apdu, response, findings):
         """Analyze command/response patterns for potential vulnerabilities"""
         if command_type not in self.response_patterns:
             self.response_patterns[command_type] = {}
-        
+
         pattern_key = f"{apdu.hex()}:{response.hex() if response else ''}"
+        
         if pattern_key in self.response_patterns[command_type]:
             # Identical command yields different response - potential non-deterministic behavior
             if self.response_patterns[command_type][pattern_key] != response:
@@ -747,9 +756,10 @@ class VulnerabilityDetector:
         else:
             self.response_patterns[command_type][pattern_key] = response
 
+
 class CardResponseAnalyzer:
     """Helper class for analyzing card responses"""
-    
+
     @staticmethod
     def analyze_timing(start_time, end_time, command_type):
         """Analyze response timing for potential side-channel vulnerabilities"""
@@ -761,20 +771,20 @@ class CardResponseAnalyzer:
             'anomaly': response_time > ANALYSIS_THRESHOLDS['RESPONSE_TIME_THRESHOLD']
         }
         return timing_info
-    
+
     @staticmethod
     def analyze_response_pattern(data):
         """Analyze response data for patterns and anomalies"""
         if not data:
             return None
-            
+
         pattern_info = {
             'length': len(data),
             'unique_bytes': len(set(data)),
             'repeating_patterns': [],
             'byte_frequency': dict(Counter(data))
         }
-        
+
         # Look for repeating patterns
         for pattern_len in range(2, min(16, len(data))):
             patterns = {}
@@ -787,7 +797,7 @@ class CardResponseAnalyzer:
                         'positions': patterns[pattern] + [i]
                     })
                 patterns[pattern] = [i]
-                
+
         return pattern_info
 
     @staticmethod
@@ -795,11 +805,11 @@ class CardResponseAnalyzer:
         """Detect potentially weak random number generation"""
         if not data:
             return False
-            
+
         entropy = CardResponseAnalyzer.calculate_entropy(data)
         repeating = CardResponseAnalyzer.find_repeating_sequences(data)
         linear = CardResponseAnalyzer.check_linear_relationship(data)
-        
+
         return {
             'entropy_low': entropy < min_entropy,
             'has_repeating_sequences': bool(repeating),
@@ -837,11 +847,11 @@ class CardResponseAnalyzer:
         """Check for linear relationships in data"""
         if len(data) < window:
             return False
-            
+
         differences = []
         for i in range(len(data)-1):
             differences.append((data[i+1] - data[i]) % 256)
-            
+
         # Check if differences are constant
         return len(set(differences[:window])) == 1
 
@@ -871,63 +881,63 @@ class DatabaseManager:
         conn = sqlite3.connect(str(self.db_path))
         c = conn.cursor()
         c.execute('''
-            UPDATE sessions 
-            SET end_time = CURRENT_TIMESTAMP 
+            UPDATE sessions
+            SET end_time = CURRENT_TIMESTAMP
             WHERE id = ?
         ''', (self.current_session_id,))
         conn.commit()
         conn.close()
 
-    def log_command(self, command_type, apdu, response, sw1, sw2, execution_time, is_anomaly=False):
+def log_command(self, command_type, apdu, response, sw1, sw2, execution_time, is_anomaly=False):
         """Log an APDU command and its response"""
         if not self.current_session_id:
             return
         conn = sqlite3.connect(str(self.db_path))
         c = conn.cursor()
         c.execute('''
-            INSERT INTO commands 
+            INSERT INTO commands
             (session_id, command_type, apdu, response, sw1, sw2, execution_time, is_anomaly)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ''', (self.current_session_id, command_type, apdu, response, sw1, sw2, execution_time, is_anomaly))
         conn.commit()
         conn.close()
 
-    def log_vulnerability(self, vuln_type, description, severity, apdu, response):
+def log_vulnerability(self, vuln_type, description, severity, apdu, response):
         """Log a discovered vulnerability"""
         if not self.current_session_id:
             return
         conn = sqlite3.connect(str(self.db_path))
         c = conn.cursor()
         c.execute('''
-            INSERT INTO vulnerabilities 
+            INSERT INTO vulnerabilities
             (session_id, vulnerability_type, description, severity, apdu, response)
             VALUES (?, ?, ?, ?, ?, ?)
         ''', (self.current_session_id, vuln_type, description, severity, apdu, response))
         conn.commit()
         conn.close()
 
-    def log_key(self, key_type, key_data, metadata):
+def log_key(self, key_type, key_data, metadata):
         """Log discovered keys or certificates"""
         if not self.current_session_id:
             return
         conn = sqlite3.connect(str(self.db_path))
         c = conn.cursor()
         c.execute('''
-            INSERT INTO keys 
+            INSERT INTO keys
             (session_id, key_type, key_data, metadata)
             VALUES (?, ?, ?, ?)
         ''', (self.current_session_id, key_type, key_data, metadata))
         conn.commit()
         conn.close()
 
-    def log_timing(self, command_type, execution_time, statistics, anomaly_score):
+def log_timing(self, command_type, execution_time, statistics, anomaly_score):
         """Log timing analysis data"""
         if not self.current_session_id:
             return
         conn = sqlite3.connect(str(self.db_path))
         c = conn.cursor()
         c.execute('''
-            INSERT INTO timing_analysis 
+            INSERT INTO timing_analysis
             (session_id, command_type, execution_time, statistics, anomaly_score)
             VALUES (?, ?, ?, ?, ?)
         ''', (self.current_session_id, command_type, execution_time, statistics, anomaly_score))
@@ -939,7 +949,7 @@ class LogManager:
     def __init__(self, verbose=False):
         self.verbose = verbose
         self.setup_logging()
-        
+
         # Translation dictionaries for human-readable output
         self.command_descriptions = {
             'SELECT': 'Select card application/file',
@@ -951,7 +961,7 @@ class LogManager:
             'GET_CHALLENGE': 'Request random challenge',
             'GET_DATA': 'Read card data object'
         }
-        
+
         self.status_descriptions = {
             0x9000: 'Success',
             0x6200: 'Warning: State of non-volatile memory unchanged',
@@ -976,41 +986,41 @@ class LogManager:
             0x6988: 'Error: Secure messaging data objects incorrect'
         }
 
-    def setup_logging(self):
+def setup_logging(self):
         """Configure logging handlers and formats"""
         # Create logs directory if it doesn't exist
         Path('logs').mkdir(exist_ok=True)
-        
+
         # Root logger configuration
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.DEBUG if self.verbose else logging.INFO)
-        
+
         # Clear existing handlers
         root_logger.handlers = []
-        
+
         # Main log file
         main_handler = logging.FileHandler('logs/greenwire-brute.log')
         main_handler.setFormatter(logging.Formatter(LOG_FORMAT))
         root_logger.addHandler(main_handler)
-        
+
         # Vulnerability log
         vuln_handler = logging.FileHandler('logs/vulnerabilities.log')
         vuln_handler.setFormatter(logging.Formatter(VERBOSE_FORMAT))
         vuln_handler.addFilter(lambda record: 'VULNERABILITY' in record.msg)
         root_logger.addHandler(vuln_handler)
-        
+
         # Key discovery log
         key_handler = logging.FileHandler('logs/keys.log')
         key_handler.setFormatter(logging.Formatter(VERBOSE_FORMAT))
         key_handler.addFilter(lambda record: 'KEY_DISCOVERY' in record.msg)
         root_logger.addHandler(key_handler)
-        
+
         # Timing analysis log
         timing_handler = logging.FileHandler('logs/timing.log')
         timing_handler.setFormatter(logging.Formatter(LOG_FORMAT))
         timing_handler.addFilter(lambda record: 'TIMING' in record.msg)
         root_logger.addHandler(timing_handler)
-        
+
         # Console output
         console_handler = logging.StreamHandler(sys.stdout)
         if self.verbose:
@@ -1019,12 +1029,12 @@ class LogManager:
             console_handler.setFormatter(logging.Formatter(LOG_FORMAT))
         root_logger.addHandler(console_handler)
 
-    def log_command(self, command_type, apdu, response, sw1, sw2, execution_time):
+def log_command(self, command_type, apdu, response, sw1, sw2, execution_time):
         """Log a command with human-readable description"""
         sw = (sw1 << 8) | sw2
         status_desc = self.status_descriptions.get(sw, f'Unknown status {hex(sw)}')
         cmd_desc = self.command_descriptions.get(command_type, command_type)
-        
+
         message = f"""
 Command: {cmd_desc}
 APDU: {apdu.hex()}
@@ -1032,21 +1042,21 @@ Response: {response.hex() if response else 'None'}
 Status: {status_desc} ({hex(sw)})
 Time: {execution_time:.4f}s
 """
-        
+
         logging.info(message)
-        
+
         # Log detailed timing information
         if execution_time > 1.0:  # Suspicious timing threshold
             logging.warning(f'TIMING: Slow response ({execution_time:.4f}s) for {cmd_desc}')
 
-    def log_vulnerability(self, finding):
+def log_vulnerability(self, finding):
         """Log a vulnerability finding with detailed explanation"""
         severity_markers = {
             'LOW': '!',
             'MEDIUM': '!!',
             'HIGH': '!!!'
         }
-        
+
         message = f"""
 VULNERABILITY DETECTED {severity_markers.get(finding['severity'], '!')}
 Type: {finding['type']}
@@ -1055,10 +1065,10 @@ Severity: {finding['severity']}
 Details: {json.dumps(finding.get('details', {}), indent=2)}
 Recommendation: {self._get_vulnerability_recommendation(finding['type'])}
 """
-        
+
         logging.warning(message)
 
-    def log_key_discovery(self, key_type, metadata):
+def log_key_discovery(self, key_type, metadata):
         """Log discovered keys or certificates"""
         message = f"""
 KEY DISCOVERY
@@ -1066,10 +1076,10 @@ Type: {key_type}
 Metadata: {json.dumps(metadata, indent=2)}
 Time: {datetime.now().isoformat()}
 """
-        
+
         logging.info(message)
 
-    def _get_vulnerability_recommendation(self, vuln_type):
+def _get_vulnerability_recommendation(self, vuln_type):
         """Get recommendation for handling a vulnerability type"""
         recommendations = {
             'TIMING_ANOMALY': 'Review command implementation for timing side-channels',
@@ -1100,24 +1110,24 @@ class SmartcardFuzzer:
             'timing_anomalies': 0
         }
 
-    def add_pattern_data(self, key_info):
+def add_pattern_data(self, key_info):
         """Helper method to add pattern data"""
         if isinstance(key_info, dict):
             self.pattern_data.append(str(key_info))
         else:
             self.pattern_data.append(key_info)
 
-    def connect(self):
+def connect(self):
         """Establish connection to the first available reader"""
         if self.options.dry_run:
             logging.info("[DRY RUN] Would connect to card reader")
             return True
-            
+
         r = readers()
         if not r:
             logging.error("No smartcard readers found")
             return False
-            
+
         self.reader = r[0]
         try:
             self.connection = self.reader.createConnection()
@@ -1153,12 +1163,12 @@ class SmartcardFuzzer:
         start_time = time.time()
         result = self.transmit_apdu(apdu, description)
         end_time = time.time()
-        
+
         if result:
             _, _ = result
             timing_info = self.analyzer.analyze_timing(start_time, end_time, description)
             self.timing_data.append(timing_info)
-            
+
             if timing_info['anomaly']:
                 self.stats['timing_anomalies'] += 1
                 logging.warning(f"Timing anomaly detected in {description}")
@@ -1173,11 +1183,11 @@ class SmartcardFuzzer:
                 if sw and sw[0] == 0x90 and sw[1] == 0x00:
                     self.analyze_response(resp)
 
-    def analyze_response(self, response, command_name=""):
+def analyze_response(self, response, command_name=""):
         """Analyze card response for patterns and EMV tags"""
         if not response:
             return
-            
+
         hex_resp = toHexString(response)
         for tag, desc in EMV_TAGS.items():
             if tag in hex_resp:
@@ -1188,7 +1198,7 @@ class SmartcardFuzzer:
                     'data': hex_resp,
                     'timestamp': datetime.now().isoformat()
                 }) # type: ignore
-        
+
         # Analyze response patterns
         pattern_info = self.analyzer.analyze_response_pattern(response)
         if pattern_info:
@@ -1198,7 +1208,7 @@ class SmartcardFuzzer:
                 'timestamp': datetime.now().isoformat()
             })
 
-    def select_application(self, aid):
+def select_application(self, aid):
         """Select EMV application using its AID"""
         aid_bytes = toBytes(aid)
         apdu = EMV_COMMANDS['SELECT'] + [len(aid_bytes)] + list(aid_bytes)
@@ -1215,19 +1225,19 @@ class SmartcardFuzzer:
         apdu = EMV_COMMANDS['GET_PROCESSING_OPTIONS'] + [len(pdol)] + pdol + [0x00]
         return self.transmit_apdu(apdu, "GET PROCESSING OPTIONS")
 
-    def internal_authenticate(self, challenge=None):
+def internal_authenticate(self, challenge=None):
         """Perform INTERNAL AUTHENTICATE with optional challenge"""
         if not challenge:
             challenge = [random.randint(0, 255) for _ in range(8)]
         apdu = EMV_COMMANDS['INTERNAL_AUTHENTICATE'] + [len(challenge)] + challenge
         return self.transmit_apdu(apdu, "INTERNAL AUTHENTICATE")
 
-    def get_challenge(self):
+def get_challenge(self):
         """Request a challenge from the card"""
         apdu = EMV_COMMANDS['GET_CHALLENGE']
         return self.transmit_apdu(apdu, "GET CHALLENGE")
 
-    def verify_pin(self, pin="0000"):
+def verify_pin(self, pin="0000"):
         """Attempt PIN verification"""
         if self.options.dry_run:
             return ([0x63, 0xC3], None)  # Simulate PIN retry counter
@@ -1235,21 +1245,21 @@ class SmartcardFuzzer:
         apdu = EMV_COMMANDS['VERIFY'] + [len(pin_data)] + pin_data
         return self.transmit_apdu(apdu, "VERIFY PIN")
 
-    def fuzz_with_entropy(self):
+def fuzz_with_entropy(self):
         """Fuzz commands that generate dynamic responses"""
         for _ in range(10):  # Try multiple times
             # Get challenge and analyze entropy
             sw, resp = self.get_challenge()
             if sw and sw[0] == 0x90 and sw[1] == 0x00:
                 self.analyze_entropy(resp)
-                
+
             # Try internal authenticate with random challenges
             challenge = [random.randint(0, 255) for _ in range(8)]
             sw, resp = self.internal_authenticate(challenge)
             if sw and sw[0] == 0x90 and sw[1] == 0x00:
                 self.analyze_entropy(resp)
 
-    def fuzz_key_detection(self):
+def fuzz_key_detection(self):
         """Attempt to detect and analyze encryption keys"""
         # Try to read common key-related tags
         for key_type, tags in KEY_TYPES.items():
@@ -1259,27 +1269,27 @@ class SmartcardFuzzer:
                 if sw and sw[0] == 0x90 and sw[1] == 0x00:
                     self.analyze_key_data(key_type, tag, resp)
 
-    def fuzz_os_commands(self):
+def fuzz_os_commands(self):
         """Test card operating system commands"""
         for os_type, config in CARD_OS_TYPES.items():
             logging.info(f"Testing {os_type} commands...")
-            
+
             # Try selecting applications
             for aid in config['aids']:
                 if self.select_application(aid):
                     logging.info(f"Found {os_type} application: {aid}")
-                    
+
                     # Test OS-specific commands
                     for cmd_name, cmd_apdu in config['instructions'].items():
                         self.fuzz_command(cmd_name, cmd_apdu)
-                        
+
                     # Test with buffer overflow patterns
                     self.test_buffer_overflow(config['instructions'])
-                    
+
                     # Test with timing analysis
                     self.test_timing_attacks(config['instructions'])
 
-    def fuzz_command(self, cmd_name, base_apdu, iterations=50):
+def fuzz_command(self, cmd_name, base_apdu, iterations=50):
         """Fuzz a specific command with various parameters"""
         for i in range(iterations):
             # Vary the parameters
@@ -1288,18 +1298,18 @@ class SmartcardFuzzer:
                 # Modify P1/P2 parameters
                 fuzzed_apdu[2] = random.randint(0, 255)
                 fuzzed_apdu[3] = random.randint(0, 255)
-            
+
             # Add random data
             data_length = random.randint(0, 255)
             fuzzed_apdu.extend([random.randint(0, 255) for _ in range(data_length)])
-            
+
             # Send command and analyze response
             sw, resp = self.transmit_with_timing(fuzzed_apdu, f"FUZZ_{cmd_name}_{i}")
             if sw:
                 self.analyze_response(resp, cmd_name)
             self.check_for_vulnerabilities(sw, cmd_name)
 
-    def test_buffer_overflow(self, instructions):
+def test_buffer_overflow(self, instructions):
         """Test for buffer overflow vulnerabilities"""
         for pattern in FUZZ_PATTERNS['BUFFER_OVERFLOW']:
             for cmd_name, base_apdu in instructions.items():
@@ -1314,7 +1324,7 @@ class SmartcardFuzzer:
                         'timestamp': datetime.now().isoformat()
                     })
 
-    def test_timing_attacks(self, instructions):
+def test_timing_attacks(self, instructions):
         """Test for timing attack vulnerabilities"""
         for pattern in FUZZ_PATTERNS['TIMING_ATTACK']:
             for cmd_name, base_apdu in instructions.items():
@@ -1325,7 +1335,7 @@ class SmartcardFuzzer:
                     self.transmit_apdu(test_apdu, f"TIMING_{cmd_name}")
                     end_time = time.time()
                     timings.append(end_time - start_time)
-                
+
                 # Analyze timing variations
                 if timings:
                     avg_time = sum(timings) / len(timings)
@@ -1336,14 +1346,13 @@ class SmartcardFuzzer:
                             'command': cmd_name,
                             'average_time': avg_time,
                             'variation': max_variation,
-                            'timestamp': datetime.now().isoformat()
-                        })
+                            'timestamp': datetime.now().isoformat()                        })
 
-    def analyze_key_data(self, key_type, tag, data):
+def analyze_key_data(self, key_type, tag, data):
         """Enhanced key data analysis"""
         if not data:
             return
-            
+
         key_info = {
             'type': key_type,
             'tag': tag,
@@ -1352,7 +1361,7 @@ class SmartcardFuzzer:
             'timestamp': datetime.now().isoformat(),
             'analysis': {}
         }
-        
+
         # Basic key analysis
         if key_type == 'RSA':
             self.analyze_rsa_key(data, key_info)
@@ -1360,26 +1369,26 @@ class SmartcardFuzzer:
             self.analyze_symmetric_key(data, key_info)
         elif key_type == 'ECC':
             self.analyze_ecc_key(data, key_info)
-            
+
         # Advanced analysis
         key_info['analysis'].update({
             'entropy': self.analyzer.calculate_entropy(data),
             'weak_random': self.analyzer.detect_weak_random(data),
             'patterns': self.analyzer.analyze_response_pattern(data)
         })
-        
+
         self.detected_keys[tag] = key_info
         logging.info(f"Analyzed {key_type} key material in tag {tag}")
         self.add_pattern_data(key_info)
 
-    def analyze_ecc_key(self, data, key_info):
+def analyze_ecc_key(self, data, key_info):
         """Analyze ECC key components"""
         key_info['analysis']['ecc'] = {
             'potential_curve': None,
             'key_size': len(data) * 8,
             'structure_valid': False
         }
-        
+
         # Check for known ECC patterns
         for curve in CRYPTO_CONSTANTS['ECC_CURVES']:
             if len(data) in [32, 48, 66]:  # Common ECC key sizes
@@ -1388,7 +1397,7 @@ class SmartcardFuzzer:
                     'structure_valid': True
                 })
 
-    def analyze_rsa_key(self, data, key_info):
+def analyze_rsa_key(self, data, key_info):
         """Analyze RSA key components and validate key structure"""
         key_info['analysis']['rsa'] = {
             'key_length': len(data) * 8,
@@ -1440,7 +1449,7 @@ class SmartcardFuzzer:
             'entropy_score': self.analyzer.calculate_entropy(data),
             'potential_weaknesses': []
         }
-        
+
         # Validate key length
         if key_info['type'] == 'DES' and len(data) != 8:
             key_info['analysis']['symmetric']['potential_weaknesses'].append(
@@ -1450,28 +1459,28 @@ class SmartcardFuzzer:
             key_info['analysis']['symmetric']['potential_weaknesses'].append(
                 f"Invalid AES key length: {len(data)} bytes"
             )
-            
+
         # Check entropy
         min_entropy = ANALYSIS_THRESHOLDS['MIN_ENTROPY']
         if key_info['analysis']['symmetric']['entropy_score'] < min_entropy:
             key_info['analysis']['symmetric']['potential_weaknesses'].append(
                 f"Low entropy score: {key_info['analysis']['symmetric']['entropy_score']:.2f}"
             )
-            
+
         # Look for patterns
         patterns = self.analyzer.find_repeating_sequences(data)
         if patterns:
             key_info['analysis']['symmetric']['potential_weaknesses'].append(
                 f"Found {len(patterns)} repeating patterns"
             )
-            
+
         # Check for weak bits
         weak_bits = self.check_weak_key_bits(data)
         if weak_bits:
             key_info['analysis']['symmetric']['potential_weaknesses'].append(
                 f"Found {len(weak_bits)} weak key bits"
             )
-            
+
         return key_info
 
     def check_weak_key_bits(self, data):
@@ -1482,7 +1491,7 @@ class SmartcardFuzzer:
             hamming = bin(byte).count('1')
             if hamming <= 2 or hamming >= 6:
                 weak_bits.append(i)
-                
+
         return weak_bits
 
     def load_patterns(self):
@@ -1490,88 +1499,14 @@ class SmartcardFuzzer:
         self.pattern_data = ["Pattern1", "Pattern2"]
 
     def analyze_entropy(self, response):
-        """Analyze the entropy of a response"""
-        if not response:
+        """Analyze the entropy of a response"""        if not response:
             raise ValueError("Response is empty")
         # Minimal entropy analysis stub
         entropy = self.analyzer.calculate_entropy(response)
-        return {"entropy_low": entropy < 3.5, "has_linear_relationship": self.analyzer.check_linear_relationship(response)}
-
-    def analyze_rsa_key(self, data, key_info):
-        """Analyze RSA key components and validate key structure"""
-        key_info['analysis']['rsa'] = {
-            'key_length': len(data) * 8,
-            'structure_valid': False,
-            'potential_weaknesses': []
+        return {
+            "entropy_low": entropy < 3.5, 
+            "has_linear_relationship": self.analyzer.check_linear_relationship(response)
         }
-
-        # Check key length against minimum requirement
-        if len(data) * 8 < 1024:
-            key_info['analysis']['rsa']['potential_weaknesses'].append(
-                f"Key length {len(data) * 8} bits below minimum requirement"
-            )
-
-        try:
-            # Attempt to parse modulus and exponent (very basic heuristic)
-            if len(data) >= 128:  # Minimum 1024-bit key
-                key_info['analysis']['rsa'].update({
-                    'structure_valid': True,
-                    'modulus_length': len(data) - 5,  # Account for header/padding
-                    'exponent': int.from_bytes(data[-5:], byteorder='big')
-                })
-
-                # Check for common weak exponents
-                if key_info['analysis']['rsa']['exponent'] in [3, 65537]:
-                    key_info['analysis']['rsa']['exponent_type'] = 'Standard'
-                else:
-                    key_info['analysis']['rsa']['potential_weaknesses'].append(
-                        f"Non-standard public exponent: {key_info['analysis']['rsa']['exponent']}"
-                    )
-
-                # Additional checks for padding and modulus properties
-                if not self.validate_rsa_padding(data):
-                    key_info['analysis']['rsa']['potential_weaknesses'].append("Invalid padding detected")
-
-        except Exception as e:
-            key_info['analysis']['rsa']['error'] = str(e)
-
-        return key_info
-
-    def analyze_symmetric_key(self, data, key_info):
-        """Analyze symmetric key data for quality and potential vulnerabilities"""
-        key_info['analysis']['symmetric'] = {
-            'key_length': len(data) * 8,
-            'entropy_score': self.analyzer.calculate_entropy(data),
-            'potential_weaknesses': []
-        }
-        # Validate key length
-        if key_info['type'] == 'DES' and len(data) != 8:
-            key_info['analysis']['symmetric']['potential_weaknesses'].append(
-                f"Invalid DES key length: {len(data)} bytes"
-            )
-        elif key_info['type'] == 'AES' and len(data) not in [16, 24, 32]:
-            key_info['analysis']['symmetric']['potential_weaknesses'].append(
-                f"Invalid AES key length: {len(data)} bytes"
-            )
-        # Check entropy
-        min_entropy = 3.5  # Example threshold
-        if key_info['analysis']['symmetric']['entropy_score'] < min_entropy:
-            key_info['analysis']['symmetric']['potential_weaknesses'].append(
-                f"Low entropy score: {key_info['analysis']['symmetric']['entropy_score']:.2f}"
-            )
-        # Look for patterns
-        patterns = self.analyzer.find_repeating_sequences(data)
-        if patterns:
-            key_info['analysis']['symmetric']['potential_weaknesses'].append(
-                f"Found {len(patterns)} repeating patterns"
-            )
-        # Check for weak bits
-        weak_bits = self.check_weak_key_bits(data)
-        if weak_bits:
-            key_info['analysis']['symmetric']['potential_weaknesses'].append(
-                f"Found {len(weak_bits)} weak key bits"
-            )
-        return key_info
 
     def check_for_vulnerabilities(self, sw, cmd_name):
         """Check for vulnerabilities based on response"""
@@ -1584,7 +1519,7 @@ class SmartcardFuzzer:
         # Minimal stub: log that this is a placeholder
         logging.info("Fuzzing all AIDs (placeholder implementation)")
 
-    def _test_card_authentication(self):
+def _test_card_authentication(self):
         """Test card authentication mechanisms"""
         sw, resp = None, None  # Initialize variables
         try:
@@ -1595,7 +1530,7 @@ class SmartcardFuzzer:
             logging.error(f"Error during offline authentication: {e}")
         return {"sw": sw, "resp": resp}
 
-    def _test_cvm_processing(self):
+def _test_cvm_processing(self):
         """
         Simulates CVM processing including signature and PIN verification.
         Example usage:
@@ -1613,7 +1548,7 @@ class SmartcardFuzzer:
         except Exception as e:
             logging.error(f"CVM processing error: {e}")
 
-    def run(self):
+def run(self):
         """Enhanced main fuzzing routine"""
         if not self.connect():
             return False
@@ -1639,13 +1574,13 @@ class SmartcardFuzzer:
                     futures.append(executor.submit(self.fuzz_all_aids))
                     futures.append(executor.submit(self.fuzz_os_commands))
                     futures.append(executor.submit(self.fuzz_key_detection))
-                    
+
                     for future in futures:
                         future.result()  # Wait for all tests to complete
 
             self.save_detailed_report()
             return True
-            
+
         except Exception as e:
             logging.error(f"Error during fuzzing: {e}")
             return False
@@ -1682,7 +1617,7 @@ FUZZ_PATTERNS = {
 def parse_arguments():
     """Parse command-line arguments"""
     parser = argparse.ArgumentParser(description='GREENWIRE CLI Interface')
-    
+
     # Attack mode and options
     parser.add_argument('--mode', required=True, choices=['standard', 'simulate', 'fuzz', 'readfuzz', 'extractkeys', 'issue', 'search-ca'],
                         help='Testing mode')
@@ -1694,7 +1629,7 @@ def parse_arguments():
                         help='Authentication method')
     parser.add_argument('--fuzz', choices=['basic', 'advanced'],
                         help='Fuzzing strategy')
-    
+
     # Analysis options
     parser.add_argument('--timing', action='store_true',
                         help='Enable timing analysis')
@@ -1704,7 +1639,7 @@ def parse_arguments():
                         help='Enable glitch detection')
     parser.add_argument('--combined', action='store_true',
                         help='Test combined attacks')
-    
+
     # Output options
     parser.add_argument('--verbose', action='store_true',
                         help='Enable detailed logging')
@@ -1712,7 +1647,7 @@ def parse_arguments():
                         help='Suppress non-error output')
     parser.add_argument('--export', type=str,
                         help='Export results to JSON file')
-    
+
     # Advanced options
     parser.add_argument('--pattern-depth', type=int, default=3,
                         help='Maximum recursion depth for pattern fuzzing')
@@ -1722,11 +1657,11 @@ def parse_arguments():
                         help='Maximum retry attempts per command')
 
     args = parser.parse_args()
-    
+
     # Post-processing of arguments
     if args.silent:
         args.verbose = False
-    
+
     return args
 
 def manage_jcop_card(args):
@@ -1769,35 +1704,35 @@ def main():
         try:
             logging.info(f"Starting GREENWIRE in {args.mode} mode")
             logging.info(f"Card type: {args.type}")
-            
+
             # Initialize fuzzer
             fuzzer = SmartcardFuzzer(vars(args))  # Fix: Pass options argument
-            
+
             if args.timing or args.mode == 'standard':
                 timing_results = run_timing_analysis(
                     fuzzer,
                     CARD_OS_COMMANDS['EMV'],
                     args.count
                 )
-                
-           
+
+
             if args.power:
                 power_results = run_power_analysis(
                     fuzzer,
                     CARD_OS_COMMANDS['EMV'],
                     ANALYSIS_THRESHOLDS['POWER_TRACE_SAMPLES']
                 )
-                
+
             if args.glitch:
                 glitch_results = run_glitch_detection(
                     fuzzer,
                     CARD_OS_COMMANDS['EMV'],
                     args.count
                 )
-                
+
             if args.combined:
                 combined_results = run_combined_analysis(args)
-                
+
             if args.export:
                 results = {
                     'timing': timing_results if args.timing else None,
@@ -1811,12 +1746,12 @@ def main():
                         'iterations': args.count
                     }
                 }
-                
+
                 with open(args.export, 'w') as f:
                     json.dump(results, f, indent=2)
-                    
+
             logging.info("Testing complete")
-            
+
         except Exception as e:
             logging.error(f"Error during execution: {str(e)}", exc_info=True)
             sys.exit(1)
@@ -1824,12 +1759,12 @@ def main():
 def run_timing_analysis(fuzzer: SmartcardFuzzer, commands: Dict, iterations: int) -> Dict:
     """
     Execute timing analysis attack suite following EMVCo Book 4 requirements
-    
+
     Args:
         fuzzer: Initialized SmartcardFuzzer instance
         commands: Dictionary of APDU commands to test
         iterations: Number of test iterations
-        
+
     Returns:
         Analysis results dictionary
     """
@@ -1838,17 +1773,17 @@ def run_timing_analysis(fuzzer: SmartcardFuzzer, commands: Dict, iterations: int
         'timings': {},
         'anomalies': []
     }
-    
+
     for cmd_name, cmd_data in commands.items():
         logging.info(f"Running timing analysis for {cmd_name}")
-        
+
         cmd = bytes(cmd_data.values())
         analysis = fuzzer.analyze_timing_attack(cmd, iterations)
-        
+
         results['timings'][cmd_name] = analysis['timing']
         if analysis.get('vulnerabilities'):
             results['vulnerabilities'].extend(analysis['vulnerabilities'])
-            
+
         # Log suspicious timing variations
         if analysis['timing'].get('anomalies'):
             logging.warning(f"[ANOMALY] Suspicious timing pattern in {cmd_name}")
@@ -1857,18 +1792,18 @@ def run_timing_analysis(fuzzer: SmartcardFuzzer, commands: Dict, iterations: int
                 'type': 'TIMING',
                 'details': analysis['timing']['anomalies']
             })
-            
+
     return results
 
 def run_power_analysis(fuzzer: SmartcardFuzzer, commands: Dict, samples: int) -> Dict:
     """
     Execute power analysis attack suite following EMVCo CAST requirements
-    
+
     Args:
         fuzzer: Initialized SmartcardFuzzer instance
         commands: Dictionary of APDU commands to test
         samples: Number of power traces to collect
-        
+
     Returns:
         Analysis results dictionary
     """
@@ -1877,30 +1812,30 @@ def run_power_analysis(fuzzer: SmartcardFuzzer, commands: Dict, samples: int) ->
         'traces': {},
         'correlations': {}
     }
-    
+
     for cmd_name, cmd_data in commands.items():
         logging.info(f"Collecting power traces for {cmd_name}")
-        
+
         cmd = bytes(cmd_data.values())
         analysis = fuzzer.test_power_analysis(cmd, samples)
-        
+
         results['traces'][cmd_name] = analysis['traces']
         results['correlations'][cmd_name] = analysis['correlations']
-        
+
         if analysis.get('vulnerabilities'):
             results['vulnerabilities'].extend(analysis['vulnerabilities'])
-            
+
     return results
 
 def run_glitch_detection(fuzzer: SmartcardFuzzer, commands: Dict, iterations: int) -> Dict:
     """
     Execute clock glitch detection following EMVCo CAST requirements
-    
+
     Args:
         fuzzer: Initialized SmartcardFuzzer instance
         commands: Dictionary of APDU commands to test
         iterations: Number of test iterations
-        
+
     Returns:
         Analysis results dictionary
     """
@@ -1909,15 +1844,15 @@ def run_glitch_detection(fuzzer: SmartcardFuzzer, commands: Dict, iterations: in
         'glitches': {},
         'anomalies': []
     }
-    
+
     for cmd_name, cmd_data in commands.items():
         logging.info(f"Testing clock glitch resistance for {cmd_name}")
-        
+
         cmd = bytes(cmd_data.values())
         analysis = fuzzer.detect_clock_glitch(cmd, iterations)
-        
+
         results['glitches'][cmd_name] = analysis['glitches']
-        
+
         if analysis['glitches']:
             logging.warning(f"[ANOMALY] Potential glitch vulnerability in {cmd_name}")
             results['anomalies'].append({
@@ -1925,20 +1860,20 @@ def run_glitch_detection(fuzzer: SmartcardFuzzer, commands: Dict, iterations: in
                 'type': 'GLITCH',
                 'count': len(analysis)
             })
-            
+
         if analysis.get('vulnerabilities'):
             results['vulnerabilities'].extend(analysis['vulnerabilities'])
-            
+
     return results
 
 def run_combined_analysis(args) -> Dict:
     """
     Execute combined attack detection looking for vulnerability combinations
-    
+
     Args:
         fuzzer: Initialized SmartcardFuzzer instance
         args: Command-line arguments
-        
+
     Returns:
         Analysis results dictionary
     """
@@ -1982,7 +1917,7 @@ class SmartcardIssuer:
         self.lun_generator = LUNGenerator()
         self.ca_searcher = RootCASearcher()
 
-    def issue_card(self, card_type, lun=None):
+def issue_card(self, card_type, lun=None):
         """
         Issue a new card with specified type and LUN.
         If LUN is not provided, generate a random valid LUN.
@@ -2023,6 +1958,6 @@ class RootCASearcher:
             'SDA': 'Root_CA_SDA'
         }
         return root_ca_mapping.get(command_type)
-        
+
 if __name__ == "__main__":
     main()
