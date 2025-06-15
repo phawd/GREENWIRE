@@ -109,13 +109,23 @@ GREENWIRE can now:
 - Emulate an EMV/NFC card (hardware and platform dependent, requires nfcpy and compatible reader)
 - Generate sample EMV cards for testing purposes
   - Each card includes a unique 256-bit encryption key
+- Perform basic contactless EMV transactions via `--nfc-action` flags
+- Handle contactless terminal mode with multiple AIDs and configurable CA keys
+- Fuzz contactless transactions with `--contactless-fuzz`
 
 ### Usage
 
 - To emulate a terminal/ATM:
-  ```bash
-  python3 greenwire-brute.py --emulate terminal --emv-transaction --emv-aid A0000000031010 --issuer "Test Bank"
-  ```
+```bash
+python3 greenwire-brute.py \
+  --emulate terminal \
+  --emv-transaction \
+  --emv-aids A0000000031010,A0000000041010 \
+  --ca-file ca_keys.json \
+  --issuer "Test Bank"
+```
+The CA key file is a JSON array of objects with `rid`, `index`, `modulus`, and
+`exponent` fields used for offline data authentication.
 - To emulate a card (NFC/EMV):
   ```bash
   python3 greenwire-brute.py --emulate card
@@ -130,6 +140,19 @@ Generated cards include a unique 256-bit encryption key alongside the PAN and ot
 Terminal emulation supports Dynamic Data Authentication (DDA) and can operate in wireless/contactless mode when requested.
 
 See CLI help (`-h`) for all options.
+
+## Contact vs Contactless Cards
+
+Traditional **contact** smartcards follow the ISO 7816 specification and
+exchange APDUs over a physical interface. They must be inserted into a reader
+where electrical contacts power the chip and facilitate secure data transfer.
+
+**Contactless** cards communicate wirelessly using short-range radio
+frequencies, typically ISO 14443. They draw power from the radio field and can
+be used for quick "tap" payments. GREENWIRE supports both modes. Terminal
+emulation can issue commands over NFC when the `--wireless` flag is passed and
+the appropriate reader hardware is available, while the default behavior
+assumes a contact interface.
 
 #### Notes
 - Place your Perl modules and `greenwire-cli.pl` in the same directory or adjust the path.

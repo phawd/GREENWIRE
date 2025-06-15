@@ -1,0 +1,14 @@
+[
+  {
+    "rid": "A000000003",
+    "index": "92",
+    "modulus": "C1D2E3F4A5B6C7D8E9F0C1D2E3F4A5B6C7D8E9F0C1D2E3F4A5B6C7D8E9F0C1D2",
+    "exponent": "03"
+  },
+  {
+    "rid": "A000000004",
+    "index": "FF",
+    "modulus": "D1E2F3A4B5C6D7E8F9C0D1E2F3A4B5C6D7E8F9C0D1E2F3A4B5C6D7E8F9C0D1E2",
+    "exponent": "03"
+  }
+]
