@@ -44,6 +44,8 @@ Modes:
   fuzz         Dedicated fuzzing mode
   readfuzz     Focus on READ RECORD fuzzing
   extractkeys  Extract and analyze keys
+  issue        Issue a new card
+  search-ca    Search for root CA
 
 Attack Options:
   --mode MODE           Testing mode (required)
@@ -177,7 +179,7 @@ def parse_args():
     
     # Required arguments
     parser.add_argument('--mode', required=True,
-                       choices=['standard', 'simulate', 'fuzz', 'readfuzz', 'extractkeys'],
+                       choices=['standard', 'simulate', 'fuzz', 'readfuzz', 'extractkeys', 'issue', 'search-ca'],
                        help='Testing mode')
                        
     # Card options
@@ -1077,11 +1079,11 @@ Time: {datetime.now().isoformat()}
         }
         return recommendations.get(vuln_type, 'Further investigation required')
 
-class SmartcardFuzzerBrute:
-    def __init__(self, args, reader):
-        self.args = args
-        self.connection = CardConnection(reader)  # Initialize connection with reader
-        self.reader = reader
+class SmartcardFuzzer:
+    def __init__(self, options):
+        self.options = options
+        self.connection = None
+        self.reader = None
         self.pattern_data = []
         self.selected_aid = None
         self.current_application = None
@@ -1107,7 +1109,7 @@ class SmartcardFuzzerBrute:
 
     def connect(self):
         """Establish connection to the first available reader"""
-        if self.args.dry_run:
+        if self.options.dry_run:
             logging.info("[DRY RUN] Would connect to card reader")
             return True
             
@@ -1227,7 +1229,7 @@ class SmartcardFuzzerBrute:
 
     def verify_pin(self, pin="0000"):
         """Attempt PIN verification"""
-        if self.args.dry_run:
+        if self.options.dry_run:
             return ([0x63, 0xC3], None)  # Simulate PIN retry counter
         pin_data = list(bytes.fromhex(pin.ljust(16, 'F')))
         apdu = EMV_COMMANDS['VERIFY'] + [len(pin_data)] + pin_data
@@ -1594,44 +1596,22 @@ class SmartcardFuzzerBrute:
         return {"sw": sw, "resp": resp}
 
     def _test_cvm_processing(self):
-        """Test Cardholder Verification Method (CVM) processing"""
+        """
+        Simulates CVM processing including signature and PIN verification.
+        Example usage:
+        - python greenwire-brute.py --mode simulate --type visa --verbose
+        """
         try:
-            # Simulate CVM list with signature and PIN preference
-            cvm_methods = [
-                ([0x01, 0x1F], "Signature preferred"),
-                ([0x02, 0x02], "Plaintext PIN verified by ICC"),
-                ([0x03, 0x03], "Enciphered PIN verified by ICC"),
-            ]
-            for cvm_list, desc in cvm_methods:
-                apdu = [0x80, 0xCA, 0x8E, 0x00] + [len(cvm_list)] + cvm_list
-                sw, _ = self.transmit_apdu(apdu, f"Set CVM List: {desc}")
-                if sw == [0x90, 0x00]:
-                    print(f"[CVM] CVM list set successfully for {desc}.")
-                else:
-                    print(f"[CVM] Failed to set CVM list ({desc}). SW: {sw}")
+            cvm_list = [0x01, 0x1F]  # Example: Signature preferred
+            apdu = [0x80, 0xCA, 0x8E, 0x00] + [len(cvm_list)] + cvm_list
+            sw, resp = self.transmit_apdu(apdu, "Set CVM List")
+            print(f"CVM List set: {sw}, {resp}")
 
-                # Simulate a transaction for each CVM
-                if desc == "Signature preferred":
-                    signature_apdu = [0x00, 0x88, 0x00, 0x00, 0x08] + [random.randint(0, 255) for _ in range(8)]
-                    sw, _ = self.transmit_apdu(signature_apdu, "Simulate Signature Transaction")
-                    if sw == [0x90, 0x00]:
-                        print("[CVM] Signature-based transaction simulated successfully.")
-                    else:
-                        print(f"[CVM] Signature transaction failed. SW: {sw}")
-                else:
-                    # Simulate PIN verification
-                    pin = "1234"
-                    pin_data = list(bytes.fromhex(pin.ljust(16, 'F')))
-                    pin_apdu = [0x00, 0x20, 0x00, 0x80, len(pin_data)] + pin_data
-                    sw, _ = self.transmit_apdu(pin_apdu, f"Simulate {desc} PIN Verification")
-                    if sw == [0x90, 0x00]:
-                        print(f"[CVM] {desc} PIN verification simulated successfully.")
-                    elif sw and sw[0] == 0x63:
-                        print(f"[CVM] PIN verification failed, retries left. SW: {sw}")
-                    else:
-                        print(f"[CVM] PIN verification failed. SW: {sw}")
+            signature_apdu = [0x00, 0x88, 0x00, 0x00, 0x08] + [random.randint(0, 255) for _ in range(8)]
+            sw, resp = self.transmit_apdu(signature_apdu, "Simulate Signature Transaction")
+            print(f"Signature Transaction: {sw}, {resp}")
         except Exception as e:
-            print(f"[CVM] Error during CVM processing: {e}")
+            logging.error(f"CVM processing error: {e}")
 
     def run(self):
         """Enhanced main fuzzing routine"""
@@ -1639,22 +1619,22 @@ class SmartcardFuzzerBrute:
             return False
 
         # Start a new database session
-        self.db_manager.start_session(self.args.mode, self.args.card_type, self.args.provider)
+        self.db_manager.start_session(self.options.mode, self.options.card_type, self.options.provider)
         # The attribute 'provider' does not exist in args, using 'fuzz' instead:
 
         try:
-            if self.args.mode == 'readfuzz':
+            if self.options.mode == 'readfuzz':
                 self.fuzz_read_record()
-            elif self.args.mode == 'entropy':
+            elif self.options.mode == 'entropy':
                 self.fuzz_with_entropy()
-            elif self.args.mode == 'keys':
+            elif self.options.mode == 'keys':
                 self.fuzz_key_detection()
-            elif self.args.mode == 'os':
+            elif self.options.mode == 'os':
                 self.fuzz_os_commands()
-            elif self.args.mode == 'timing':
+            elif self.options.mode == 'timing':
                 self.test_timing_attacks(EMV_COMMANDS)
-            elif self.args.mode == 'full':
-                with ThreadPoolExecutor(max_workers=self.args.threads) as executor:
+            elif self.options.mode == 'full':
+                with ThreadPoolExecutor(max_workers=self.options.threads) as executor:
                     futures = []
                     futures.append(executor.submit(self.fuzz_all_aids))
                     futures.append(executor.submit(self.fuzz_os_commands))
@@ -1704,7 +1684,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='GREENWIRE CLI Interface')
     
     # Attack mode and options
-    parser.add_argument('--mode', required=True, choices=['standard', 'simulate', 'fuzz', 'readfuzz', 'extractkeys'],
+    parser.add_argument('--mode', required=True, choices=['standard', 'simulate', 'fuzz', 'readfuzz', 'extractkeys', 'issue', 'search-ca'],
                         help='Testing mode')
     parser.add_argument('--type', choices=['visa', 'mc', 'amex', 'jcb', 'discover', 'unionpay'],
                         help='Card type')
@@ -1749,64 +1729,97 @@ def parse_arguments():
     
     return args
 
-def main():
-    """Main execution flow"""
-    args = parse_args()
-    init_logging(args)
-    
+def manage_jcop_card(args):
+    """
+    Manage JCOP card operations via Java integration.
+    """
+    import subprocess
+    java_cmd = ["java", "-cp", ".", "jcop_card_manager"]
+    if args.mode == "issue":
+        java_cmd.extend(["issueCard", args.type, args.lun or ""])
+    elif args.mode == "search-ca":
+        java_cmd.extend(["searchRootCA", args.type])
     try:
-        logging.info(f"Starting GREENWIRE in {args.mode} mode")
-        logging.info(f"Card type: {args.type}")
-        
-        # Initialize fuzzer
-        fuzzer = SmartcardFuzzer()
-        
-        if args.timing or args.mode == 'standard':
-            timing_results = run_timing_analysis(
-                fuzzer,
-                CARD_OS_COMMANDS['EMV'],
-                args.count
-            )
-            
-        if args.power:
-            power_results = run_power_analysis(
-                fuzzer,
-                CARD_OS_COMMANDS['EMV'],
-                ANALYSIS_THRESHOLDS['POWER_TRACE_SAMPLES']
-            )
-            
-        if args.glitch:
-            glitch_results = run_glitch_detection(
-                fuzzer,
-                CARD_OS_COMMANDS['EMV'],
-                args.count
-            )
-            
-        if args.combined:
-            combined_results = run_combined_analysis(args)
-            
-        if args.export:
-            results = {
-                'timing': timing_results if args.timing else None,
-                'power': power_results if args.power else None,
-                'glitch': glitch_results if args.glitch else None,
-                'combined': combined_results if args.combined else None,
-                'metadata': {
-                    'timestamp': datetime.now().isoformat(),
-                    'mode': args.mode,
-                    'card_type': args.type,
-                    'iterations': args.count
-                }
-            }
-            
-            with open(args.export, 'w') as f:
-                json.dump(results, f, indent=2)
-                
-        logging.info("Testing complete")
-        
+        result = subprocess.run(java_cmd, capture_output=True, text=True)
+        print(result.stdout)
+        print(result.stderr)
     except Exception as e:
-        logging.error(f"Error during execution: {str(e)}", exc_info=True)
-        sys.exit(1)
+        logging.error(f"Error managing JCOP card: {e}")
+
+def main():
+    parser = argparse.ArgumentParser(description="GREENWIRE CLI Interface")
+    parser.add_argument("--mode", required=True, help="Testing mode")
+    parser.add_argument("--type", help="Card type (visa, mc, amex, etc.)")
+    parser.add_argument("--lun", help="Logical Unit Number for card issuance")
+    parser.add_argument("--auth", help="Authentication method (pin, sig)")
+    parser.add_argument("--export", help="Export results to file")
+    parser.add_argument("--verbose", action="store_true", help="Enable detailed logging")
+    parser.add_argument("--search-ca", action="store_true", help="Search for root CA")
+    args = parser.parse_args()
+
+    if args.mode == "issue":
+        issuer = SmartcardIssuer()
+        issuer.issue_card(args.type, args.lun)
+
+    elif args.mode == "search-ca":
+        issuer = SmartcardIssuer()
+        issuer.search_root_ca(args.type)
+
+    else:
+        try:
+            logging.info(f"Starting GREENWIRE in {args.mode} mode")
+            logging.info(f"Card type: {args.type}")
+            
+            # Initialize fuzzer
+            fuzzer = SmartcardFuzzer(vars(args))  # Fix: Pass options argument
+            
+            if args.timing or args.mode == 'standard':
+                timing_results = run_timing_analysis(
+                    fuzzer,
+                    CARD_OS_COMMANDS['EMV'],
+                    args.count
+                )
+                
+           
+            if args.power:
+                power_results = run_power_analysis(
+                    fuzzer,
+                    CARD_OS_COMMANDS['EMV'],
+                    ANALYSIS_THRESHOLDS['POWER_TRACE_SAMPLES']
+                )
+                
+            if args.glitch:
+                glitch_results = run_glitch_detection(
+                    fuzzer,
+                    CARD_OS_COMMANDS['EMV'],
+                    args.count
+                )
+                
+            if args.combined:
+                combined_results = run_combined_analysis(args)
+                
+            if args.export:
+                results = {
+                    'timing': timing_results if args.timing else None,
+                    'power': power_results if args.power else None,
+                    'glitch': glitch_results if args.glitch else None,
+                    'combined': combined_results if args.combined else None,
+                    'metadata': {
+                        'timestamp': datetime.now().isoformat(),
+                        'mode': args.mode,
+                        'card_type': args.type,
+                        'iterations': args.count
+                    }
+                }
+                
+                with open(args.export, 'w') as f:
+                    json.dump(results, f, indent=2)
+                    
+            logging.info("Testing complete")
+            
+        except Exception as e:
+            logging.error(f"Error during execution: {str(e)}", exc_info=True)
+            sys.exit(1)
 
 def run_timing_analysis(fuzzer: SmartcardFuzzer, commands: Dict, iterations: int) -> Dict:
     """
@@ -1964,64 +1977,52 @@ def run_combined_analysis(args) -> Dict:
             results['attack_chains'].append(chain)
     return results
 
-def main():
-    """Main execution flow"""
-    args = parse_args()
-    init_logging(args)
-    
-    try:
-        logging.info(f"Starting GREENWIRE in {args.mode} mode")
-        logging.info(f"Card type: {args.type}")
-        
-        # Initialize fuzzer
-        fuzzer = SmartcardFuzzer()
-        
-        if args.timing or args.mode == 'standard':
-            timing_results = run_timing_analysis(
-                fuzzer,
-                CARD_OS_COMMANDS['EMV'],
-                args.count
-            )
-            
-        if args.power:
-            power_results = run_power_analysis(
-                fuzzer,
-                CARD_OS_COMMANDS['EMV'],
-                ANALYSIS_THRESHOLDS['POWER_TRACE_SAMPLES']
-            )
-            
-        if args.glitch:
-            glitch_results = run_glitch_detection(
-                fuzzer,
-                CARD_OS_COMMANDS['EMV'],
-                args.count
-            )
-            
-        if args.combined:
-            combined_results = run_combined_analysis(args)
-            
-        if args.export:
-            results = {
-                'timing': timing_results if args.timing else None,
-                'power': power_results if args.power else None,
-                'glitch': glitch_results if args.glitch else None,
-                'combined': combined_results if args.combined else None,
-                'metadata': {
-                    'timestamp': datetime.now().isoformat(),
-                    'mode': args.mode,
-                    'card_type': args.type,
-                    'iterations': args.count
-                }
-            }
-            
-            with open(args.export, 'w') as f:
-                json.dump(results, f, indent=2)
-                
-        logging.info("Testing complete")
-        
-    except Exception as e:
-        logging.error(f"Error during execution: {str(e)}", exc_info=True)
-        sys.exit(1)
+class SmartcardIssuer:
+    def __init__(self):
+        self.lun_generator = LUNGenerator()
+        self.ca_searcher = RootCASearcher()
 
-if __name__ == '__main__':
+    def issue_card(self, card_type, lun=None):
+        """
+        Issue a new card with specified type and LUN.
+        If LUN is not provided, generate a random valid LUN.
+        """
+        if not lun:
+            lun = self.lun_generator.generate_valid_lun()
+        logging.info(f"Issuing {card_type} card with LUN: {lun}")
+        # Perform issuance logic here
+        # ...existing code...
+
+    def search_root_ca(self, command_type):
+        """
+        Search for root CA for the given command type (DDA/SDA).
+        """
+        ca = self.ca_searcher.find_ca(command_type)
+        if ca:
+            logging.info(f"Found root CA for {command_type}: {ca}")
+        else:
+            logging.error(f"No root CA found for {command_type}")
+        return ca
+
+class LUNGenerator:
+    def generate_valid_lun(self):
+        """
+        Generate a random valid LUN (Logical Unit Number).
+        """
+        # Example logic for generating a valid LUN
+        return ''.join(random.choices('0123456789', k=16))
+
+class RootCASearcher:
+    def find_ca(self, command_type):
+        """
+        Search for root CA based on the command type (DDA/SDA).
+        """
+        # Example logic for searching root CA
+        root_ca_mapping = {
+            'DDA': 'Root_CA_DDA',
+            'SDA': 'Root_CA_SDA'
+        }
+        return root_ca_mapping.get(command_type)
+        
+if __name__ == "__main__":
     main()

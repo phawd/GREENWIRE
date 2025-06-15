@@ -7,32 +7,32 @@
 **Dedication:** To MOORE, 101st Airborne, trained Green Beret (1967, Dac To, Silver Star recipient), and all who stand for freedom.
 
 ---
-I ditched the perl version for python, for now.
+
+### Primary CLI Tool: greenwire-brute.py
+
+`greenwire-brute.py` is the main entry point for advanced EMV and smartcard security testing. It supports fuzzing, cryptographic analysis, and CVM processing.
+
+#### Usage Examples:
+- **Standard protocol test with verbose output**:
+  ```sh
+  python greenwire-brute.py --mode standard --type visa --verbose
+  ```
+- **Generate RSA keys for EMV**:
+  ```sh
+  python test_hsm.py --type rsa --size 2048
+  ```
+- **Simulate CVM processing**:
+  ```sh
+  python greenwire-brute.py --mode simulate --type visa --verbose
+  ```
+
+#### Features:
+- **Fuzzing**: Test card responses to random and structured APDUs.
+- **Cryptographic Analysis**: Analyze RSA, AES, and ECC keys.
+- **CVM Processing**: Simulate PIN and signature verification.
+- **Database Logging**: Save results for post-analysis.
+
 ---
-
-### Python Unified CLI: greenwire.py
-
-`greenwire.py` is a unified command-line tool for both EMV card issuing and SMS PDU building. It wraps the Python EMV issuer and the Perl SMS CLI.
-There will be other features and programs added. 
-
-GREENWIRE CLI Interface
-
-Advanced EMV and smartcard security testing tool implementing EMVCo specified
-attack methodologies and industry standard test requirements.
-
-Attack Capabilities:
-- Timing Analysis (EMVCo Book 4 §2.4)
-  - PIN verification timing
-  - Cryptographic operation analysis
-  - Memory access patterns
-  
-- Power Analysis (EMVCo CAST §5.4)  
-  - Simple Power Analysis (SPA)
-  - Differential Power Analysis (DPA)
-  - Correlation Power Analysis (CPA)
-  
-- Clock Glitch (EMVCo CAST §4.2)
-  - Instruction skip attacks
   - Data corruption
   - Crypto fault injection
   

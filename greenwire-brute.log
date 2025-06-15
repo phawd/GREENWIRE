@@ -1,0 +1,14 @@
+2025-06-08 23:00:27,527 - INFO - [MainThread] - Starting GREENWIRE in standard mode
+2025-06-08 23:00:27,528 - INFO - [MainThread] - Card type: visa
+2025-06-08 23:00:27,528 - ERROR - [MainThread] - Error during execution: SmartcardFuzzer.__init__() missing 1 required positional argument: 'options'
+Traceback (most recent call last):
+  File "F:\repo\GREENWIRE\greenwire-brute.py", line 1917, in main
+    fuzzer = SmartcardFuzzer()
+TypeError: SmartcardFuzzer.__init__() missing 1 required positional argument: 'options'
+2025-06-08 23:01:37,406 - INFO - [MainThread] - Starting GREENWIRE in extractkeys mode
+2025-06-08 23:01:37,406 - INFO - [MainThread] - Card type: auto
+2025-06-08 23:01:37,406 - ERROR - [MainThread] - Error during execution: SmartcardFuzzer.__init__() missing 1 required positional argument: 'options'
+Traceback (most recent call last):
+  File "F:\repo\GREENWIRE\greenwire-brute.py", line 1917, in main
+    fuzzer = SmartcardFuzzer()
+TypeError: SmartcardFuzzer.__init__() missing 1 required positional argument: 'options'

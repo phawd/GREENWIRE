@@ -923,6 +923,7 @@ Time: {datetime.now().isoformat()}
 class SmartcardFuzzer:
     def __init__(self, options):
         self.options = options
+        self.detected_keys = {}
         self.dry_run = options.get('dry_run', False)
         self.verbose = options.get('verbose', False)
         self.vulnerabilities = []
@@ -1059,3 +1060,12 @@ class SmartcardFuzzer:
             'details': f'Compliance check simulated for {standard_name} section {section}',
             'timestamp': datetime.now().isoformat()
         }
+
+    def analyze_rsa_key(self, data):
+        try:
+            # Example RSA key analysis logic
+            key_length = len(data) * 8
+            if key_length < 2048:
+                logging.warning(f"Weak RSA key detected: {key_length} bits")
+        except Exception as e:
+            logging.error(f"Error analyzing RSA key: {e}")
