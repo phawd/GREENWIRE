@@ -23,6 +23,13 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Union
 from dataclasses import dataclass
 
+from greenwire.core.nfc_emv import (
+    ContactlessEMVTerminal,
+    CAPublicKey,
+    load_ca_keys,
+    DEFAULT_CA_KEYS,
+)
+
 # Analysis thresholds for security checks
 ANALYSIS_THRESHOLDS = {
     'MIN_ENTROPY': 6.5,            # Minimum entropy for random values
@@ -1034,28 +1041,47 @@ class SmartcardFuzzer:
         return results
 
     def _execute_attack_step(self, scenario_name, step):
-        """Execute a single step in an attack scenario"""
+        """Execute a single step in an attack scenario."""
         if self.dry_run:
             return {'step': step, 'status': 'simulated', 'success': True}
 
         # This would contain actual smartcard communication logic
-        # For now, we just simulate the step execution
         return {
             'step': step,
             'status': 'completed',
             'success': True,
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now().isoformat(),
         }
 
     def _check_section_compliance(self, standard_name, section):
-        """Check compliance with a specific section of an EMV standard"""
+        """Check compliance with a specific section of an EMV standard."""
         if self.dry_run:
-            return {'compliant': True, 'details': 'Dry run - no actual check performed'}
+            return {
+                'compliant': True,
+                'details': 'Dry run - no actual check performed',
+            }
 
         # This would contain actual compliance checking logic
-        # For now, we just return simulated results
         return {
             'compliant': True,
             'details': f'Compliance check simulated for {standard_name} section {section}',
-            'timestamp': datetime.now().isoformat()
+            'timestamp': datetime.now().isoformat(),
         }
+
+    def fuzz_contactless(
+        self,
+        aids: List[str],
+        iterations: int = 1,
+        ca_file: str | None = None,
+    ) -> List[dict]:
+        """Perform simple contactless EMV fuzzing using ``nfcpy``."""
+
+        ca_dict = load_ca_keys(ca_file) if ca_file else DEFAULT_CA_KEYS
+        ca_keys = {k: CAPublicKey(**v) for k, v in ca_dict.items()}
+        terminal = ContactlessEMVTerminal(aids, ca_keys)
+
+        results: List[dict] = []
+        for _ in range(iterations):
+            results.extend(terminal.run())
+
+        return results
