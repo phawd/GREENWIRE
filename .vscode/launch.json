@@ -1,0 +1,71 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        // Base template - not a runnable configuration
+        {
+            "type": "pydevd",
+            "name": "PyDev Base Template",
+            "request": "base-template",
+            "env": {},
+            "args": [],
+            "variablePresentation": {
+                "special": "hide",
+                "function": "hide",
+                "class": "hide",
+                "protected": "inline"
+            }
+        },
+        // Debug GREENWIRE UI
+        // Debug GREENWIRE UI
+        {
+            "name": "Debug GREENWIRE UI",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/greenwire_ui.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {},
+            "justMyCode": true
+        },
+        // Debug GREENWIRE Brute
+        // Debug GREENWIRE Brute
+        {
+            "name": "Debug GREENWIRE Brute",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/greenwire-brute.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [],
+            "env": {},
+            "justMyCode": true
+        },
+        // Debug Current File
+        // Debug Current File
+        {
+            "name": "Debug Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {},
+            "justMyCode": true
+        },
+        // Debug GREENWIRE Brute with Arguments
+        {
+            "name": "Debug with Arguments",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/greenwire-brute.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "--mode", "dry-run",
+                "--count", "5"
+            ],
+            "env": {},
+            "justMyCode": false
+        }
+    ]
+}

@@ -1,4 +1,5 @@
 {
     "python.pythonPath": "C:\\Users\\cross\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
-    "git.branchRandomName.enable": true
+    "git.branchRandomName.enable": true,
+    "java.debug.settings.onBuildFailureProceed": true
 }

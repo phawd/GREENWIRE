@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="669122a8-a417-498a-8a34-0ed033f2aed3" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.specstory/history/2025-06-08_23-29-fix-the-repo-and-test-the-code.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/greenwire.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/# Commit Summary.md" beforeDir="false" afterPath="$PROJECT_DIR$/# Commit Summary.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/greenwire-brute-improved.py" beforeDir="false" afterPath="$PROJECT_DIR$/greenwire-brute-improved.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/greenwire-brute.py" beforeDir="false" afterPath="$PROJECT_DIR$/greenwire-brute.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/greenwire/core/fuzzer.py" beforeDir="false" afterPath="$PROJECT_DIR$/greenwire/core/fuzzer.py" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
+  "lastFilter": {
+    "state": "OPEN",
+    "assignee": "phawd"
+  }
+}]]></component>
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/phawd/GREENWIRE.git",
+    "accountId": "16a0c444-8567-4e03-a5b2-b83dacc25dd2"
+  }
+}]]></component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 0
+}]]></component>
+  <component name="ProjectId" id="2yV1cdyLJPS32xCdLts0v09T2Wf" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "dart.analysis.tool.window.visible": "false",
+    "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-53e2683a6804-9cdd278e9d02-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-251.26094.141" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="669122a8-a417-498a-8a34-0ed033f2aed3" name="Changes" comment="" />
+      <created>1749905010840</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1749905010840</updated>
+    </task>
+    <servers />
+  </component>
+</project>
