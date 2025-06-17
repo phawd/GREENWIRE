@@ -5,9 +5,11 @@ from .core.nfc_iso import (
     ISO15693ReaderWriter,
     ISO18092ReaderWriter,
 )
+from .nfc_vuln import scan_nfc_vulnerabilities
 
 __all__ = [
     "ISO14443ReaderWriter",
     "ISO15693ReaderWriter",
     "ISO18092ReaderWriter",
+    "scan_nfc_vulnerabilities",
 ]

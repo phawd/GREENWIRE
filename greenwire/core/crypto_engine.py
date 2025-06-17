@@ -15,13 +15,41 @@ def rsa_sign(private_key: rsa.RSAPrivateKey, data: bytes) -> bytes:
     return private_key.sign(data, padding.PKCS1v15(), hashes.SHA256())
 
 
-def rsa_verify(public_key: rsa.RSAPublicKey, signature: bytes, data: bytes) -> bool:
+def rsa_verify(
+    public_key: rsa.RSAPublicKey,
+    signature: bytes,
+    data: bytes,
+) -> bool:
     """Verify RSA signature."""
     try:
         public_key.verify(signature, data, padding.PKCS1v15(), hashes.SHA256())
         return True
     except Exception:
         return False
+
+
+def rsa_encrypt(public_key: rsa.RSAPublicKey, data: bytes) -> bytes:
+    """Encrypt ``data`` with RSA using OAEP."""
+    return public_key.encrypt(
+        data,
+        padding.OAEP(
+            mgf=padding.MGF1(hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None,
+        ),
+    )
+
+
+def rsa_decrypt(private_key: rsa.RSAPrivateKey, ciphertext: bytes) -> bytes:
+    """Decrypt OAEP ``ciphertext`` with RSA."""
+    return private_key.decrypt(
+        ciphertext,
+        padding.OAEP(
+            mgf=padding.MGF1(hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None,
+        ),
+    )
 
 
 def generate_ec_key() -> ec.EllipticCurvePrivateKey:
@@ -34,7 +62,11 @@ def ec_sign(private_key: ec.EllipticCurvePrivateKey, data: bytes) -> bytes:
     return private_key.sign(data, ec.ECDSA(hashes.SHA256()))
 
 
-def ec_verify(public_key: ec.EllipticCurvePublicKey, signature: bytes, data: bytes) -> bool:
+def ec_verify(
+    public_key: ec.EllipticCurvePublicKey,
+    signature: bytes,
+    data: bytes,
+) -> bool:
     """Verify ECC signature."""
     try:
         public_key.verify(signature, data, ec.ECDSA(hashes.SHA256()))
@@ -45,7 +77,11 @@ def ec_verify(public_key: ec.EllipticCurvePublicKey, signature: bytes, data: byt
 
 def aes_encrypt(key: bytes, plaintext: bytes, iv: bytes) -> bytes:
     """Encrypt plaintext using AES-CBC with PKCS7 padding."""
-    cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
+    cipher = Cipher(
+        algorithms.AES(key),
+        modes.CBC(iv),
+        backend=default_backend(),
+    )
     encryptor = cipher.encryptor()
     pad_len = 16 - len(plaintext) % 16
     padded = plaintext + bytes([pad_len] * pad_len)
@@ -54,7 +90,11 @@ def aes_encrypt(key: bytes, plaintext: bytes, iv: bytes) -> bytes:
 
 def aes_decrypt(key: bytes, ciphertext: bytes, iv: bytes) -> bytes:
     """Decrypt AES-CBC ciphertext with PKCS7 padding."""
-    cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
+    cipher = Cipher(
+        algorithms.AES(key),
+        modes.CBC(iv),
+        backend=default_backend(),
+    )
     decryptor = cipher.decryptor()
     padded = decryptor.update(ciphertext) + decryptor.finalize()
     pad_len = padded[-1]

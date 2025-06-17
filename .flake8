@@ -1,0 +1,2 @@
+[flake8]
+exclude = greenwire/core/fuzzer.py,greenwire-brute.py,greenwire-brute-improved.py,greenwtest1.py
