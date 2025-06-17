@@ -113,6 +113,7 @@ from dataclasses import dataclass
 from greenwire.core.fuzzer import SmartcardFuzzer
 from smartcard.CardConnection import CardConnection
 import nfc
+from greenwire.core import symm_analysis
 
 # Database Schema Version
 DB_VERSION = 1
@@ -933,6 +934,25 @@ class DatabaseManager:
         conn.commit()
         conn.close()
 
+    def catalog_results(self, keys: Dict[str, Dict]):
+        """Persist analyzed key information for the session."""
+        if not self.current_session_id:
+            return
+        conn = sqlite3.connect(str(self.db_path))
+        c = conn.cursor()
+        for info in keys.values():
+            c.execute(
+                '''INSERT INTO keys (session_id, key_type, key_data, metadata) VALUES (?, ?, ?, ?)''',
+                (
+                    self.current_session_id,
+                    info.get('type'),
+                    bytes.fromhex(info.get('data', '')),
+                    json.dumps(info),
+                ),
+            )
+        conn.commit()
+        conn.close()
+
 # Enhanced logging system with human-readable output
 class LogManager:
     def __init__(self, verbose=False):
@@ -1441,56 +1461,17 @@ class SmartcardFuzzerBrute:
         return pad_end >= 8
 
     def analyze_symmetric_key(self, data, key_info):
-        """Analyze symmetric key data for quality and potential vulnerabilities"""
-        key_info['analysis']['symmetric'] = {
-            'key_length': len(data) * 8,
-            'entropy_score': self.analyzer.calculate_entropy(data),
-            'potential_weaknesses': []
-        }
-        
-        # Validate key length
-        if key_info['type'] == 'DES' and len(data) != 8:
-            key_info['analysis']['symmetric']['potential_weaknesses'].append(
-                f"Invalid DES key length: {len(data)} bytes"
-            )
-        elif key_info['type'] == 'AES' and len(data) not in [16, 24, 32]:
-            key_info['analysis']['symmetric']['potential_weaknesses'].append(
-                f"Invalid AES key length: {len(data)} bytes"
-            )
-            
-        # Check entropy
-        min_entropy = ANALYSIS_THRESHOLDS['MIN_ENTROPY']
-        if key_info['analysis']['symmetric']['entropy_score'] < min_entropy:
-            key_info['analysis']['symmetric']['potential_weaknesses'].append(
-                f"Low entropy score: {key_info['analysis']['symmetric']['entropy_score']:.2f}"
-            )
-            
-        # Look for patterns
-        patterns = self.analyzer.find_repeating_sequences(data)
-        if patterns:
-            key_info['analysis']['symmetric']['potential_weaknesses'].append(
-                f"Found {len(patterns)} repeating patterns"
-            )
-            
-        # Check for weak bits
-        weak_bits = self.check_weak_key_bits(data)
-        if weak_bits:
-            key_info['analysis']['symmetric']['potential_weaknesses'].append(
-                f"Found {len(weak_bits)} weak key bits"
-            )
-            
+        """Analyze symmetric key data using shared utilities."""
+        key_info['analysis']['symmetric'] = symm_analysis.analyze_symmetric_key(
+            bytes(data),
+            key_info['type'],
+            min_entropy=ANALYSIS_THRESHOLDS['MIN_ENTROPY']
+        )
         return key_info
 
     def check_weak_key_bits(self, data):
-        """Check for weak bits in key material"""
-        weak_bits = []
-        for i, byte in enumerate(data):
-            # Check for bytes with low hamming weight
-            hamming = bin(byte).count('1')
-            if hamming <= 2 or hamming >= 6:
-                weak_bits.append(i)
-                
-        return weak_bits
+        """Check for weak bits in key material."""
+        return symm_analysis.weak_key_bits(bytes(data))
 
     def load_patterns(self):
         """Load fuzzing patterns from a predefined source"""
@@ -1559,41 +1540,6 @@ class SmartcardFuzzerBrute:
 
         return key_info
 
-    def analyze_symmetric_key(self, data, key_info):
-        """Analyze symmetric key data for quality and potential vulnerabilities"""
-        key_info['analysis']['symmetric'] = {
-            'key_length': len(data) * 8,
-            'entropy_score': self.analyzer.calculate_entropy(data),
-            'potential_weaknesses': []
-        }
-        # Validate key length
-        if key_info['type'] == 'DES' and len(data) != 8:
-            key_info['analysis']['symmetric']['potential_weaknesses'].append(
-                f"Invalid DES key length: {len(data)} bytes"
-            )
-        elif key_info['type'] == 'AES' and len(data) not in [16, 24, 32]:
-            key_info['analysis']['symmetric']['potential_weaknesses'].append(
-                f"Invalid AES key length: {len(data)} bytes"
-            )
-        # Check entropy
-        min_entropy = 3.5  # Example threshold
-        if key_info['analysis']['symmetric']['entropy_score'] < min_entropy:
-            key_info['analysis']['symmetric']['potential_weaknesses'].append(
-                f"Low entropy score: {key_info['analysis']['symmetric']['entropy_score']:.2f}"
-            )
-        # Look for patterns
-        patterns = self.analyzer.find_repeating_sequences(data)
-        if patterns:
-            key_info['analysis']['symmetric']['potential_weaknesses'].append(
-                f"Found {len(patterns)} repeating patterns"
-            )
-        # Check for weak bits
-        weak_bits = self.check_weak_key_bits(data)
-        if weak_bits:
-            key_info['analysis']['symmetric']['potential_weaknesses'].append(
-                f"Found {len(weak_bits)} weak key bits"
-            )
-        return key_info
 
     def check_for_vulnerabilities(self, sw, cmd_name):
         """Check for vulnerabilities based on status words and log them."""
@@ -1710,6 +1656,7 @@ class SmartcardFuzzerBrute:
                     for future in futures:
                         future.result()  # Wait for all tests to complete
 
+            self.db_manager.catalog_results(self.detected_keys)
             self.save_detailed_report()
             return True
             
@@ -1718,8 +1665,9 @@ class SmartcardFuzzerBrute:
             return False
 
     def save_detailed_report(self):
-        """Save a detailed report of the fuzzing session"""
-        # Placeholder for saving logic
+        """Save a detailed report of the fuzzing session."""
+        with open('card_results.json', 'w') as f:
+            json.dump(self.detected_keys, f, indent=2)
         logging.info("Detailed report saved.")
 
 CRYPTO_CONSTANTS = {
