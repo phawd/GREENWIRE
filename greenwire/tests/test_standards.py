@@ -43,4 +43,3 @@ def test_check_compliance_returns_message():
     handler = standards.StandardHandler()
     msg = handler.check_compliance(standards.Standard.GLOBALPLATFORM_ISSUER)
     assert msg == "Following GlobalPlatform Issuer standard"
-

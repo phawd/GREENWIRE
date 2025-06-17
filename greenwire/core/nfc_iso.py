@@ -51,7 +51,11 @@ class _BaseReaderWriter:
     # ------------------------------------------------------------------
     # NFC helper functionality
     # ------------------------------------------------------------------
-    def connect(self, device: str = "usb", targets: Optional[Sequence[str]] = None) -> bool:
+    def connect(
+        self,
+        device: str = "usb",
+        targets: Optional[Sequence[str]] = None,
+    ) -> bool:
         """Attempt to connect to an NFC tag using nfcpy.
 
         Parameters
@@ -61,9 +65,9 @@ class _BaseReaderWriter:
         targets:
             Optional list of target identifiers passed to ``clf.connect``.
 
-        Returns ``True`` if a tag was successfully connected. On failure or when
-        ``nfcpy`` is unavailable, ``False`` is returned and the object continues
-        to operate in in-memory mode.
+        Returns ``True`` if a tag was successfully connected.
+        On failure or when ``nfcpy`` is unavailable, ``False`` is returned and
+        the object continues to operate in in-memory mode.
         """
 
         if nfc is None:
@@ -98,7 +102,11 @@ class _BaseReaderWriter:
                 self.tag = None
 
     @contextmanager
-    def session(self, device: str = "usb", targets: Optional[Sequence[str]] = None):
+    def session(
+        self,
+        device: str = "usb",
+        targets: Optional[Sequence[str]] = None,
+    ):
         """Context manager to manage an NFC connection."""
 
         if self.connect(device, targets):
@@ -116,24 +124,40 @@ class _BaseReaderWriter:
             return self.tag.transceive(data)
         raise RuntimeError("No NFC tag connected")
 
+    def authenticate(self, block: int, key: bytes) -> bool:
+        """Authenticate to a MIFARE Classic block using ``key``.
+
+        This is a best-effort helper that relies on ``nfcpy`` when available.
+        When running in pure in-memory mode, authentication always fails.
+        """
+
+        if self.tag and hasattr(self.tag, "authenticate"):
+            try:
+                return bool(self.tag.authenticate(block, key))
+            except Exception:
+                return False
+        return False
+
 
 class ISO14443ReaderWriter(_BaseReaderWriter):
     """Reader/writer for ISO 14443 tags."""
 
-    def connect(self, device: str = "usb") -> bool:  # pragma: no cover - hardware dependent
+    def connect(self, device: str = "usb") -> bool:
+        # pragma: no cover - hardware dependent
         return super().connect(device, targets=["106A", "106B"])
 
 
 class ISO15693ReaderWriter(_BaseReaderWriter):
     """Reader/writer for ISO/IEC 15693 tags."""
 
-    def connect(self, device: str = "usb") -> bool:  # pragma: no cover - hardware dependent
+    def connect(self, device: str = "usb") -> bool:
+        # pragma: no cover - hardware dependent
         return super().connect(device, targets=["iso15693"])
 
 
 class ISO18092ReaderWriter(_BaseReaderWriter):
     """Reader/writer for ISO 18092 (NFC Forum) devices."""
 
-    def connect(self, device: str = "usb") -> bool:  # pragma: no cover - hardware dependent
+    def connect(self, device: str = "usb") -> bool:
+        # pragma: no cover - hardware dependent
         return super().connect(device, targets=["212F", "424F"])
-
