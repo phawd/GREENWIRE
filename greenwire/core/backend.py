@@ -14,7 +14,8 @@ def init_backend(db_path: str | Path = "card_data.db") -> sqlite3.Connection:
     """Initialize the backend database and return a connection."""
     conn = sqlite3.connect(db_path)
     conn.execute(
-        "CREATE TABLE IF NOT EXISTS cards (verification_code TEXT PRIMARY KEY, pan_hash TEXT UNIQUE)"
+        "CREATE TABLE IF NOT EXISTS cards ("
+        "verification_code TEXT PRIMARY KEY, pan_hash TEXT UNIQUE)"
     )
     return conn
 
@@ -54,7 +55,9 @@ def issue_card(
 def is_duplicate(conn: sqlite3.Connection, pan: str) -> bool:
     """Return True if the given PAN is already stored."""
     return (
-        conn.execute("SELECT 1 FROM cards WHERE pan_hash = ?", (_pan_hash(pan),))
-        .fetchone()
+        conn.execute(
+            "SELECT 1 FROM cards WHERE pan_hash = ?",
+            (_pan_hash(pan),),
+        ).fetchone()
         is not None
     )
