@@ -1,7 +1,7 @@
 import java.util.List;
 import java.util.Random;
-import javax.smartcardio.*;
 import java.util.logging.Logger;
+import javax.smartcardio.*;
 
 public class JCOPCardManager {
     private static final Logger logger = Logger.getLogger(JCOPCardManager.class.getName());

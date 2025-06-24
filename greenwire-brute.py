@@ -109,6 +109,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Union
 from dataclasses import dataclass
 from greenwire.core.fuzzer import SmartcardFuzzer
+import subprocess
 
 # Debugging: Print Python module search paths
 print('sys.path:', sys.path)
@@ -1755,6 +1756,45 @@ def manage_jcop_card(args):
         print(result.stderr)
     except Exception as e:
         logging.error(f"Error managing JCOP card: {e}")
+
+# Added integration with JCOPCardManager Java class using subprocess
+def call_jcop_manager(method, *args):
+    """
+    Call a method from the JCOPCardManager Java class.
+
+    Parameters:
+    - method (str): The name of the method to call in the Java class.
+    - *args: Additional arguments to pass to the method.
+
+    Returns:
+    - str: The output from the Java method.
+    """
+    try:
+        # Construct the command to invoke the Java method
+        command = ["java", "-cp", "./build/libs/GREENWIRE.jar", "JCOPCardManager", method] + list(args)
+        result = subprocess.run(command, capture_output=True, text=True, check=True)
+        print(result.stdout)  # Print the output for debugging
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        # Handle errors during the subprocess call
+        print(f"Error calling JCOPCardManager: {e.stderr}")
+        return None
+
+# Example usage of the CLI
+if __name__ == "__main__":
+    print("Connecting to card...")
+    call_jcop_manager("connect")
+
+    print("Issuing card...")
+    # Example: Issue a Visa card with a specific LUN
+    call_jcop_manager("issueCard", "visa", "1234567890123456")
+
+    print("Searching for root CA...")
+    # Example: Search for a root CA using the DDA command type
+    call_jcop_manager("searchRootCA", "DDA")
+
+    print("Disconnecting from card...")
+    call_jcop_manager("disconnect")
 
 def main():
     parser = argparse.ArgumentParser(description="GREENWIRE CLI Interface")

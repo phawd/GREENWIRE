@@ -6,5 +6,8 @@
         "C:\\jdk-24_windows-x64_bin\\jdk-24.0.1\\lib",
         "/workspace/java"
     ],
-    "java.home": "C:\\jdk-24_windows-x64_bin\\jdk-24.0.1"
+    "java.home": "C:\\jdk-24_windows-x64_bin\\jdk-24.0.1",
+    "cSpell.words": [
+        "GREENWIRE"
+    ]
 }
