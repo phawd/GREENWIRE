@@ -1757,10 +1757,16 @@ def manage_jcop_card(args):
     except Exception as e:
         logging.error(f"Error managing JCOP card: {e}")
 
-# Added integration with JCOPCardManager Java class using subprocess
+# Extended CLI to include JCOPCardManager functions for fuzzing, deployment, and card type identification
+import subprocess
+import datetime
+
+# Function to call JCOPCardManager methods via subprocess
 def call_jcop_manager(method, *args):
     """
     Call a method from the JCOPCardManager Java class.
+
+
 
     Parameters:
     - method (str): The name of the method to call in the Java class.
@@ -1780,21 +1786,43 @@ def call_jcop_manager(method, *args):
         print(f"Error calling JCOPCardManager: {e.stderr}")
         return None
 
+# Function to fuzz the card
+def fuzz_card():
+    """
+    Perform fuzzing on the card to identify vulnerabilities.
+    """
+    print("Starting card fuzzing...")
+    call_jcop_manager("fuzz")
+    print("Card fuzzing completed.")
+
+# Function to deploy a card
+def deploy_card(card_type, lun):
+    """
+    Deploy a card of a specific type with a given LUN.
+
+    Parameters:
+    - card_type (str): The type of card to deploy (e.g., visa, mc).
+    - lun (str): The Logical Unit Number for the card.
+    """
+    print(f"Deploying {card_type} card with LUN: {lun}...")
+    call_jcop_manager("issueCard", card_type, lun)
+    print("Card deployment completed.")
+
+# Function to identify the card type
+def identify_card():
+    """
+    Identify the type of card connected to the system.
+    """
+    print("Identifying card type...")
+    call_jcop_manager("identifyCard")
+    print("Card identification completed.")
+
 # Example usage of the CLI
 if __name__ == "__main__":
-    print("Connecting to card...")
-    call_jcop_manager("connect")
-
-    print("Issuing card...")
-    # Example: Issue a Visa card with a specific LUN
-    call_jcop_manager("issueCard", "visa", "1234567890123456")
-
-    print("Searching for root CA...")
-    # Example: Search for a root CA using the DDA command type
-    call_jcop_manager("searchRootCA", "DDA")
-
-    print("Disconnecting from card...")
-    call_jcop_manager("disconnect")
+    print(f"Running GREENWIRE CLI on {datetime.datetime.now().strftime('%Y-%m-%d')}...")
+    identify_card()
+    deploy_card("visa", "1234567890123456")
+    fuzz_card()
 
 def main():
     parser = argparse.ArgumentParser(description="GREENWIRE CLI Interface")
