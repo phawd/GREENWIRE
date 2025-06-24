@@ -918,6 +918,32 @@ _**Assistant**_
 ````
 
 ````
+### Updates Applied:
+
+#### `GREENWIRE.yml`:
+- **Added Extensive Comments**:
+  - Explained the purpose of the workflow.
+  - Documented each section, including triggers, jobs, and steps.
+  - Clarified the build, test, and deployment processes.
+
+#### `greenwire-brute.py`:
+- **Added Detailed Comments**:
+  - Documented the purpose of the CLI script.
+  - Explained the `call_jcop_manager` function and its parameters.
+  - Provided context for the example usage of the CLI.
+
+Both files are now well-documented and easier to understand. Let me know if further refinements are needed!
+
+---
+
+_**User**_
+
+fix and merge files if possible
+
+---
+
+_**Assistant**_
+
 
 
 ---
