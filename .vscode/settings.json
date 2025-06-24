@@ -1,5 +1,10 @@
 {
     "python.pythonPath": "C:\\Users\\cross\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
     "git.branchRandomName.enable": true,
-    "java.debug.settings.onBuildFailureProceed": true
+    "java.debug.settings.onBuildFailureProceed": true,
+    "java.classPath": [
+        "C:\\jdk-24_windows-x64_bin\\jdk-24.0.1\\lib",
+        "/workspace/java"
+    ],
+    "java.home": "C:\\jdk-24_windows-x64_bin\\jdk-24.0.1"
 }

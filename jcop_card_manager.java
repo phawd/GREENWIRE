@@ -2,13 +2,12 @@ import javax.smartcardio.*;
 import java.util.List;
 import java.util.Random;
 
-public class JCOPCardManager {
-
+public class JCOPCardManagerHelper {
     private CardTerminal terminal;
     private Card card;
     private CardChannel channel;
 
-    public JCOPCardManager() throws Exception {
+    public JCOPCardManagerHelper() throws Exception {
         TerminalFactory factory = TerminalFactory.getDefault();
         List<CardTerminal> terminals = factory.terminals().list();
         if (terminals.isEmpty()) {
@@ -17,10 +16,15 @@ public class JCOPCardManager {
         terminal = terminals.get(0);
     }
 
-    public void connect() throws Exception {
-        card = terminal.connect("T=1");
-        channel = card.getBasicChannel();
-        System.out.println("Connected to card: " + card);
+    public void connect() throws CardException {
+        // Corrected syntax
+        try {
+            card = terminal.connect("T=1");
+            channel = card.getBasicChannel();
+            System.out.println("Connected to card: " + card);
+        } catch (CardException e) {
+            throw new CardException("Connection failed", e);
+        }
     }
 
     public void issueCard(String cardType, String lun) throws Exception {
@@ -28,27 +32,30 @@ public class JCOPCardManager {
             lun = generateRandomLUN();
         }
         System.out.println("Issuing " + cardType + " card with LUN: " + lun);
-        byte[] apdu = new byte[]{0x00, (byte) 0xA4, 0x04, 0x00, (byte) lun.length()};
+        byte len = (byte) lun.length();
+        byte[] apdu = new byte[]{(byte)0x00, (byte)0xA4, (byte)0x04, (byte)0x00, len};
         System.arraycopy(lun.getBytes(), 0, apdu, 5, lun.length());
         sendAPDU(apdu);
     }
 
     public void searchRootCA(String commandType) throws Exception {
         System.out.println("Searching for root CA for " + commandType);
-        byte[] apdu = new byte[]{0x00, (byte) 0xCA, 0x00, 0x00, 0x00};
+        byte[] apdu = new byte[]{(byte)0x00, (byte)0xCA, (byte)0x00, (byte)0x00, (byte)0x00};
         sendAPDU(apdu);
     }
 
     public void authenticate(String pin) throws Exception {
         System.out.println("Authenticating with PIN: " + pin);
-        byte[] apdu = new byte[]{0x00, (byte) 0x20, 0x00, 0x00, (byte) pin.length()};
+        byte len = (byte) pin.length();
+        byte[] apdu = new byte[]{(byte)0x00, (byte)0x20, (byte)0x00, (byte)0x00, len};
         System.arraycopy(pin.getBytes(), 0, apdu, 5, pin.length());
         sendAPDU(apdu);
     }
 
     public void manageKeys(String keyType, byte[] keyData) throws Exception {
         System.out.println("Managing keys of type: " + keyType);
-        byte[] apdu = new byte[]{0x00, (byte) 0xD8, 0x00, 0x00, (byte) keyData.length};
+        byte len = (byte) keyData.length;
+        byte[] apdu = new byte[]{(byte)0x00, (byte)0xD8, (byte)0x00, (byte)0x00, len};
         System.arraycopy(keyData, 0, apdu, 5, keyData.length);
         sendAPDU(apdu);
     }
@@ -82,7 +89,13 @@ public class JCOPCardManager {
             lun = generateRandomLUN();
         }
         System.out.println("Issuing DDA-compliant " + cardType + " card with LUN: " + lun);
-        byte[] apdu = new byte[]{0x00, (byte) 0xA4, 0x04, 0x00, (byte) lun.length()};
+        byte len = (byte) lun.length();
+        byte[] apdu = new byte[5 + lun.length()];
+        apdu[0] = (byte)0x00;
+        apdu[1] = (byte)0xA4;
+        apdu[2] = (byte)0x04;
+        apdu[3] = (byte)0x00;
+        apdu[4] = len;
         System.arraycopy(lun.getBytes(), 0, apdu, 5, lun.length());
         sendAPDU(apdu);
 
@@ -93,15 +106,22 @@ public class JCOPCardManager {
     public void performDryRuns(int iterations) throws Exception {
         System.out.println("Performing dry runs...");
         for (int i = 0; i < iterations; i++) {
-            byte[] apdu = new byte[]{0x00, (byte) 0xB0, 0x00, 0x00, 0x10}; // Example APDU command
+            byte[] apdu = new byte[5];
+            apdu[0] = (byte)0x00;
+            apdu[1] = (byte)0xB0;
+            apdu[2] = (byte)0x00;
+            apdu[3] = (byte)0x00;
+            apdu[4] = (byte)0x10;
             sendAPDU(apdu);
             System.out.println("Dry run " + (i + 1) + " completed.");
         }
     }
 
-    private void sendAPDU(byte[] apdu) throws Exception {
-        CommandAPDU command = new CommandAPDU(apdu);
-        ResponseAPDU response = channel.transmit(command);
+    public void sendAPDU(byte[] apdu) throws CardException {
+        if (apdu == null || apdu.length == 0) {
+            throw new IllegalArgumentException("APDU command cannot be null or empty");
+        }
+        ResponseAPDU response = channel.transmit(new CommandAPDU(apdu));
         System.out.println("Response: " + response.toString());
     }
 
@@ -114,16 +134,21 @@ public class JCOPCardManager {
         return lun.toString();
     }
 
-    public void disconnect() {
-        if (card != null) {
-            card.disconnect(false);
-            System.out.println("Disconnected from card.");
+    public void disconnect() throws CardException {
+        // Corrected syntax
+        try {
+            if (card != null) {
+                card.disconnect(false);
+                System.out.println("Disconnected from card.");
+            }
+        } catch (CardException e) {
+            throw new CardException("Disconnection failed", e);
         }
     }
 
     public static void main(String[] args) {
         try {
-            JCOPCardManager manager = new JCOPCardManager();
+            JCOPCardManagerHelper manager = new JCOPCardManagerHelper();
             manager.connect();
 
             if (args.length > 0) {
@@ -156,6 +181,9 @@ public class JCOPCardManager {
             e.printStackTrace();
         }
     }
-}
+
+    public void sendApdu() {
+        byte[] apdu = new byte[]{(byte)0x00, (byte)0xA4, (byte)0x04, (byte)0x00, (byte)0x00};
+        System.out.println("Sending APDU: " + java.util.Arrays.toString(apdu));
     }
 }
