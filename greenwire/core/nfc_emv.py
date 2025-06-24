@@ -43,7 +43,13 @@ class CAPublicKey:
 
 
 def load_ca_keys(path: str) -> Dict[str, Dict[str, str]]:
-    """Load CA keys from ``path`` or return ``DEFAULT_CA_KEYS`` on failure."""
+    """Load certificate authority keys from ``path``.
+
+    The file is expected to contain a JSON array of key descriptions.  If the
+    file cannot be read or parsed for any reason, the built-in
+    ``DEFAULT_CA_KEYS`` are returned instead to keep the system operational.
+    """
+
     try:
         with open(path, "r", encoding="utf-8") as fh:
             data = json.load(fh)

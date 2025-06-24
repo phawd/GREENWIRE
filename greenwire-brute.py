@@ -1846,6 +1846,8 @@ def main():
                 }
             }
             
+            # Store the collected test results in JSON format.  The file is
+            # created (or overwritten) at ``args.export``.
             with open(args.export, 'w') as f:
                 json.dump(results, f, indent=2)
                 

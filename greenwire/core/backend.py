@@ -11,7 +11,13 @@ SECRET = "GREENWIRE_SECRET"
 
 
 def init_backend(db_path: str | Path = "card_data.db") -> sqlite3.Connection:
-    """Initialize the backend database and return a connection."""
+    """Initialise the SQLite backend and return a connection.
+
+    The database file is created on demand when ``db_path`` does not already
+    exist.  Only a single ``cards`` table is required to store the hashed PAN
+    and a verification code used by the tests.
+    """
+
     conn = sqlite3.connect(db_path)
     conn.execute(
         "CREATE TABLE IF NOT EXISTS cards ("
