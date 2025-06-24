@@ -20,7 +20,9 @@ GREENWIRE Menu
 7. Read NFC block
 8. Write NFC block
 9. Show NFC tag UID
-10. Quit
+10. JCOP OS version
+11. Fuzz JCOP
+12. Quit
 """
 
 
@@ -81,6 +83,25 @@ def main() -> None:
             uid = processor.read_uid()
             print(f"UID: {uid}")
         elif choice == "10":
+            from greenwire.core.jcop import JCOPManager
+            mgr = JCOPManager()
+            try:
+                data, sw1, sw2 = mgr.get_os_version()
+                print("JCOP OS version:", data, hex(sw1), hex(sw2))
+            except Exception as exc:
+                print("Error accessing JCOP card:", exc)
+        elif choice == "11":
+            from greenwire.core.jcop import JCOPManager
+            mgr = JCOPManager()
+            try:
+                mgr.connect()
+                fuzzer = SmartcardFuzzer({"dry_run": True})
+                results = fuzzer.fuzz_contactless(["A0000000031010"], iterations=1)
+                for r in results:
+                    print(r)
+            except Exception as exc:
+                print("JCOP fuzzing failed:", exc)
+        elif choice == "12":
             break
         else:
             print("Invalid choice")
