@@ -2,12 +2,7 @@ import javax.smartcardio.*;
 import java.util.List;
 import java.util.Random;
 
-<<<<<<< Updated upstream
-public class JCOPCardManagerHelper {
-=======
-public class JCOPCardManager {
-
->>>>>>> Stashed changes
+class JCOPCardManagerHelper {
     private CardTerminal terminal;
     private Card card;
     private CardChannel channel;
@@ -37,46 +32,30 @@ public class JCOPCardManager {
             lun = generateRandomLUN();
         }
         System.out.println("Issuing " + cardType + " card with LUN: " + lun);
-<<<<<<< Updated upstream
         byte len = (byte) lun.length();
         byte[] apdu = new byte[]{(byte)0x00, (byte)0xA4, (byte)0x04, (byte)0x00, len};
-=======
-        byte[] apdu = new byte[]{0x00, (byte) 0xA4, 0x04, 0x00, (byte) lun.length()};
->>>>>>> Stashed changes
         System.arraycopy(lun.getBytes(), 0, apdu, 5, lun.length());
         sendAPDU(apdu);
     }
 
     public void searchRootCA(String commandType) throws Exception {
         System.out.println("Searching for root CA for " + commandType);
-<<<<<<< Updated upstream
         byte[] apdu = new byte[]{(byte)0x00, (byte)0xCA, (byte)0x00, (byte)0x00, (byte)0x00};
-=======
-        byte[] apdu = new byte[]{0x00, (byte) 0xCA, 0x00, 0x00, 0x00};
->>>>>>> Stashed changes
         sendAPDU(apdu);
     }
 
     public void authenticate(String pin) throws Exception {
         System.out.println("Authenticating with PIN: " + pin);
-<<<<<<< Updated upstream
         byte len = (byte) pin.length();
         byte[] apdu = new byte[]{(byte)0x00, (byte)0x20, (byte)0x00, (byte)0x00, len};
-=======
-        byte[] apdu = new byte[]{0x00, (byte) 0x20, 0x00, 0x00, (byte) pin.length()};
->>>>>>> Stashed changes
         System.arraycopy(pin.getBytes(), 0, apdu, 5, pin.length());
         sendAPDU(apdu);
     }
 
     public void manageKeys(String keyType, byte[] keyData) throws Exception {
         System.out.println("Managing keys of type: " + keyType);
-<<<<<<< Updated upstream
         byte len = (byte) keyData.length;
         byte[] apdu = new byte[]{(byte)0x00, (byte)0xD8, (byte)0x00, (byte)0x00, len};
-=======
-        byte[] apdu = new byte[]{0x00, (byte) 0xD8, 0x00, 0x00, (byte) keyData.length};
->>>>>>> Stashed changes
         System.arraycopy(keyData, 0, apdu, 5, keyData.length);
         sendAPDU(apdu);
     }
@@ -110,7 +89,6 @@ public class JCOPCardManager {
             lun = generateRandomLUN();
         }
         System.out.println("Issuing DDA-compliant " + cardType + " card with LUN: " + lun);
-<<<<<<< Updated upstream
         byte len = (byte) lun.length();
         byte[] apdu = new byte[5 + lun.length()];
         apdu[0] = (byte)0x00;
@@ -118,9 +96,6 @@ public class JCOPCardManager {
         apdu[2] = (byte)0x04;
         apdu[3] = (byte)0x00;
         apdu[4] = len;
-=======
-        byte[] apdu = new byte[]{0x00, (byte) 0xA4, 0x04, 0x00, (byte) lun.length()};
->>>>>>> Stashed changes
         System.arraycopy(lun.getBytes(), 0, apdu, 5, lun.length());
         sendAPDU(apdu);
 
@@ -131,32 +106,22 @@ public class JCOPCardManager {
     public void performDryRuns(int iterations) throws Exception {
         System.out.println("Performing dry runs...");
         for (int i = 0; i < iterations; i++) {
-<<<<<<< Updated upstream
             byte[] apdu = new byte[5];
             apdu[0] = (byte)0x00;
             apdu[1] = (byte)0xB0;
             apdu[2] = (byte)0x00;
             apdu[3] = (byte)0x00;
             apdu[4] = (byte)0x10;
-=======
-            byte[] apdu = new byte[]{0x00, (byte) 0xB0, 0x00, 0x00, 0x10}; // Example APDU command
->>>>>>> Stashed changes
             sendAPDU(apdu);
             System.out.println("Dry run " + (i + 1) + " completed.");
         }
     }
 
-<<<<<<< Updated upstream
     public void sendAPDU(byte[] apdu) throws CardException {
         if (apdu == null || apdu.length == 0) {
             throw new IllegalArgumentException("APDU command cannot be null or empty");
         }
         ResponseAPDU response = channel.transmit(new CommandAPDU(apdu));
-=======
-    private void sendAPDU(byte[] apdu) throws Exception {
-        CommandAPDU command = new CommandAPDU(apdu);
-        ResponseAPDU response = channel.transmit(command);
->>>>>>> Stashed changes
         System.out.println("Response: " + response.toString());
     }
 
@@ -220,7 +185,5 @@ public class JCOPCardManager {
     public void sendApdu() {
         byte[] apdu = new byte[]{(byte)0x00, (byte)0xA4, (byte)0x04, (byte)0x00, (byte)0x00};
         System.out.println("Sending APDU: " + java.util.Arrays.toString(apdu));
-    }
-}
     }
 }

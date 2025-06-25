@@ -1745,11 +1745,19 @@ def manage_jcop_card(args):
     Manage JCOP card operations via Java integration.
     """
     import subprocess
-    java_cmd = ["java", "-cp", ".", "jcop_card_manager"]
-    if args.mode == "issue":
-        java_cmd.extend(["issueCard", args.type, args.lun or ""])
-    elif args.mode == "search-ca":
-        java_cmd.extend(["searchRootCA", args.type])
+    java_cmd = ["java", "-cp", ".", "JCOPCardManager"]
+    if args.mode == "issue-dda":
+        java_cmd.extend(["issueDDACompliantCard", args.type, args.lun or "", args.key_data])
+    elif args.mode == "dry-run":
+        java_cmd.extend(["performDryRuns", str(args.count)])
+    elif args.mode == "fuzz-jcop":
+        java_cmd.extend(["fuzzAPDU", args.fuzz_pattern])
+    elif args.mode == "verify-transaction":
+        java_cmd.extend(["executeEMVCommand", args.emv_command])
+    elif args.mode == "cvm":
+        java_cmd.extend(["authenticate", args.auth])
+    elif args.mode == "nfc4":
+        java_cmd.extend(["nfc4Test", args.nfc_data or ""])
     try:
         result = subprocess.run(java_cmd, capture_output=True, text=True)
         print(result.stdout)
@@ -1829,24 +1837,27 @@ def main():
     parser.add_argument("--mode", required=True, help="Testing mode")
     parser.add_argument("--type", help="Card type (visa, mc, amex, etc.)")
     parser.add_argument("--lun", help="Logical Unit Number for card issuance")
+<<<<<<< Updated upstream
 
     parser.add_argument("--auth", help="Authentication method (pin, sig)")
    
 
     parser.add_argument("--export", help="Export results to file")
+=======
+    parser.add_argument("--key_data", help="Key data for DDA issuance")
+    parser.add_argument("--count", type=int, default=10, help="Number of dry runs or fuzz iterations")
+    parser.add_argument("--fuzz_pattern", help="APDU pattern for JCOP fuzzing")
+    parser.add_argument("--emv_command", help="EMV command for transaction verification")
+    parser.add_argument("--auth", help="Authentication data for CVM")
+    parser.add_argument("--nfc_data", help="Data for NFC4 wireless test")
+>>>>>>> Stashed changes
     parser.add_argument("--verbose", action="store_true", help="Enable detailed logging")
-    parser.add_argument("--search-ca", action="store_true", help="Search for root CA")
     args = parser.parse_args()
 
-    if args.mode == "issue":
-        issuer = SmartcardIssuer()
-        issuer.issue_card(args.type, args.lun)
-
-    elif args.mode == "search-ca":
-        issuer = SmartcardIssuer()
-        issuer.search_root_ca(args.type)
-
+    if args.mode in ["issue-dda", "dry-run", "fuzz-jcop", "verify-transaction", "cvm", "nfc4"]:
+        manage_jcop_card(args)
     else:
+<<<<<<< Updated upstream
         try:
             logging.info(f"Starting GREENWIRE in {args.mode} mode")
             logging.info(f"Card type: {args.type}")
@@ -2107,3 +2118,6 @@ class RootCASearcher:
 
 if __name__ == "__main__":
     main()
+=======
+        print("Invalid mode specified. Use --help for usage information.")
+>>>>>>> Stashed changes

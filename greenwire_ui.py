@@ -1,3 +1,7 @@
+<<<<<<< Updated upstream
+=======
+import os
+>>>>>>> Stashed changes
 import subprocess
 
 def display_menu():
