@@ -161,9 +161,7 @@ assumes a contact interface.
 
 ### Interactive Menu
 
-The `greenwire.menu_cli` module offers a verbose interactive interface
-with more than twenty options for fuzzing, scanning and dumping cards. It
-includes JCOP card detection and other utilities. Invoke it via:
+The `greenwire.menu_cli` module offers a verbose interactive interface with more than twenty features, including card fuzzing, scanning and dumping. The CLI now prints the host operating system on launch and attempts JCOP detection heuristics.
 
 ```bash
 python -m greenwire.menu_cli

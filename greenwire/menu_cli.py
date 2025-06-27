@@ -1,4 +1,5 @@
 import argparse
+import platform
 from pathlib import Path
 """Simple interactive CLI exposing most GREENWIRE features."""
 
@@ -33,6 +34,15 @@ GREENWIRE Menu
 20. Detect card OS
 21. Quit
 """
+
+# ---------------------------------------------------------------------------
+# Utility helper
+# ---------------------------------------------------------------------------
+
+def print_host_os() -> None:
+    """Display the operating system running this script."""
+    os_name = platform.system().lower()
+    print(f"[*] Detected host OS: {os_name}")
 
 # ---------------------------------------------------------------------------
 # Helper functions for each menu option
@@ -149,6 +159,9 @@ def main() -> None:
 
     conn = init_backend(Path(args.db))
     processor = NFCEMVProcessor()
+
+    # Inform the user about the host operating system
+    print_host_os()
 
     while True:
         print(MENU)
