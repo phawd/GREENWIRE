@@ -1,2 +1,3 @@
 [flake8]
 exclude = greenwire/core/fuzzer.py,greenwire-brute.py,greenwire-brute-improved.py,greenwtest1.py
+ignore = E501,E302,E741,W503,E226

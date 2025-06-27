@@ -20,6 +20,13 @@ class DummyRW(nfc_iso.ISO14443ReaderWriter):
         return key == b"\xff" * 6
 
 
+class BackdoorRW(DummyRW):
+    def transceive(self, data: bytes) -> bytes:
+        if data == b"\x40\x43":
+            return b"\x0a"
+        raise RuntimeError("No tag")
+
+
 def test_scan_vulnerabilities_detects_default_key():
     reader = DummyRW()
     vulns = nfc_vuln.scan_nfc_vulnerabilities(reader)
@@ -31,3 +38,8 @@ def test_scan_vulnerabilities_unprotected_block():
     reader.write_block(4, b"data")
     vulns = nfc_vuln.scan_nfc_vulnerabilities(reader)
     assert {"type": "UNPROTECTED_BLOCK", "block": 4} in vulns
+
+
+def test_detect_backdoor_cloning():
+    reader = BackdoorRW()
+    assert nfc_vuln.detect_backdoor_cloning(reader) is True

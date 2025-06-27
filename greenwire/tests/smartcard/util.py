@@ -8,4 +8,4 @@ def toHexString(data):
 
 def toBytes(hexstring):
     """Convert a hex string to a list of bytes."""
-    return [int(hexstring[i:i+2], 16) for i in range(0, len(hexstring), 2)]
+    return [int(hexstring[i:i + 2], 16) for i in range(0, len(hexstring), 2)]

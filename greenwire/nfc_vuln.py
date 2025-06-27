@@ -14,6 +14,15 @@ DEFAULT_MIFARE_KEYS: List[bytes] = [
 ]
 
 
+def detect_backdoor_cloning(reader: _BaseReaderWriter) -> bool:
+    """Return ``True`` if the tag responds to a backdoor cloning command."""
+    try:
+        resp = reader.transceive(b"\x40\x43")
+        return resp == b"\x0a"
+    except Exception:
+        return False
+
+
 def _try_key(reader: _BaseReaderWriter, block: int, key: bytes) -> bool:
     try:
         return reader.authenticate(block, key)
@@ -40,5 +49,8 @@ def scan_nfc_vulnerabilities(
             vulns.append({"type": "UNPROTECTED_BLOCK", "block": 4})
     except Exception:
         pass
+
+    if detect_backdoor_cloning(reader):
+        vulns.append({"type": "BACKDOOR_CLONING"})
 
     return vulns

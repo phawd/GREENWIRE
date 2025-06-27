@@ -34,7 +34,10 @@ def parse_args() -> argparse.Namespace:
     fuzz.add_argument("--ca-file", type=str, help="CA key JSON file")
 
     nfc = sub.add_parser("nfc", help="Perform NFC operations")
-    nfc.add_argument("action", choices=["read-uid", "read-block", "write-block"])
+    nfc.add_argument(
+        "action",
+        choices=["read-uid", "read-block", "write-block", "scan"],
+    )
     nfc.add_argument("--block", type=int)
     nfc.add_argument("--data", type=str)
 
@@ -77,6 +80,14 @@ def run_nfc(args: argparse.Namespace) -> None:
         if args.block is None or args.data is None:
             raise SystemExit("--block and --data required")
         proc.write_block(args.block, bytes.fromhex(args.data))
+    elif args.action == "scan":
+        from greenwire.nfc_vuln import scan_nfc_vulnerabilities
+        vulns = scan_nfc_vulnerabilities(proc)
+        if vulns:
+            for v in vulns:
+                print(v)
+        else:
+            print("No vulnerabilities detected")
 
 
 def run_emulation(args: argparse.Namespace) -> None:
