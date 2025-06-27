@@ -65,12 +65,18 @@ def dump_atr() -> None:
 def dump_memory(blocks: int = 16) -> None:
     """Read and display a range of blocks from the card."""
     reader = ISO14443ReaderWriter()
-    for blk in range(blocks):
+    if reader.connect():
         try:
-            data = reader.read_block(blk)
-            print(f"Block {blk}: {data.hex()}")
-        except Exception as exc:  # noqa: BLE001
-            print(f"Error reading block {blk}: {exc}")
+            for blk in range(blocks):
+                try:
+                    data = reader.read_block(blk)
+                    print(f"Block {blk}: {data.hex()}")
+                except Exception as exc:  # noqa: BLE001
+                    print(f"Error reading block {blk}: {exc}")
+        finally:
+            reader.disconnect()
+    else:
+        print("No reader or tag detected")
 
 
 def brute_force_pin() -> None:
