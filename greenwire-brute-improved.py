@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+from pathlib import Path
 from typing import List
 
 from greenwire.core.fuzzer import SmartcardFuzzer
@@ -20,6 +21,11 @@ from greenwire.core.nfc_emv import (
     ContactlessEMVTerminal,
     CAPublicKey,
     load_ca_keys,
+)
+from greenwire.core.file_fuzzer import (
+    fuzz_image_file,
+    fuzz_binary_file,
+    fuzz_unusual_input,
 )
 
 
@@ -37,6 +43,16 @@ def parse_args() -> argparse.Namespace:
     nfc.add_argument("action", choices=["read-uid", "read-block", "write-block"])
     nfc.add_argument("--block", type=int)
     nfc.add_argument("--data", type=str)
+
+    filefuzz = sub.add_parser(
+        "filefuzz",
+        help="Fuzz parsers handling images, binaries or unusual text",
+    )
+    filefuzz.add_argument(
+        "category", choices=["image", "binary", "unusual"], help="Input type"
+    )
+    filefuzz.add_argument("path", help="Seed file for fuzzing")
+    filefuzz.add_argument("--iterations", type=int, default=10)
 
     emu = sub.add_parser("emulate", help="Emulate terminal or card")
     emu.add_argument("mode", choices=["terminal", "card"])
@@ -93,6 +109,23 @@ def run_emulation(args: argparse.Namespace) -> None:
         print("Card emulation requires hardware and nfcpy support")
 
 
+def run_filefuzz(args: argparse.Namespace) -> None:
+    """Fuzz file parsers based on the selected category."""
+    path = Path(args.path)
+    if args.category == "image":
+        results = fuzz_image_file(path, iterations=args.iterations)
+    elif args.category == "binary":
+        results = fuzz_binary_file(path, iterations=args.iterations)
+    else:
+        data = path.read_text(errors="ignore")
+        results = fuzz_unusual_input(lambda s: s.encode("utf-8"), data, args.iterations)
+    for res in results:
+        if res.get("error"):
+            print(f"Iteration {res['iteration']}: {res['error']}")
+        else:
+            print(f"Iteration {res['iteration']}: ok")
+
+
 def main() -> None:
     args = parse_args()
     logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -103,6 +136,8 @@ def main() -> None:
         run_nfc(args)
     elif args.command == "emulate":
         run_emulation(args)
+    elif args.command == "filefuzz":
+        run_filefuzz(args)
 
 
 if __name__ == "__main__":
