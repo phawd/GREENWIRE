@@ -69,28 +69,26 @@ import time
 import json
 import argparse
 import logging
-from typing import Dict, List, Tuple, Optional, Union, Any, Set
+from typing import Dict, List, Optional, Union, Any
 from dataclasses import dataclass
 from pathlib import Path
 import os
 import re
 import sqlite3
 import random
-import hashlib
 from math import log2
 from collections import Counter
-import threading
 from concurrent.futures import ThreadPoolExecutor
-import csv
 from datetime import datetime
-import struct
+
+from greenwire.core.standards import Standard, StandardHandler
 
 # Third-party imports
 try:
     from smartcard.System import readers
     from smartcard.util import toHexString, toBytes
     from smartcard.CardConnection import CardConnection
-    from greenwire.core.fuzzer import SmartcardFuzzer
+    from greenwire.core.fuzzer import SmartcardFuzzer, init_database
 except ImportError:
     logging.warning("Smartcard library not found. Running in simulation mode.")
     # Define mock classes/functions for simulation mode
@@ -110,6 +108,11 @@ except ImportError:
         
         def detect_clock_glitch(self, cmd, iterations):
             return {'glitches': {}, 'vulnerabilities': []}
+
+try:
+    import nfc
+except ImportError:  # pragma: no cover - hardware library optional
+    nfc = None
 
 # Constants
 DB_VERSION = 1
@@ -327,6 +330,59 @@ FUZZ_PATTERNS = {
         [0xFF] * 32   # Maximum length pattern
     ]
 }
+
+# ---------------------------------------------------------------------------
+# Basic analysis functions
+
+def run_timing_analysis(fuzzer, commands, iterations):
+    """Perform a basic timing analysis loop."""
+    logging.debug("Starting timing analysis for %d iterations", iterations)
+    results = []
+    for i in range(iterations):
+        for _ in commands:
+            results.append({"iteration": i, "analysis": "timing"})
+    return results
+
+def run_power_analysis(fuzzer, commands, sample_count):
+    """Perform a basic power analysis loop."""
+    logging.debug("Running power analysis with %d samples", sample_count)
+    results = []
+    for i in range(sample_count):
+        for _ in commands:
+            results.append({"sample": i, "analysis": "power"})
+    return results
+
+def run_glitch_detection(fuzzer, commands, iterations):
+    """Perform a basic glitch detection loop."""
+    logging.debug("Executing glitch detection for %d iterations", iterations)
+    results = []
+    for i in range(iterations):
+        for _ in commands:
+            results.append({"iteration": i, "analysis": "glitch"})
+    return results
+
+def run_combined_analysis(_args):
+    """Return a minimal combined attack analysis result."""
+    logging.debug("Running combined attack analysis")
+    return [{"analysis": "combined", "status": "simulated"}]
+
+def handle_nfc_operations(args):
+    """Handle basic in-memory NFC read/write commands."""
+    handler = StandardHandler()
+
+    if args.nfc_action == "read_block":
+        data = handler.read_block(Standard.ISO_14443, args.block_number)
+        print(data.hex())
+    elif args.nfc_action == "write_block":
+        payload = bytes.fromhex(args.block_data)
+        handler.write_block(Standard.ISO_14443, args.block_number, payload)
+        print("OK")
+    else:
+        logging.info("Unsupported NFC action: %s", args.nfc_action)
+
+def init_logging(args):
+    """Initialize logging based on verbosity settings."""
+    LogManager(verbose=args.verbose)
 
 # Configure logging with more detailed format and multiple handlers
 LOG_FORMAT = '%(asctime)s - %(levelname)s - [%(threadName)s] - %(message)s'
@@ -749,103 +805,6 @@ class VulnerabilityDetector:
         else:
             self.response_patterns[command_type][pattern_key] = response
 
-class CardResponseAnalyzer:
-    """Helper class for analyzing card responses"""
-    
-    @staticmethod
-    def analyze_timing(start_time, end_time, command_type):
-        """Analyze response timing for potential side-channel vulnerabilities"""
-        response_time = end_time - start_time
-        timing_info = {
-            'command': command_type,
-            'response_time': response_time,
-            'timestamp': datetime.now().isoformat(),
-            'anomaly': response_time > ANALYSIS_THRESHOLDS['RESPONSE_TIME_THRESHOLD']
-        }
-        return timing_info
-    
-    @staticmethod
-    def analyze_response_pattern(data):
-        """Analyze response data for patterns and anomalies"""
-        if not data:
-            return None
-            
-        pattern_info = {
-            'length': len(data),
-            'unique_bytes': len(set(data)),
-            'repeating_patterns': [],
-            'byte_frequency': dict(Counter(data))
-        }
-        
-        # Look for repeating patterns
-        for pattern_len in range(2, min(16, len(data))):
-            patterns = {}
-            for i in range(len(data) - pattern_len):
-                pattern = tuple(data[i:i+pattern_len])
-                if pattern in patterns:
-                    pattern_info['repeating_patterns'].append({
-                        'pattern': list(pattern),
-                        'length': pattern_len,
-                        'positions': patterns[pattern] + [i]
-                    })
-                patterns[pattern] = [i]
-                
-        return pattern_info
-
-    @staticmethod
-    def detect_weak_random(data, min_entropy=ANALYSIS_THRESHOLDS['MIN_ENTROPY']):
-        """Detect potentially weak random number generation"""
-        if not data:
-            return False
-            
-        entropy = CardResponseAnalyzer.calculate_entropy(data)
-        repeating = CardResponseAnalyzer.find_repeating_sequences(data)
-        linear = CardResponseAnalyzer.check_linear_relationship(data)
-        
-        return {
-            'entropy_low': entropy < min_entropy,
-            'has_repeating_sequences': bool(repeating),
-            'has_linear_relationship': linear,
-            'entropy_value': entropy
-        }
-
-    @staticmethod
-    def calculate_entropy(data):
-        """Calculate Shannon entropy of data"""
-        if not data:
-            return 0.0
-        counts = Counter(data)
-        probs = [float(c)/len(data) for c in counts.values()]
-        return -sum(p * log2(p) for p in probs)
-
-    @staticmethod
-    def find_repeating_sequences(data, min_length=3):
-        """Find repeating sequences in data"""
-        sequences = []
-        for length in range(min_length, len(data)//2):
-            for start in range(len(data) - length):
-                sequence = data[start:start+length]
-                rest = data[start+length:]
-                if sequence in rest:
-                    sequences.append({
-                        'sequence': sequence,
-                        'length': length,
-                        'positions': [start, start+length+rest.index(sequence)]
-                    })
-        return sequences
-
-    @staticmethod
-    def check_linear_relationship(data, window=8):
-        """Check for linear relationships in data"""
-        if len(data) < window:
-            return False
-            
-        differences = []
-        for i in range(len(data)-1):
-            differences.append((data[i+1] - data[i]) % 256)
-            
-        # Check if differences are constant
-        return len(set(differences[:window])) == 1
 
 class DatabaseManager:
     def __init__(self):
@@ -1499,81 +1458,6 @@ class SmartcardFuzzerBrute:
         entropy = self.analyzer.calculate_entropy(response)
         return {"entropy_low": entropy < 3.5, "has_linear_relationship": self.analyzer.check_linear_relationship(response)}
 
-    def analyze_rsa_key(self, data, key_info):
-        """Analyze RSA key components and validate key structure"""
-        key_info['analysis']['rsa'] = {
-            'key_length': len(data) * 8,
-            'structure_valid': False,
-            'potential_weaknesses': []
-        }
-
-        # Check key length against minimum requirement
-        if len(data) * 8 < 1024:
-            key_info['analysis']['rsa']['potential_weaknesses'].append(
-                f"Key length {len(data) * 8} bits below minimum requirement"
-            )
-
-        try:
-            # Attempt to parse modulus and exponent (very basic heuristic)
-            if len(data) >= 128:  # Minimum 1024-bit key
-                key_info['analysis']['rsa'].update({
-                    'structure_valid': True,
-                    'modulus_length': len(data) - 5,  # Account for header/padding
-                    'exponent': int.from_bytes(data[-5:], byteorder='big')
-                })
-
-                # Check for common weak exponents
-                if key_info['analysis']['rsa']['exponent'] in [3, 65537]:
-                    key_info['analysis']['rsa']['exponent_type'] = 'Standard'
-                else:
-                    key_info['analysis']['rsa']['potential_weaknesses'].append(
-                        f"Non-standard public exponent: {key_info['analysis']['rsa']['exponent']}"
-                    )
-
-                # Additional checks for padding and modulus properties
-                if not self.validate_rsa_padding(data):
-                    key_info['analysis']['rsa']['potential_weaknesses'].append("Invalid padding detected")
-
-        except Exception as e:
-            key_info['analysis']['rsa']['error'] = str(e)
-
-        return key_info
-
-    def analyze_symmetric_key(self, data, key_info):
-        """Analyze symmetric key data for quality and potential vulnerabilities"""
-        key_info['analysis']['symmetric'] = {
-            'key_length': len(data) * 8,
-            'entropy_score': self.analyzer.calculate_entropy(data),
-            'potential_weaknesses': []
-        }
-        # Validate key length
-        if key_info['type'] == 'DES' and len(data) != 8:
-            key_info['analysis']['symmetric']['potential_weaknesses'].append(
-                f"Invalid DES key length: {len(data)} bytes"
-            )
-        elif key_info['type'] == 'AES' and len(data) not in [16, 24, 32]:
-            key_info['analysis']['symmetric']['potential_weaknesses'].append(
-                f"Invalid AES key length: {len(data)} bytes"
-            )
-        # Check entropy
-        min_entropy = 3.5  # Example threshold
-        if key_info['analysis']['symmetric']['entropy_score'] < min_entropy:
-            key_info['analysis']['symmetric']['potential_weaknesses'].append(
-                f"Low entropy score: {key_info['analysis']['symmetric']['entropy_score']:.2f}"
-            )
-        # Look for patterns
-        patterns = self.analyzer.find_repeating_sequences(data)
-        if patterns:
-            key_info['analysis']['symmetric']['potential_weaknesses'].append(
-                f"Found {len(patterns)} repeating patterns"
-            )
-        # Check for weak bits
-        weak_bits = self.check_weak_key_bits(data)
-        if weak_bits:
-            key_info['analysis']['symmetric']['potential_weaknesses'].append(
-                f"Found {len(weak_bits)} weak key bits"
-            )
-        return key_info
 
     def check_for_vulnerabilities(self, sw, cmd_name):
         """Check for vulnerabilities based on response"""
@@ -1703,7 +1587,7 @@ FUZZ_PATTERNS = {
     ]
 }
 
-def parse_arguments():
+def parse_args():
     """Parse command-line arguments"""
     parser = argparse.ArgumentParser(description='GREENWIRE CLI Interface')
     
@@ -1843,7 +1727,7 @@ def emulate_terminal(args):
     aid = args.emv_aid or 'A0000000031010'  # Default to VISA
     # Select application
     apdu_select = EMV_COMMANDS['SELECT'] + [len(bytes.fromhex(aid))] + list(bytes.fromhex(aid))
-    print(f"[EMULATION] Sending SELECT AID: {aid}")
+    print(f"[EMULATION] Sending SELECT AID: {aid} -> {apdu_select}")
     # ...send APDU to card (real or simulated)...
     # Simulate GPO, READ RECORD, VERIFY, INTERNAL AUTH, GENERATE AC, etc.
     # This can use SmartcardFuzzer or direct APDU logic

@@ -44,3 +44,15 @@ def test_check_compliance_returns_message():
     msg = handler.check_compliance(standards.Standard.GLOBALPLATFORM_ISSUER)
     assert msg == "Following GlobalPlatform Issuer standard"
 
+
+def test_iso_read_write_blocks():
+    handler = standards.StandardHandler()
+    targets = [
+        standards.Standard.ISO_14443,
+        standards.Standard.ISO_IEC_15693,
+        standards.Standard.ISO_18092,
+    ]
+    for std in targets:
+        handler.write_block(std, 1, b"ABCD")
+        assert handler.read_block(std, 1) == b"ABCD"
+
