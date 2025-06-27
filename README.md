@@ -159,6 +159,20 @@ assumes a contact interface.
 - For Google Drive upload, ensure `service-account.json` is present.
 - All EMV and SMS logic is unified in `greenwire.py` for convenience.
 
+### Interactive Menu
+
+The `greenwire.menu_cli` module offers a verbose interactive interface with more than twenty features. It supports card fuzzing, scanning, dumping, and generating test certificates. The CLI prints the host operating system on launch and attempts JCOP detection heuristics.
+
+Key features include:
+- issuing sample cards
+- scanning and fuzzing contactless readers
+- dumping ATR, memory and filesystem data
+- generating a self-signed certificate for cryptographic tests
+
+```bash
+python -m greenwire.menu_cli
+```
+
 ## Supported Standards
 
 The project aims to cover a wide range of card and NFC specifications. The
