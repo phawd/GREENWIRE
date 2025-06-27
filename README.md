@@ -55,6 +55,7 @@ Modes:
   fuzz         Dedicated fuzzing mode
   readfuzz     Focus on READ RECORD fuzzing
   extractkeys  Extract and analyze keys
+  filefuzz     Fuzz file parsers (images, binaries, unusual text)
 
 Attack Options:
   --mode MODE           Testing mode (required)
@@ -160,6 +161,7 @@ assumes a contact interface.
 
 The `greenwire.menu_cli` module offers a verbose interactive interface
 with more than twenty options for fuzzing, scanning and dumping cards.
+It now also includes a file parser fuzzer for images and binaries.
 Invoke it via:
 
 ```bash
