@@ -7,7 +7,14 @@
 **Dedication:** To MOORE, 101st Airborne, trained Green Beret (1967, Dac To, Silver Star recipient), and all who stand for freedom.
 
 ---
-I replaced the original Perl implementation with a Python version for now.
+The original toolkit relied heavily on Perl, but Python now drives most
+functionality.
+
+Recent research traces smart-card origins to the 1970s and highlights
+ongoing security evolution—from early encryption schemes to modern
+biometric safeguards.  Wireless RFID cards remain especially vulnerable
+to cloning attacks, so GREENWIRE now includes dedicated scanning
+commands to identify common weaknesses.
 ---
 
 ### Python Unified CLI: greenwire.py
@@ -168,6 +175,25 @@ Invoke it via:
 ```bash
 python -m greenwire.menu_cli
 ```
+
+For a quick walkthrough of supported standards, you can launch the
+dedicated standards menu:
+
+```bash
+python -m greenwire.standards_menu
+```
+
+### RFID Security Considerations
+
+Recent studies uncovered a backdoor in certain MIFARE Classic clones
+(e.g. FM11RF08) that allows instant card cloning.  The new ``nfc scan``
+command runs a vulnerability check, including a test for this backdoor.
+Invoke it with:
+
+```bash
+python greenwire-brute-improved.py nfc scan
+```
+
 
 ## Supported Standards
 
