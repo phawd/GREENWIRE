@@ -6,7 +6,7 @@ Combines features from greenwire-brute.py, improved variant, and fuzzer.py into
 one efficient, Windows-friendly tool.
 
 Usage:
-  greenwire.py [options] --mode <mode> [--type <type>] [--count N]
+  greenwtest1.py [options] --mode <mode> [--type <type>] [--count N]
 
 Modes:
   standard      Basic EMV protocol testing

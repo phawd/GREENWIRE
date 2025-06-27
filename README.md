@@ -10,9 +10,9 @@
 I replaced the original Perl implementation with a Python version for now.
 ---
 
-### Python Unified CLI: greenwire.py
+### Python Unified CLI: greenwtest1.py
 
-`greenwire.py` is a unified command-line tool for both EMV card issuing and SMS PDU building. It wraps the Python EMV issuer and the Perl SMS CLI.
+`greenwtest1.py` is a unified command-line tool for both EMV card issuing and SMS PDU building. It wraps the Python EMV issuer and the Perl SMS CLI.
 Additional features and programs will be added over time.
 
 GREENWIRE CLI Interface
@@ -157,7 +157,7 @@ assumes a contact interface.
 #### Notes
 - Place your Perl modules and `greenwire-cli.pl` in the same directory or adjust the path.
 - For Google Drive upload, ensure `service-account.json` is present.
-- All EMV and SMS logic is unified in `greenwire.py` for convenience.
+- All EMV and SMS logic is unified in `greenwtest1.py` for convenience.
 
 ## Supported Standards
 
