@@ -3,7 +3,7 @@ import hashlib
 from pathlib import Path
 from typing import Optional
 
-from .emv_generator import generate_card
+from .emv_generator import generate_card, generate_sle_sda_certificate
 
 # Secret used for hashing; in real deployments this should come from
 # a secure source such as an environment variable or secrets manager.
@@ -61,3 +61,14 @@ def is_duplicate(conn: sqlite3.Connection, pan: str) -> bool:
         ).fetchone()
         is not None
     )
+
+
+def generate_certifications(conn: sqlite3.Connection, count: int = 5) -> list[dict]:
+    """Generate ``count`` sample cards and return them."""
+    count = max(5, min(10, count))
+    cards = []
+    for _ in range(count):
+        card = issue_card(conn)
+        card["sle_sda_cert"] = generate_sle_sda_certificate(card["pan"])
+        cards.append(card)
+    return cards

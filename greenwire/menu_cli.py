@@ -4,6 +4,7 @@ from pathlib import Path
 """Simple interactive CLI exposing most GREENWIRE features."""
 
 from greenwire.core.backend import init_backend, issue_card
+from greenwire.core.backend import generate_certifications
 from greenwire.core.nfc_emv import ContactlessEMVTerminal, NFCEMVProcessor
 from greenwire.core.nfc_iso import ISO14443ReaderWriter, AndroidReaderWriter
 from greenwire.nfc_vuln import scan_nfc_vulnerabilities
@@ -197,6 +198,10 @@ def main() -> None:
 
     conn = init_backend(Path(args.db))
     processor = NFCEMVProcessor()
+    cards = generate_certifications(conn)
+    print("Generated sample certifications:")
+    for card in cards:
+        print(card)
 
     while True:
         print(MENU)

@@ -131,6 +131,8 @@ GREENWIRE includes experimental attack modes for JCOP card OS fuzzing and
 cryptographic HSM operations. NFC delay attacks simulate timing issues in
 contactless environments. These features are available via the interactive
 menu and tree menu under *General Card Ops*.
+The utility function `generate_sle_sda_certificate()` creates a placeholder
+SLE SDA certificate for each generated card.
 
 ### Supported Hardware
 GREENWIRE works with most PC/SC readers including **ACR122U**, **PN532**,
@@ -166,6 +168,9 @@ The CA key file is a JSON array of objects with `rid`, `index`, `modulus`, and
   ```
 
 Generated cards include a unique 256-bit encryption key alongside the PAN and other details.
+Each run of the interactive menus automatically issues 5-10 sample cards and
+prints their details. These cards include a placeholder SLE SDA certificate so
+they can be written to either contactless or contact test hardware.
 
 Terminal emulation supports Dynamic Data Authentication (DDA) and can operate in wireless/contactless mode when requested.
 

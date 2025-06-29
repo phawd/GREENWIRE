@@ -3,6 +3,7 @@
 import argparse
 import sys
 from greenwire.core import fuzzer
+from greenwire.core.backend import init_backend, generate_certifications
 
 def main():
     parser = argparse.ArgumentParser(description="Greenwire EMV/JCOP Smartcard Fuzzer CLI")
@@ -25,6 +26,12 @@ def main():
     parser.add_argument('--auth-data', type=str, help='Authentication data for CVM')
     parser.add_argument('--nfc-data', type=str, help='Data for NFC4 wireless test')
     args = parser.parse_args()
+
+    conn = init_backend()
+    cards = generate_certifications(conn)
+    print("Generated sample certifications:")
+    for card in cards:
+        print(card)
 
     options = {'dry_run': args.dry_run, 'verbose': args.verbose}
     try:

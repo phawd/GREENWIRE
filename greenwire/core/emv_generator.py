@@ -58,6 +58,15 @@ def generate_card(issuer: str = "TEST BANK", iin: str = "400000") -> dict:
     return card
 
 
+def generate_sle_sda_certificate(pan: str) -> dict:
+    """Return a placeholder certificate for SLE cards using SDA."""
+    return {
+        "card_type": "SLE",
+        "pan": pan,
+        "sda_tag": secrets.token_hex(8),
+    }
+
+
 if __name__ == "__main__":
     import json
     import argparse

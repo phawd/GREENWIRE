@@ -16,6 +16,7 @@ from typing import Callable, Dict
 from greenwire.core.crypto_engine import generate_rsa_key, generate_ec_key
 from greenwire.core.nfc_emv import ContactlessEMVTerminal
 from greenwire.core.nfc_iso import AndroidReaderWriter
+from greenwire.core.backend import generate_certifications, init_backend
 from greenwire.core.standards import Standard, StandardHandler
 from greenwire.menu_cli import (
     dump_atr,
@@ -33,7 +34,6 @@ from greenwire.menu_cli import (
     hsm_crypto_test,
     nfc_delay_attack,
 )
-from greenwire.core.backend import init_backend
 
 # ---------------------------------------------------------------------------
 # Action implementations
@@ -133,6 +133,11 @@ def run_tree_cli() -> None:
     parser = argparse.ArgumentParser(description="GREENWIRE tree menu")
     parser.add_argument("--db", default="card_data.db")
     args = parser.parse_args()  # noqa: F841 - reserved for future DB selection
+    conn = init_backend(args.db)
+    cards = generate_certifications(conn)
+    print("Generated sample certifications:")
+    for c in cards:
+        print(c)
 
     while True:
         print("\nSelect standard/card type:")
