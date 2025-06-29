@@ -1,13 +1,7 @@
-
 ---
 
 ### ✅ `README_MIRROR.md` — for posting to mirrors like:
 
-- OneDrive public folder
-- Google Drive
-- SourceForge
-- Archive.org
-- Any forum
 
 ---
 
@@ -15,6 +9,8 @@
 
 # Operation Greenwire v1.0 - Mirror Release 🚀🔥
 
+=======
+ main
 https://github.com/GREENWIRE/GREENWIRE
 
 **License:** GNU GPL v3
@@ -74,3 +70,65 @@ It is intended for education, transparency, and empowerment.
 Operation Greenwire honors the spirit of **EFF**, **PGP**, **BBS**, and other freedom technologies.
 
 **SALUTE — and may this code serve liberty. 🚀🔥**
+
+---
+
+# GitHub Actions Workflow for GREENWIRE CI/CD
+# This workflow automates the build, test, and deployment processes for the GREENWIRE project.
+# It is triggered on pushes and pull requests to the main branch.
+
+name: GREENWIRE CI/CD
+
+on:
+  # Trigger the workflow on push and pull request events targeting the main branch
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    # Build job to compile the Java project
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        # Check out the repository code
+        uses: actions/checkout@v2
+      - name: Set up Java
+        # Set up Java 17 environment
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+      - name: Build with Gradle
+        # Build the project using Gradle
+        run: ./gradlew build
+
+  test:
+    # Test job to run both Python and Java tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        # Check out the repository code
+        uses: actions/checkout@v2
+      - name: Run Python tests
+        # Run Python tests using pytest
+        run: pytest --maxfail=5 --disable-warnings
+      - name: Run Java tests
+        # Run Java tests using Gradle
+        run: ./gradlew test
+      - name: Test Python-Java integration
+        # Test the integration between Python CLI and Java backend
+        run: python greenwire-brute.py
+
+  deploy:
+    # Deployment job to deploy the project
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        # Check out the repository code
+        uses: actions/checkout@v2
+      - name: Deploy
+        # Placeholder for deployment script
+        run: echo "Deploying GREENWIRE project"

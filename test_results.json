@@ -1,0 +1,126 @@
+{
+  "passed": 18,
+  "failed": 7,
+  "errors": [
+    "Missing required file: test_cli.py",
+    "Missing required file: test_hsm.py",
+    "Missing required file: smartcard_utils.py",
+    "Missing required file: analysis.py",
+    "FAILED: Import test: smartcard_utils - Return code: 1",
+    "FAILED: Import test: analysis - Return code: 1",
+    "FAILED: GREENWIRE Brute Help - Return code: 1"
+  ],
+  "details": [
+    {
+      "test": "Dependency check: argparse",
+      "status": "PASSED",
+      "stdout": "argparse is available\n",
+      "stderr": ""
+    },
+    {
+      "test": "Dependency check: logging",
+      "status": "PASSED",
+      "stdout": "logging is available\n",
+      "stderr": ""
+    },
+    {
+      "test": "Dependency check: subprocess",
+      "status": "PASSED",
+      "stdout": "subprocess is available\n",
+      "stderr": ""
+    },
+    {
+      "test": "Dependency check: json",
+      "status": "PASSED",
+      "stdout": "json is available\n",
+      "stderr": ""
+    },
+    {
+      "test": "Dependency check: os",
+      "status": "PASSED",
+      "stdout": "os is available\n",
+      "stderr": ""
+    },
+    {
+      "test": "Dependency check: sys",
+      "status": "PASSED",
+      "stdout": "sys is available\n",
+      "stderr": ""
+    },
+    {
+      "test": "Syntax check: greenwire-brute.py",
+      "status": "PASSED",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "test": "Syntax check: greenwire_ui.py",
+      "status": "PASSED",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "test": "Syntax check: ui_test_core.py",
+      "status": "PASSED",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "test": "Syntax check: setup.py",
+      "status": "PASSED",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "test": "Syntax check: greenwtest1.py",
+      "status": "PASSED",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "test": "Syntax check: greenwire.py",
+      "status": "PASSED",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "test": "Syntax check: greenwire-brute-improved.py",
+      "status": "PASSED",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "test": "Import test: greenwire_ui",
+      "status": "PASSED",
+      "stdout": "greenwire_ui imported successfully\n",
+      "stderr": ""
+    },
+    {
+      "test": "Import test: smartcard_utils",
+      "status": "FAILED",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\nModuleNotFoundError: No module named 'smartcard_utils'\n"
+    },
+    {
+      "test": "Import test: analysis",
+      "status": "FAILED",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\nModuleNotFoundError: No module named 'analysis'\n"
+    },
+    {
+      "test": "GREENWIRE UI Import Test",
+      "status": "PASSED",
+      "stdout": "UI module loaded successfully\n",
+      "stderr": ""
+    },
+    {
+      "test": "GREENWIRE Brute Help",
+      "status": "FAILED",
+      "returncode": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"/workspace/GREENWIRE/greenwire-brute.py\", line 98, in <module>\n    from smartcard.System import readers\nModuleNotFoundError: No module named 'smartcard'\n"
+    }
+  ]
+}

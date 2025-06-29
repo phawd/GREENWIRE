@@ -1,0 +1,81 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug GREENWIRE UI",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/greenwire_ui.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {},
+            "justMyCode": true
+        },
+        {
+            "name": "Debug GREENWIRE Brute",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/greenwire-brute.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [],
+            "env": {},
+            "justMyCode": true
+        },
+        {
+            "name": "Debug Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {},
+            "justMyCode": true
+        },
+        {
+            "name": "Debug with Arguments",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/greenwire-brute.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "--mode", "dry-run",
+                "--count", "5"
+            ],
+            "env": {},
+            "justMyCode": false
+        },        {
+            "name": "Test UI Suite",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/test_suite_fixed.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {},
+            "justMyCode": true
+        },
+        {
+            "name": "Test UI Suite (Quick)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/test_suite_fixed.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": ["--quick"],
+            "env": {},
+            "justMyCode": true
+        },
+        {
+            "name": "Test UI Suite (Verbose)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/test_suite_fixed.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "args": ["--verbose"],
+            "env": {},
+            "justMyCode": true
+        }
+    ]
+}

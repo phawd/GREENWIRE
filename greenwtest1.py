@@ -137,8 +137,14 @@ class TLVParser:
 
 class VulnerabilityDetector:
     def __init__(self, db_conn):
-        self.db = db_conn; self.timing_hist={} ; self.patterns={}
-        self.suspicious_sw = {0x6283:"Selected file invalidated",...}
+        self.db = db_conn
+        self.timing_hist = {}
+        self.patterns = {}
+        self.suspicious_sw = {
+            0x6283: "Selected file invalidated",
+            0x6700: "Wrong length",
+            0x6982: "Security status not satisfied",
+        }
     def analyze_command(self, typ, apdu, resp, sw1, sw2, exec_time):
         findings=[]
         # timing
@@ -220,7 +226,36 @@ def run_simulate(conn, args, fuzzer, detector):
     logging.info("Simulating transaction with fuzzing...")
     # integrate fuzzer and detector here...
 
-# Additional run_fuzz, run_readfuzz, run_extractkeys stubbed similarly...
+def run_fuzz(conn, args, fuzzer, detector):
+    """Run generic fuzzing using SmartcardFuzzer."""
+    logging.info("Running fuzz mode...")
+    result = fuzzer.simulate_attack_scenario("SDA_DOWNGRADE")
+    logging.info("Scenario result: %s", result)
+
+
+def run_readfuzz(conn, args, fuzzer, detector):
+    """Fuzz READ RECORD commands via contactless interface."""
+    logging.info("Running READ RECORD fuzzing...")
+    aids = EMV_AIDS.get(args.type, EMV_AIDS.get('visa', []))
+    for res in fuzzer.fuzz_contactless(aids, iterations=args.count):
+        detector.analyze_command(
+            "READ_RECORD",
+            b"",
+            res.get("gpo", b""),
+            0x90,
+            0x00,
+            0.0,
+        )
+
+
+def run_extractkeys(conn, args, fuzzer, detector):
+    """Extract cryptographic key material using the fuzzer."""
+    logging.info("Extracting keys from card...")
+    fuzzer.fuzz_key_detection()
+    if args.export:
+        Path(args.export).write_text(json.dumps(fuzzer.detected_keys, indent=2))
+
+
 def run_advanced(conn, args, fuzzer, detector):
     logging.info("Running advanced attack scenarios...")
     for name, scenario in ATTACK_SCENARIOS.items():
@@ -239,9 +274,9 @@ def main():
     else:
         if args.mode=='standard':    run_standard(conn, args, fuzzer, detector)
         elif args.mode=='simulate':  run_simulate(conn, args, fuzzer, detector)
-        elif args.mode=='fuzz':      run_simulate(conn, args, fuzzer, detector)
-        elif args.mode=='readfuzz':  run_simulate(conn, args, fuzzer, detector)
-        elif args.mode=='extractkeys': logging.info("Extracting keys...")
+        elif args.mode=='fuzz':      run_fuzz(conn, args, fuzzer, detector)
+        elif args.mode=='readfuzz':  run_readfuzz(conn, args, fuzzer, detector)
+        elif args.mode=='extractkeys': run_extractkeys(conn, args, fuzzer, detector)
     conn.close()
 
 if __name__=='__main__':
