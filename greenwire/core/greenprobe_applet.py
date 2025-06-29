@@ -1,13 +1,19 @@
 from __future__ import annotations
 
-"""Simulated JCOP card applet for terminal probing."""
+"""Simulated JCOP-based applet for terminal probing."""
 
 from typing import List, Dict, Optional
 from greenwire.core.nfc_iso import ISO14443ReaderWriter
 
 
-class JCOPProbeApplet:
-    """Emulate a JCOP applet that probes terminals and logs interactions."""
+class GreenProbeApplet:
+    """Emulate a JCOP applet that probes terminals and logs interactions.
+
+    The class name is simplified for usage in Python code while the
+    actual card content mimics a standard EMV applet so that terminals
+    treat it as compliant.  It records all probing attempts for later
+    analysis.
+    """
 
     def __init__(self) -> None:
         self.transaction_log: List[Dict[str, str]] = []
@@ -48,3 +54,27 @@ class JCOPProbeApplet:
     def get_transaction_log(self) -> List[Dict[str, str]]:
         """Return the stored transaction records."""
         return list(self.transaction_log)
+
+    def fuzz_after_identification(
+        self,
+        terminal_type: str,
+        reader: Optional[ISO14443ReaderWriter] = None,
+    ) -> None:
+        """Fuzz a terminal after identifying its type.
+
+        When an ATM is detected the applet uses the crypto engine as a
+        minimal stand‑in for an HSM to generate a key before sending
+        mutated APDUs.  All results are stored in the transaction log.
+        """
+        if reader is None:
+            reader = ISO14443ReaderWriter()
+
+        key_used = ""
+        if terminal_type.upper() == "ATM":
+            from greenwire.core.crypto_engine import generate_rsa_key
+
+            key = generate_rsa_key()
+            key_used = f"RSA-{key.key_size}"
+
+        self.probe_terminal(reader, terminal_type)
+        self.transaction_log.append({"fuzzed": terminal_type, "key": key_used})
