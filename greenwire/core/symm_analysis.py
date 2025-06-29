@@ -32,15 +32,17 @@ def find_repeating_sequences(data: bytes, min_len: int = 2) -> List[bytes]:
     """Detect simple repeating byte sequences in the key."""
     patterns = []
     length = len(data)
-    for l in range(min_len, min(4, length // 2) + 1):
-        for i in range(length - l):
-            segment = data[i:i + l]
+    for seg_len in range(min_len, min(4, length // 2) + 1):
+        for i in range(length - seg_len):
+            segment = data[i:i + seg_len]
             if data.count(segment) > 1 and segment not in patterns:
                 patterns.append(segment)
     return patterns
 
 
-def analyze_symmetric_key(data: bytes, key_type: str, *, min_entropy: float = 3.5) -> Dict:
+def analyze_symmetric_key(
+    data: bytes, key_type: str, *, min_entropy: float = 3.5
+) -> Dict:
     """Analyze symmetric key material and return analysis information."""
     info = {
         "key_length": len(data) * 8,
@@ -48,9 +50,13 @@ def analyze_symmetric_key(data: bytes, key_type: str, *, min_entropy: float = 3.
         "potential_weaknesses": []
     }
     if key_type == "DES" and len(data) != 8:
-        info["potential_weaknesses"].append(f"Invalid DES key length: {len(data)} bytes")
+        info["potential_weaknesses"].append(
+            f"Invalid DES key length: {len(data)} bytes"
+        )
     elif key_type == "AES" and len(data) not in [16, 24, 32]:
-        info["potential_weaknesses"].append(f"Invalid AES key length: {len(data)} bytes")
+        info["potential_weaknesses"].append(
+            f"Invalid AES key length: {len(data)} bytes"
+        )
 
     if info["entropy_score"] < min_entropy:
         info["potential_weaknesses"].append(
@@ -59,7 +65,9 @@ def analyze_symmetric_key(data: bytes, key_type: str, *, min_entropy: float = 3.
 
     patterns = find_repeating_sequences(data)
     if patterns:
-        info["potential_weaknesses"].append(f"Found {len(patterns)} repeating patterns")
+        info["potential_weaknesses"].append(
+            f"Found {len(patterns)} repeating patterns"
+        )
 
     weak = weak_key_bits(data)
     if weak:
