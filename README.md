@@ -6,9 +6,6 @@
 
 **Dedication:** To MOORE, 101st Airborne, trained Green Beret (1967, Dac To, Silver Star recipient), and all who stand for freedom.
 
----
-I replaced the original Perl implementation with a Python version for now.
----
 
 ### Python Unified CLI: greenwire.py
 
