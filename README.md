@@ -133,6 +133,11 @@ contactless environments. These features are available via the interactive
 menu and tree menu under *General Card Ops*.
 The utility function `generate_sle_sda_certificate()` creates a placeholder
 SLE SDA certificate for each generated card.
+The new `JCOPProbeApplet` module provides a simulated card applet that
+actively probes any connected terminal using basic EMV commands. The applet
+records the terminal identifier and whether the probe succeeded in an internal
+transaction log, demonstrating how a real JCOP applet might track terminal
+interactions.
 
 ### Supported Hardware
 GREENWIRE works with most PC/SC readers including **ACR122U**, **PN532**,
