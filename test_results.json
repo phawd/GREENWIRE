@@ -1,24 +1,13 @@
 {
-<<<<<<< Updated upstream
-  "passed": 12,
-  "failed": 10,
+  "passed": 18,
+  "failed": 7,
   "errors": [
     "Missing required file: test_cli.py",
     "Missing required file: test_hsm.py",
     "Missing required file: smartcard_utils.py",
     "Missing required file: analysis.py",
-    "FAILED: Syntax check: greenwire-brute-improved.py - Return code: 1",
-    "FAILED: Syntax check: greenwire-brute.py - Return code: 1",
-    "FAILED: Syntax check: greenwtest1.py - Return code: 1",
     "FAILED: Import test: smartcard_utils - Return code: 1",
     "FAILED: Import test: analysis - Return code: 1",
-=======
-  "passed": 33,
-  "failed": 3,
-  "errors": [
-    "FAILED: Syntax check: greenwire-brute-improved.py - Return code: 1",
-    "FAILED: Syntax check: greenwtest1.py - Return code: 1",
->>>>>>> Stashed changes
     "FAILED: GREENWIRE Brute Help - Return code: 1"
   ],
   "details": [
@@ -59,57 +48,10 @@
       "stderr": ""
     },
     {
-<<<<<<< Updated upstream
-=======
-      "test": "Syntax check: advanced_card_profile.py",
-      "status": "PASSED",
-      "stdout": "",
-      "stderr": ""
-    },
-    {
-      "test": "Syntax check: aid_bruteforce.py",
-      "status": "PASSED",
-      "stdout": "",
-      "stderr": ""
-    },
-    {
-      "test": "Syntax check: analysis.py",
-      "status": "PASSED",
-      "stdout": "",
-      "stderr": ""
-    },
-    {
-      "test": "Syntax check: cli.py",
-      "status": "PASSED",
-      "stdout": "",
-      "stderr": ""
-    },
-    {
-      "test": "Syntax check: file_enumeration.py",
-      "status": "PASSED",
-      "stdout": "",
-      "stderr": ""
-    },
-    {
->>>>>>> Stashed changes
-      "test": "Syntax check: greenwire-brute-improved.py",
-      "status": "FAILED",
-      "returncode": 1,
-      "stdout": "",
-      "stderr": "Sorry: IndentationError: expected an indented block after 'if' statement on line 681 (greenwire-brute-improved.py, line 681)"
-    },
-    {
       "test": "Syntax check: greenwire-brute.py",
-<<<<<<< Updated upstream
-      "status": "FAILED",
-      "returncode": 1,
-      "stdout": "",
-      "stderr": "  File \"F:\\repo\\GREENWIRE\\greenwire-brute.py\", line 1752\n    <<<<<<< Updated upstream\n    ^^\nSyntaxError: invalid syntax\n"
-=======
       "status": "PASSED",
       "stdout": "",
       "stderr": ""
->>>>>>> Stashed changes
     },
     {
       "test": "Syntax check: greenwire_ui.py",
@@ -118,70 +60,36 @@
       "stderr": ""
     },
     {
+      "test": "Syntax check: ui_test_core.py",
+      "status": "PASSED",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "test": "Syntax check: setup.py",
+      "status": "PASSED",
+      "stdout": "",
+      "stderr": ""
+    },
+    {
       "test": "Syntax check: greenwtest1.py",
-      "status": "FAILED",
-      "returncode": 1,
-      "stdout": "",
-      "stderr": "  File \"F:\\repo\\GREENWIRE\\greenwtest1.py\", line 141\n    self.suspicious_sw = {0x6283:\"Selected file invalidated\",...}\n                                                               ^\nSyntaxError: ':' expected after dictionary key\n"
-    },
-    {
-<<<<<<< Updated upstream
-=======
-      "test": "Syntax check: main.py",
       "status": "PASSED",
       "stdout": "",
       "stderr": ""
     },
     {
-      "test": "Syntax check: robust_card_profile.py",
+      "test": "Syntax check: greenwire.py",
       "status": "PASSED",
       "stdout": "",
       "stderr": ""
     },
     {
-      "test": "Syntax check: smartcard.py",
+      "test": "Syntax check: greenwire-brute-improved.py",
       "status": "PASSED",
       "stdout": "",
       "stderr": ""
     },
     {
-      "test": "Syntax check: smartcard_utils.py",
-      "status": "PASSED",
-      "stdout": "",
-      "stderr": ""
-    },
-    {
-      "test": "Syntax check: test_cli.py",
-      "status": "PASSED",
-      "stdout": "",
-      "stderr": ""
-    },
-    {
-      "test": "Syntax check: test_hsm.py",
-      "status": "PASSED",
-      "stdout": "",
-      "stderr": ""
-    },
-    {
-      "test": "Syntax check: test_random_apdus.py",
-      "status": "PASSED",
-      "stdout": "",
-      "stderr": ""
-    },
-    {
-      "test": "Syntax check: test_reader.py",
-      "status": "PASSED",
-      "stdout": "",
-      "stderr": ""
-    },
-    {
-      "test": "Syntax check: Untitled-2.py",
-      "status": "PASSED",
-      "stdout": "",
-      "stderr": ""
-    },
-    {
->>>>>>> Stashed changes
       "test": "Import test: greenwire_ui",
       "status": "PASSED",
       "stdout": "greenwire_ui imported successfully\n",
@@ -189,29 +97,17 @@
     },
     {
       "test": "Import test: smartcard_utils",
-<<<<<<< Updated upstream
       "status": "FAILED",
       "returncode": 1,
       "stdout": "",
-      "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n    import smartcard_utils; print('smartcard_utils imported successfully')\n    ^^^^^^^^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'smartcard_utils'\n"
+      "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\nModuleNotFoundError: No module named 'smartcard_utils'\n"
     },
     {
       "test": "Import test: analysis",
       "status": "FAILED",
       "returncode": 1,
       "stdout": "",
-      "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n    import analysis; print('analysis imported successfully')\n    ^^^^^^^^^^^^^^^\nModuleNotFoundError: No module named 'analysis'\n"
-=======
-      "status": "PASSED",
-      "stdout": "smartcard_utils imported successfully\n",
-      "stderr": ""
-    },
-    {
-      "test": "Import test: analysis",
-      "status": "PASSED",
-      "stdout": "analysis imported successfully\n",
-      "stderr": ""
->>>>>>> Stashed changes
+      "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\nModuleNotFoundError: No module named 'analysis'\n"
     },
     {
       "test": "GREENWIRE UI Import Test",
@@ -224,11 +120,7 @@
       "status": "FAILED",
       "returncode": 1,
       "stdout": "",
-<<<<<<< Updated upstream
-      "stderr": "  File \"F:\\repo\\GREENWIRE\\greenwire-brute.py\", line 1752\n    <<<<<<< Updated upstream\n    ^^\nSyntaxError: invalid syntax\n"
-=======
-      "stderr": "Traceback (most recent call last):\n  File \"F:\\repo\\GREENWIRE\\greenwire-brute.py\", line 98, in <module>\n    from smartcard.System import readers\nModuleNotFoundError: No module named 'smartcard.System'; 'smartcard' is not a package\n"
->>>>>>> Stashed changes
+      "stderr": "Traceback (most recent call last):\n  File \"/workspace/GREENWIRE/greenwire-brute.py\", line 98, in <module>\n    from smartcard.System import readers\nModuleNotFoundError: No module named 'smartcard'\n"
     }
   ]
 }

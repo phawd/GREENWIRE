@@ -228,7 +228,6 @@
 2025-06-15 12:41:13,467 - INFO - 
 [REPORT] Detailed results saved to: F:\repo\GREENWIRE\test_results.json
 2025-06-15 12:41:13,467 - WARNING - [WARNING] Some tests failed. Please review the errors above.
-<<<<<<< Updated upstream
 2025-06-15 12:43:31,085 - INFO - [INFO] Starting GREENWIRE Comprehensive Test Suite
 2025-06-15 12:43:31,086 - INFO - Working directory: F:\repo\GREENWIRE
 2025-06-15 12:43:31,086 - INFO - ================================================================================
@@ -326,5 +325,106 @@
 2025-06-15 12:43:34,306 - INFO - 
 [REPORT] Detailed results saved to: F:\repo\GREENWIRE\test_results.json
 2025-06-15 12:43:34,307 - WARNING - [WARNING] Some tests failed. Please review the errors above.
-=======
->>>>>>> Stashed changes
+2025-06-29 14:02:56,942 - INFO - [INFO] Starting GREENWIRE Comprehensive Test Suite
+2025-06-29 14:02:56,942 - INFO - Working directory: /workspace/GREENWIRE
+2025-06-29 14:02:56,942 - INFO - ================================================================================
+2025-06-29 14:02:56,942 - INFO - ==================================================
+2025-06-29 14:02:56,942 - INFO - TESTING FILE EXISTENCE
+2025-06-29 14:02:56,942 - INFO - ==================================================
+2025-06-29 14:02:56,942 - INFO - [PASS] Found: greenwire_ui.py
+2025-06-29 14:02:56,942 - INFO - [PASS] Found: greenwire-brute.py
+2025-06-29 14:02:56,942 - ERROR - [FAIL] Missing required file: test_cli.py
+2025-06-29 14:02:56,942 - ERROR - [FAIL] Missing required file: test_hsm.py
+2025-06-29 14:02:56,942 - ERROR - [FAIL] Missing required file: smartcard_utils.py
+2025-06-29 14:02:56,942 - ERROR - [FAIL] Missing required file: analysis.py
+2025-06-29 14:02:56,942 - INFO - ==================================================
+2025-06-29 14:02:56,942 - INFO - TESTING DEPENDENCIES
+2025-06-29 14:02:56,942 - INFO - ==================================================
+2025-06-29 14:02:56,942 - INFO - Running test: Dependency check: argparse
+2025-06-29 14:02:56,942 - INFO - Command: /root/.pyenv/versions/3.11.12/bin/python -c import argparse; print(f'argparse is available')
+2025-06-29 14:02:56,962 - INFO - [PASS] Dependency check: argparse
+2025-06-29 14:02:56,962 - INFO - Running test: Dependency check: logging
+2025-06-29 14:02:56,962 - INFO - Command: /root/.pyenv/versions/3.11.12/bin/python -c import logging; print(f'logging is available')
+2025-06-29 14:02:56,988 - INFO - [PASS] Dependency check: logging
+2025-06-29 14:02:56,988 - INFO - Running test: Dependency check: subprocess
+2025-06-29 14:02:56,988 - INFO - Command: /root/.pyenv/versions/3.11.12/bin/python -c import subprocess; print(f'subprocess is available')
+2025-06-29 14:02:57,011 - INFO - [PASS] Dependency check: subprocess
+2025-06-29 14:02:57,011 - INFO - Running test: Dependency check: json
+2025-06-29 14:02:57,011 - INFO - Command: /root/.pyenv/versions/3.11.12/bin/python -c import json; print(f'json is available')
+2025-06-29 14:02:57,030 - INFO - [PASS] Dependency check: json
+2025-06-29 14:02:57,030 - INFO - Running test: Dependency check: os
+2025-06-29 14:02:57,030 - INFO - Command: /root/.pyenv/versions/3.11.12/bin/python -c import os; print(f'os is available')
+2025-06-29 14:02:57,040 - INFO - [PASS] Dependency check: os
+2025-06-29 14:02:57,040 - INFO - Running test: Dependency check: sys
+2025-06-29 14:02:57,040 - INFO - Command: /root/.pyenv/versions/3.11.12/bin/python -c import sys; print(f'sys is available')
+2025-06-29 14:02:57,051 - INFO - [PASS] Dependency check: sys
+2025-06-29 14:02:57,063 - INFO - [PASS] Optional dependency: cryptography
+2025-06-29 14:02:57,063 - INFO - ==================================================
+2025-06-29 14:02:57,063 - INFO - TESTING PYTHON SYNTAX
+2025-06-29 14:02:57,063 - INFO - ==================================================
+2025-06-29 14:02:57,064 - INFO - Running test: Syntax check: greenwire-brute.py
+2025-06-29 14:02:57,064 - INFO - Command: /root/.pyenv/versions/3.11.12/bin/python -m py_compile /workspace/GREENWIRE/greenwire-brute.py
+2025-06-29 14:02:57,107 - INFO - [PASS] Syntax check: greenwire-brute.py
+2025-06-29 14:02:57,107 - INFO - Running test: Syntax check: greenwire_ui.py
+2025-06-29 14:02:57,107 - INFO - Command: /root/.pyenv/versions/3.11.12/bin/python -m py_compile /workspace/GREENWIRE/greenwire_ui.py
+2025-06-29 14:02:57,138 - INFO - [PASS] Syntax check: greenwire_ui.py
+2025-06-29 14:02:57,138 - INFO - Running test: Syntax check: ui_test_core.py
+2025-06-29 14:02:57,138 - INFO - Command: /root/.pyenv/versions/3.11.12/bin/python -m py_compile /workspace/GREENWIRE/ui_test_core.py
+2025-06-29 14:02:57,168 - INFO - [PASS] Syntax check: ui_test_core.py
+2025-06-29 14:02:57,168 - INFO - Running test: Syntax check: setup.py
+2025-06-29 14:02:57,168 - INFO - Command: /root/.pyenv/versions/3.11.12/bin/python -m py_compile /workspace/GREENWIRE/setup.py
+2025-06-29 14:02:57,198 - INFO - [PASS] Syntax check: setup.py
+2025-06-29 14:02:57,198 - INFO - Running test: Syntax check: greenwtest1.py
+2025-06-29 14:02:57,198 - INFO - Command: /root/.pyenv/versions/3.11.12/bin/python -m py_compile /workspace/GREENWIRE/greenwtest1.py
+2025-06-29 14:02:57,230 - INFO - [PASS] Syntax check: greenwtest1.py
+2025-06-29 14:02:57,230 - INFO - Running test: Syntax check: greenwire.py
+2025-06-29 14:02:57,230 - INFO - Command: /root/.pyenv/versions/3.11.12/bin/python -m py_compile /workspace/GREENWIRE/greenwire.py
+2025-06-29 14:02:57,260 - INFO - [PASS] Syntax check: greenwire.py
+2025-06-29 14:02:57,260 - INFO - Running test: Syntax check: greenwire-brute-improved.py
+2025-06-29 14:02:57,260 - INFO - Command: /root/.pyenv/versions/3.11.12/bin/python -m py_compile /workspace/GREENWIRE/greenwire-brute-improved.py
+2025-06-29 14:02:57,291 - INFO - [PASS] Syntax check: greenwire-brute-improved.py
+2025-06-29 14:02:57,291 - INFO - ==================================================
+2025-06-29 14:02:57,291 - INFO - TESTING UI IMPORTS
+2025-06-29 14:02:57,291 - INFO - ==================================================
+2025-06-29 14:02:57,291 - INFO - Running test: Import test: greenwire_ui
+2025-06-29 14:02:57,291 - INFO - Command: /root/.pyenv/versions/3.11.12/bin/python -c import greenwire_ui; print('greenwire_ui imported successfully')
+2025-06-29 14:02:57,314 - INFO - [PASS] Import test: greenwire_ui
+2025-06-29 14:02:57,314 - INFO - Running test: Import test: smartcard_utils
+2025-06-29 14:02:57,314 - INFO - Command: /root/.pyenv/versions/3.11.12/bin/python -c import smartcard_utils; print('smartcard_utils imported successfully')
+2025-06-29 14:02:57,324 - ERROR - FAILED: Import test: smartcard_utils - Return code: 1
+2025-06-29 14:02:57,324 - INFO - Running test: Import test: analysis
+2025-06-29 14:02:57,324 - INFO - Command: /root/.pyenv/versions/3.11.12/bin/python -c import analysis; print('analysis imported successfully')
+2025-06-29 14:02:57,343 - ERROR - FAILED: Import test: analysis - Return code: 1
+2025-06-29 14:02:57,343 - INFO - ==================================================
+2025-06-29 14:02:57,343 - INFO - TESTING GREENWIRE UI FUNCTIONALITY
+2025-06-29 14:02:57,343 - INFO - ==================================================
+2025-06-29 14:02:57,343 - INFO - Running test: GREENWIRE UI Import Test
+2025-06-29 14:02:57,343 - INFO - Command: /root/.pyenv/versions/3.11.12/bin/python -c import greenwire_ui; print('UI module loaded successfully')
+2025-06-29 14:02:57,374 - INFO - [PASS] GREENWIRE UI Import Test
+2025-06-29 14:02:57,375 - INFO - ==================================================
+2025-06-29 14:02:57,375 - INFO - TESTING GREENWIRE BRUTE HELP
+2025-06-29 14:02:57,375 - INFO - ==================================================
+2025-06-29 14:02:57,375 - INFO - Running test: GREENWIRE Brute Help
+2025-06-29 14:02:57,375 - INFO - Command: /root/.pyenv/versions/3.11.12/bin/python greenwire-brute.py --help
+2025-06-29 14:02:57,418 - ERROR - FAILED: GREENWIRE Brute Help - Return code: 1
+2025-06-29 14:02:57,418 - INFO - ================================================================================
+2025-06-29 14:02:57,418 - INFO - [FINAL] TEST SUITE COMPLETE
+2025-06-29 14:02:57,418 - INFO - ================================================================================
+2025-06-29 14:02:57,418 - INFO - [SUMMARY] RESULTS:
+2025-06-29 14:02:57,418 - INFO -    Total Tests: 25
+2025-06-29 14:02:57,418 - INFO -    Passed: 18 [PASS]
+2025-06-29 14:02:57,418 - INFO -    Failed: 7 [FAIL]
+2025-06-29 14:02:57,418 - INFO -    Success Rate: 72.0%
+2025-06-29 14:02:57,418 - INFO -    Duration: 0.48 seconds
+2025-06-29 14:02:57,418 - INFO - 
+[ERRORS] ENCOUNTERED:
+2025-06-29 14:02:57,418 - ERROR -    1. Missing required file: test_cli.py
+2025-06-29 14:02:57,418 - ERROR -    2. Missing required file: test_hsm.py
+2025-06-29 14:02:57,418 - ERROR -    3. Missing required file: smartcard_utils.py
+2025-06-29 14:02:57,418 - ERROR -    4. Missing required file: analysis.py
+2025-06-29 14:02:57,418 - ERROR -    5. FAILED: Import test: smartcard_utils - Return code: 1
+2025-06-29 14:02:57,418 - ERROR -    6. FAILED: Import test: analysis - Return code: 1
+2025-06-29 14:02:57,418 - ERROR -    7. FAILED: GREENWIRE Brute Help - Return code: 1
+2025-06-29 14:02:57,419 - INFO - 
+[REPORT] Detailed results saved to: /workspace/GREENWIRE/test_results.json
+2025-06-29 14:02:57,419 - WARNING - [WARNING] Some tests failed. Please review the errors above.
