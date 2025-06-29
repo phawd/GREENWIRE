@@ -140,6 +140,36 @@ and any Android 13+ phone running the helper service over ADB. Emulator
 usage is supported through the Android SDK. Ensure ``adb`` is installed
 and the device or emulator is authorized for USB debugging.
 
+### Smart Card Manufacturing Overview
+
+Smartcards typically embed a silicon chip into a plastic card body.  For
+contact cards, the chip is bonded to gold-plated pads that provide power
+and data over the ISO 7816 interface.  Contactless cards laminate a small
+antenna coil around the chip so it can draw power from an RF field.  A
+final lamination step fuses printed layers and overlays with security
+features like holograms.
+
+For contactless cards such as MIFARE Classic, DESFire, FeliCa, or EMV
+dual-interface cards, the antenna geometry and chip type vary.  DESFire
+cards typically include larger EEPROM for keys and application data,
+while EMV dual-interface cards integrate both contact pads and an RF
+antenna in a thin module.
+
+### Card Types and Standards
+
+| Type | Standard | Compatibility | Common Uses | Security Notes |
+|------|----------|---------------|-------------|----------------|
+| **Magstripe** | ISO 7810, ISO 7811 | Works with legacy swipe readers | Early banking, access control | Minimal security, data easily copied |
+| **Contact Smartcard** | ISO 7816 | Works with PC/SC readers, ATMs | Banking, SIM, ID | Chip-based security with tamper‑resistant silicon |
+| **Contactless (MIFARE)** | ISO 14443 Type A | Compatible with NFC readers | Transit passes, access control | Varies by model (Classic vs DESFire) |
+| **Contactless (FeliCa)** | JIS X 6319-4 | Mainly in Japan & Asia | Transit, e-money | Uses its own cryptographic protocol |
+| **EMV Dual Interface** | ISO 7816 + ISO 14443 | Works in contact and contactless terminals | Modern payment cards | Supports SDA/DDA, PIN verification |
+| **NFC Tags** | ISO 14443/15693 | Broad NFC device support | Inventory, tap-to-launch | Often lacks cryptographic security |
+
+Different card families offer varying memory sizes, crypto algorithms,
+and reader compatibility.  Greenwire aims to handle these standards via
+its menu-driven CLI and tree menu.
+
 ```bash
 python3 greenwire-brute.py --emulate terminal --reader android
 ```
