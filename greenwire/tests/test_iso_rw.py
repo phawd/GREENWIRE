@@ -27,6 +27,10 @@ def test_iso18092_rw():
     _run_rw_test(nfc_iso.ISO18092ReaderWriter)
 
 
+def test_android_rw():
+    _run_rw_test(nfc_iso.AndroidReaderWriter)
+
+
 def test_transceive_requires_connection():
     handler = nfc_iso.ISO14443ReaderWriter()
     with pytest.raises(RuntimeError):

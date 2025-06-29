@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="669122a8-a417-498a-8a34-0ed033f2aed3" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/GREENWIRE.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/csv-editor.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/# Commit Summary.md" beforeDir="false" afterPath="$PROJECT_DIR$/# Commit Summary.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.github/workflows/GREENWIRE.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/GREENWIRE.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.specstory/history/2025-06-15_17-32-@vscode-startdebugging.md" beforeDir="false" afterPath="$PROJECT_DIR$/.specstory/history/2025-06-15_17-32-@vscode-startdebugging.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.vscode/launch.json" beforeDir="false" afterPath="$PROJECT_DIR$/.vscode/launch.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.vscode/settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/.vscode/settings.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/# Code Citations.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/# Commit Summary 2.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/# Commit Summary.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/.github/ISSUE_TEMPLATE/bug_report.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/.github/ISSUE_TEMPLATE/feature_request.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/.github/pull_request_template.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/.github/workflows/GREENWIRE.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/.github/workflows/blank.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/.github/workflows/codeql.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/.github/workflows/static.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/.specstory/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/.specstory/.what-is-this.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/.specstory/history/2025-06-07_10-16-combining-readme-and-mirror-documentation.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/.specstory/history/2025-06-07_12-24-please-run-and-debug-and-fix-greenwire-brute-pl.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/.specstory/history/2025-06-07_13-28-python3-greenwire-brute-py-export-report-emv.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/.specstory/history/2025-06-07_13-38-test-files-and-commit.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/.specstory/history/2025-06-07_13-57-test-everything,-clean-up,-organize,-and-update-re.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/.specstory/history/2025-06-07_21-16-elaborate-on-attacks,-their-history-search-the-in.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/.vscode/extensions.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/.vscode/settings.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/.vscode/tasks.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/CONTRIBUTING.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/F:/repo/GREENWIRE" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/GREENWIRE.code-workspace" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/LICENSE" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/SECURITY.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/ca_keys.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/dongli.python-preview-0.0.4.vsix" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwire-brute-improved.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwire-brute-improved.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwire-brute.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwire.egg-info/entry_points.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwire/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwire/core/backend.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwire/core/crypto_engine.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwire/core/emv_generator.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwire/core/fuzzer.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwire/core/nfc_emv.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwire/core/nfc_iso.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwire/core/standards.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwire/tests/conftest.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwire/tests/nfc.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwire/tests/smartcard/CardConnection.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwire/tests/smartcard/System.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwire/tests/smartcard/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwire/tests/smartcard/util.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwire/tests/terminal_emulator.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwire/tests/test_backend.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwire/tests/test_contactless_fuzz.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwire/tests/test_crypto_engine.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwire/tests/test_emulation.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwire/tests/test_emv_generator.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwire/tests/test_iso_rw.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwire/tests/test_standards.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/greenwtest1.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/requirements.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/setup.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/setup_instructions.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/setup_log.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/setup_repo.sh" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/GREENWIRE-1/yaml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/JCOPCardManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/JCOPCardManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/greenwire-brute.py" beforeDir="false" afterPath="$PROJECT_DIR$/greenwire-brute.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/greenwire_ui.py" beforeDir="false" afterPath="$PROJECT_DIR$/greenwire_ui.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/jcop_card_manager.java" beforeDir="false" afterPath="$PROJECT_DIR$/jcop_card_manager.java" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;phawd&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/phawd/GREENWIRE.git&quot;,
+    &quot;accountId&quot;: &quot;16a0c444-8567-4e03-a5b2-b83dacc25dd2&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 0
+}</component>
+  <component name="ProjectId" id="2yV1cdyLJPS32xCdLts0v09T2Wf" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.fuzzer.executor": "Debug",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "dart.analysis.tool.window.visible": "false",
+    "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true",
+    "settings.editor.selected.configurable": "editor.preferences.inline.completion"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-53e2683a6804-9cdd278e9d02-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-251.26094.141" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="669122a8-a417-498a-8a34-0ed033f2aed3" name="Changes" comment="" />
+      <created>1749905010840</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1749905010840</updated>
+    </task>
+    <servers />
+  </component>
+</project>

@@ -2,18 +2,15 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "Run Tests",
-			"type": "shell",
-			"command": "python3",
-			"args": [
-				"-m",
-				"pytest",
-				"tests/",
-				"-v"
+			"type": "java (buildArtifact)",
+			"mainClass": "JCOPCardManager",
+			"targetPath": "${workspaceFolder}/${workspaceFolderBasename}.jar",
+			"elements": [
+				"${compileOutput}",
+				"${dependencies}"
 			],
-			"group": "test",
-			"isBackground": false,
-			"problemMatcher": []
+			"problemMatcher": [],
+			"label": "java (buildArtifact): GREENWIRE"
 		}
 	]
 }

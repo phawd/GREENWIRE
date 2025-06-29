@@ -1,0 +1,330 @@
+2025-06-15 12:39:10,273 - INFO - Working directory: F:\repo\GREENWIRE
+2025-06-15 12:39:10,273 - INFO - ================================================================================
+2025-06-15 12:39:10,273 - INFO - ==================================================
+2025-06-15 12:39:10,274 - INFO - TESTING FILE EXISTENCE
+2025-06-15 12:39:10,274 - INFO - ==================================================
+2025-06-15 12:39:10,322 - INFO - ==================================================
+2025-06-15 12:39:10,322 - INFO - TESTING DEPENDENCIES
+2025-06-15 12:39:10,323 - INFO - ==================================================
+2025-06-15 12:39:10,323 - INFO - Running test: Dependency check: cryptography
+2025-06-15 12:39:10,323 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import cryptography; print(f'cryptography is available')
+2025-06-15 12:39:10,574 - ERROR - FAILED: Dependency check: cryptography - Return code: 1
+2025-06-15 12:39:10,574 - INFO - Running test: Dependency check: argparse
+2025-06-15 12:39:10,574 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import argparse; print(f'argparse is available')
+2025-06-15 12:39:10,762 - INFO - Running test: Dependency check: logging
+2025-06-15 12:39:10,763 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import logging; print(f'logging is available')
+2025-06-15 12:39:10,966 - INFO - Running test: Dependency check: subprocess
+2025-06-15 12:39:10,966 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import subprocess; print(f'subprocess is available')
+2025-06-15 12:39:11,158 - INFO - Running test: Dependency check: json
+2025-06-15 12:39:11,158 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import json; print(f'json is available')
+2025-06-15 12:39:11,336 - INFO - ==================================================
+2025-06-15 12:39:11,336 - INFO - TESTING PYTHON SYNTAX
+2025-06-15 12:39:11,336 - INFO - ==================================================
+2025-06-15 12:39:11,337 - INFO - Running test: Syntax check: advanced_card_profile.py
+2025-06-15 12:39:11,337 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\advanced_card_profile.py
+2025-06-15 12:39:11,658 - INFO - Running test: Syntax check: aid_bruteforce.py
+2025-06-15 12:39:11,658 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\aid_bruteforce.py
+2025-06-15 12:39:11,881 - INFO - Running test: Syntax check: analysis.py
+2025-06-15 12:39:11,881 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\analysis.py
+2025-06-15 12:39:12,109 - INFO - Running test: Syntax check: cli.py
+2025-06-15 12:39:12,109 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\cli.py
+2025-06-15 12:39:12,340 - INFO - Running test: Syntax check: file_enumeration.py
+2025-06-15 12:39:12,340 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\file_enumeration.py
+2025-06-15 12:39:12,602 - INFO - Running test: Syntax check: greenwire-brute-improved.py
+2025-06-15 12:39:12,603 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\greenwire-brute-improved.py
+2025-06-15 12:39:12,881 - ERROR - FAILED: Syntax check: greenwire-brute-improved.py - Return code: 1
+2025-06-15 12:39:12,881 - INFO - Running test: Syntax check: greenwire-brute.py
+2025-06-15 12:39:12,881 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\greenwire-brute.py
+2025-06-15 12:39:13,141 - INFO - Running test: Syntax check: greenwire_ui.py
+2025-06-15 12:39:13,141 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\greenwire_ui.py
+2025-06-15 12:39:13,388 - INFO - Running test: Syntax check: greenwtest1.py
+2025-06-15 12:39:13,388 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\greenwtest1.py
+2025-06-15 12:39:13,607 - ERROR - FAILED: Syntax check: greenwtest1.py - Return code: 1
+2025-06-15 12:39:13,607 - INFO - Running test: Syntax check: main.py
+2025-06-15 12:39:13,607 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\main.py
+2025-06-15 12:39:13,852 - INFO - Running test: Syntax check: robust_card_profile.py
+2025-06-15 12:39:13,852 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\robust_card_profile.py
+2025-06-15 12:39:14,119 - INFO - Running test: Syntax check: smartcard.py
+2025-06-15 12:39:14,119 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\smartcard.py
+2025-06-15 12:39:14,358 - INFO - Running test: Syntax check: smartcard_utils.py
+2025-06-15 12:39:14,359 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\smartcard_utils.py
+2025-06-15 12:39:14,608 - INFO - Running test: Syntax check: test_cli.py
+2025-06-15 12:39:14,608 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\test_cli.py
+2025-06-15 12:39:14,866 - INFO - Running test: Syntax check: test_hsm.py
+2025-06-15 12:39:14,866 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\test_hsm.py
+2025-06-15 12:39:15,128 - INFO - Running test: Syntax check: test_random_apdus.py
+2025-06-15 12:39:15,129 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\test_random_apdus.py
+2025-06-15 12:39:15,388 - INFO - Running test: Syntax check: test_reader.py
+2025-06-15 12:39:15,388 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\test_reader.py
+2025-06-15 12:39:15,652 - INFO - Running test: Syntax check: Untitled-2.py
+2025-06-15 12:39:15,652 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\Untitled-2.py
+2025-06-15 12:39:15,919 - INFO - ==================================================
+2025-06-15 12:39:15,919 - INFO - TESTING UI IMPORTS
+2025-06-15 12:39:15,919 - INFO - ==================================================
+2025-06-15 12:39:15,920 - INFO - Running test: Import test: import greenwire_ui
+2025-06-15 12:39:15,920 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import greenwire_ui
+2025-06-15 12:39:16,142 - INFO - Running test: Import test: import smartcard_utils
+2025-06-15 12:39:16,142 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import smartcard_utils
+2025-06-15 12:39:16,310 - INFO - Running test: Import test: import analysis
+2025-06-15 12:39:16,310 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import analysis
+2025-06-15 12:39:16,477 - INFO - ==================================================
+2025-06-15 12:39:16,477 - INFO - TESTING GREENWIRE BRUTE HELP
+2025-06-15 12:39:16,477 - INFO - ==================================================
+2025-06-15 12:39:16,478 - INFO - Running test: GREENWIRE Brute Help
+2025-06-15 12:39:16,478 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe greenwire-brute.py --help
+2025-06-15 12:39:16,754 - ERROR - FAILED: GREENWIRE Brute Help - Return code: 1
+2025-06-15 12:39:16,754 - INFO - ==================================================
+2025-06-15 12:39:16,754 - INFO - TESTING GREENWIRE BRUTE MODES
+2025-06-15 12:39:16,755 - INFO - ==================================================
+2025-06-15 12:39:16,755 - INFO - Running test: Dry run mode
+2025-06-15 12:39:16,755 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe greenwire-brute.py --mode dry-run --count 1
+2025-06-15 12:39:17,071 - ERROR - FAILED: Dry run mode - Return code: 1
+2025-06-15 12:39:17,072 - INFO - ==================================================
+2025-06-15 12:39:17,072 - INFO - TESTING HSM FUNCTIONALITY
+2025-06-15 12:39:17,072 - INFO - ==================================================
+2025-06-15 12:39:17,072 - INFO - Running test: HSM Key Generation
+2025-06-15 12:39:17,072 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe test_hsm.py --generate-keys --output test_keys
+2025-06-15 12:39:17,307 - ERROR - FAILED: HSM Key Generation - Return code: 1
+2025-06-15 12:39:17,307 - INFO - ================================================================================
+2025-06-15 12:39:17,310 - INFO - ================================================================================
+2025-06-15 12:39:17,313 - INFO -    Total Tests: 35
+2025-06-15 12:39:17,318 - INFO -    Success Rate: 82.9%
+2025-06-15 12:39:17,318 - INFO -    Duration: 7.03 seconds
+2025-06-15 12:39:17,321 - ERROR -    1. FAILED: Dependency check: cryptography - Return code: 1
+2025-06-15 12:39:17,321 - ERROR -    2. FAILED: Syntax check: greenwire-brute-improved.py - Return code: 1
+2025-06-15 12:39:17,321 - ERROR -    3. FAILED: Syntax check: greenwtest1.py - Return code: 1
+2025-06-15 12:39:17,322 - ERROR -    4. FAILED: GREENWIRE Brute Help - Return code: 1
+2025-06-15 12:39:17,322 - ERROR -    5. FAILED: Dry run mode - Return code: 1
+2025-06-15 12:39:17,322 - ERROR -    6. FAILED: HSM Key Generation - Return code: 1
+2025-06-15 12:41:05,388 - INFO - [INFO] Starting GREENWIRE Comprehensive Test Suite
+2025-06-15 12:41:05,388 - INFO - Working directory: F:\repo\GREENWIRE
+2025-06-15 12:41:05,388 - INFO - ================================================================================
+2025-06-15 12:41:05,388 - INFO - ==================================================
+2025-06-15 12:41:05,389 - INFO - TESTING FILE EXISTENCE
+2025-06-15 12:41:05,389 - INFO - ==================================================
+2025-06-15 12:41:05,389 - INFO - [PASS] Found: greenwire_ui.py
+2025-06-15 12:41:05,389 - INFO - [PASS] Found: greenwire-brute.py
+2025-06-15 12:41:05,390 - INFO - [PASS] Found: test_cli.py
+2025-06-15 12:41:05,390 - INFO - [PASS] Found: test_hsm.py
+2025-06-15 12:41:05,390 - INFO - [PASS] Found: smartcard_utils.py
+2025-06-15 12:41:05,391 - INFO - [PASS] Found: analysis.py
+2025-06-15 12:41:05,391 - INFO - ==================================================
+2025-06-15 12:41:05,391 - INFO - TESTING DEPENDENCIES
+2025-06-15 12:41:05,392 - INFO - ==================================================
+2025-06-15 12:41:05,392 - INFO - Running test: Dependency check: argparse
+2025-06-15 12:41:05,392 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import argparse; print(f'argparse is available')
+2025-06-15 12:41:05,573 - INFO - [PASS] Dependency check: argparse
+2025-06-15 12:41:05,573 - INFO - Running test: Dependency check: logging
+2025-06-15 12:41:05,574 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import logging; print(f'logging is available')
+2025-06-15 12:41:05,799 - INFO - [PASS] Dependency check: logging
+2025-06-15 12:41:05,799 - INFO - Running test: Dependency check: subprocess
+2025-06-15 12:41:05,799 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import subprocess; print(f'subprocess is available')
+2025-06-15 12:41:05,982 - INFO - [PASS] Dependency check: subprocess
+2025-06-15 12:41:05,982 - INFO - Running test: Dependency check: json
+2025-06-15 12:41:05,983 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import json; print(f'json is available')
+2025-06-15 12:41:06,154 - INFO - [PASS] Dependency check: json
+2025-06-15 12:41:06,155 - INFO - Running test: Dependency check: os
+2025-06-15 12:41:06,155 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import os; print(f'os is available')
+2025-06-15 12:41:06,285 - INFO - [PASS] Dependency check: os
+2025-06-15 12:41:06,285 - INFO - Running test: Dependency check: sys
+2025-06-15 12:41:06,285 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import sys; print(f'sys is available')
+2025-06-15 12:41:06,424 - INFO - [PASS] Dependency check: sys
+2025-06-15 12:41:06,558 - INFO - [PASS] Optional dependency: cryptography
+2025-06-15 12:41:06,559 - INFO - ==================================================
+2025-06-15 12:41:06,559 - INFO - TESTING PYTHON SYNTAX
+2025-06-15 12:41:06,559 - INFO - ==================================================
+2025-06-15 12:41:06,560 - INFO - Running test: Syntax check: advanced_card_profile.py
+2025-06-15 12:41:06,560 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\advanced_card_profile.py
+2025-06-15 12:41:06,823 - INFO - [PASS] Syntax check: advanced_card_profile.py
+2025-06-15 12:41:06,824 - INFO - Running test: Syntax check: aid_bruteforce.py
+2025-06-15 12:41:06,824 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\aid_bruteforce.py
+2025-06-15 12:41:07,077 - INFO - [PASS] Syntax check: aid_bruteforce.py
+2025-06-15 12:41:07,077 - INFO - Running test: Syntax check: analysis.py
+2025-06-15 12:41:07,077 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\analysis.py
+2025-06-15 12:41:07,309 - INFO - [PASS] Syntax check: analysis.py
+2025-06-15 12:41:07,309 - INFO - Running test: Syntax check: cli.py
+2025-06-15 12:41:07,309 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\cli.py
+2025-06-15 12:41:07,530 - INFO - [PASS] Syntax check: cli.py
+2025-06-15 12:41:07,531 - INFO - Running test: Syntax check: file_enumeration.py
+2025-06-15 12:41:07,531 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\file_enumeration.py
+2025-06-15 12:41:07,755 - INFO - [PASS] Syntax check: file_enumeration.py
+2025-06-15 12:41:07,755 - INFO - Running test: Syntax check: greenwire-brute-improved.py
+2025-06-15 12:41:07,755 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\greenwire-brute-improved.py
+2025-06-15 12:41:07,994 - ERROR - FAILED: Syntax check: greenwire-brute-improved.py - Return code: 1
+2025-06-15 12:41:07,994 - INFO - Running test: Syntax check: greenwire-brute.py
+2025-06-15 12:41:07,994 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\greenwire-brute.py
+2025-06-15 12:41:08,262 - INFO - [PASS] Syntax check: greenwire-brute.py
+2025-06-15 12:41:08,262 - INFO - Running test: Syntax check: greenwire_ui.py
+2025-06-15 12:41:08,263 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\greenwire_ui.py
+2025-06-15 12:41:09,966 - INFO - [PASS] Syntax check: greenwire_ui.py
+2025-06-15 12:41:09,968 - INFO - Running test: Syntax check: greenwtest1.py
+2025-06-15 12:41:09,968 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\greenwtest1.py
+2025-06-15 12:41:10,235 - ERROR - FAILED: Syntax check: greenwtest1.py - Return code: 1
+2025-06-15 12:41:10,235 - INFO - Running test: Syntax check: main.py
+2025-06-15 12:41:10,235 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\main.py
+2025-06-15 12:41:10,528 - INFO - [PASS] Syntax check: main.py
+2025-06-15 12:41:10,528 - INFO - Running test: Syntax check: robust_card_profile.py
+2025-06-15 12:41:10,529 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\robust_card_profile.py
+2025-06-15 12:41:10,779 - INFO - [PASS] Syntax check: robust_card_profile.py
+2025-06-15 12:41:10,779 - INFO - Running test: Syntax check: smartcard.py
+2025-06-15 12:41:10,779 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\smartcard.py
+2025-06-15 12:41:11,016 - INFO - [PASS] Syntax check: smartcard.py
+2025-06-15 12:41:11,016 - INFO - Running test: Syntax check: smartcard_utils.py
+2025-06-15 12:41:11,016 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\smartcard_utils.py
+2025-06-15 12:41:11,245 - INFO - [PASS] Syntax check: smartcard_utils.py
+2025-06-15 12:41:11,245 - INFO - Running test: Syntax check: test_cli.py
+2025-06-15 12:41:11,245 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\test_cli.py
+2025-06-15 12:41:11,488 - INFO - [PASS] Syntax check: test_cli.py
+2025-06-15 12:41:11,489 - INFO - Running test: Syntax check: test_hsm.py
+2025-06-15 12:41:11,489 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\test_hsm.py
+2025-06-15 12:41:11,744 - INFO - [PASS] Syntax check: test_hsm.py
+2025-06-15 12:41:11,744 - INFO - Running test: Syntax check: test_random_apdus.py
+2025-06-15 12:41:11,744 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\test_random_apdus.py
+2025-06-15 12:41:11,983 - INFO - [PASS] Syntax check: test_random_apdus.py
+2025-06-15 12:41:11,983 - INFO - Running test: Syntax check: test_reader.py
+2025-06-15 12:41:11,983 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\test_reader.py
+2025-06-15 12:41:12,221 - INFO - [PASS] Syntax check: test_reader.py
+2025-06-15 12:41:12,221 - INFO - Running test: Syntax check: Untitled-2.py
+2025-06-15 12:41:12,221 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\Untitled-2.py
+2025-06-15 12:41:12,469 - INFO - [PASS] Syntax check: Untitled-2.py
+2025-06-15 12:41:12,469 - INFO - ==================================================
+2025-06-15 12:41:12,469 - INFO - TESTING UI IMPORTS
+2025-06-15 12:41:12,470 - INFO - ==================================================
+2025-06-15 12:41:12,470 - INFO - Running test: Import test: greenwire_ui
+2025-06-15 12:41:12,470 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import greenwire_ui; print('greenwire_ui imported successfully')
+2025-06-15 12:41:12,678 - INFO - [PASS] Import test: greenwire_ui
+2025-06-15 12:41:12,679 - INFO - Running test: Import test: smartcard_utils
+2025-06-15 12:41:12,679 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import smartcard_utils; print('smartcard_utils imported successfully')
+2025-06-15 12:41:12,825 - INFO - [PASS] Import test: smartcard_utils
+2025-06-15 12:41:12,826 - INFO - Running test: Import test: analysis
+2025-06-15 12:41:12,826 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import analysis; print('analysis imported successfully')
+2025-06-15 12:41:12,973 - INFO - [PASS] Import test: analysis
+2025-06-15 12:41:12,973 - INFO - ==================================================
+2025-06-15 12:41:12,973 - INFO - TESTING GREENWIRE UI FUNCTIONALITY
+2025-06-15 12:41:12,974 - INFO - ==================================================
+2025-06-15 12:41:12,974 - INFO - Running test: GREENWIRE UI Import Test
+2025-06-15 12:41:12,974 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import greenwire_ui; print('UI module loaded successfully')
+2025-06-15 12:41:13,168 - INFO - [PASS] GREENWIRE UI Import Test
+2025-06-15 12:41:13,169 - INFO - ==================================================
+2025-06-15 12:41:13,169 - INFO - TESTING GREENWIRE BRUTE HELP
+2025-06-15 12:41:13,169 - INFO - ==================================================
+2025-06-15 12:41:13,170 - INFO - Running test: GREENWIRE Brute Help
+2025-06-15 12:41:13,170 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe greenwire-brute.py --help
+2025-06-15 12:41:13,459 - ERROR - FAILED: GREENWIRE Brute Help - Return code: 1
+2025-06-15 12:41:13,460 - INFO - ================================================================================
+2025-06-15 12:41:13,460 - INFO - [FINAL] TEST SUITE COMPLETE
+2025-06-15 12:41:13,460 - INFO - ================================================================================
+2025-06-15 12:41:13,460 - INFO - [SUMMARY] RESULTS:
+2025-06-15 12:41:13,460 - INFO -    Total Tests: 36
+2025-06-15 12:41:13,460 - INFO -    Passed: 33 [PASS]
+2025-06-15 12:41:13,461 - INFO -    Failed: 3 [FAIL]
+2025-06-15 12:41:13,461 - INFO -    Success Rate: 91.7%
+2025-06-15 12:41:13,462 - INFO -    Duration: 8.07 seconds
+2025-06-15 12:41:13,462 - INFO - 
+[ERRORS] ENCOUNTERED:
+2025-06-15 12:41:13,462 - ERROR -    1. FAILED: Syntax check: greenwire-brute-improved.py - Return code: 1
+2025-06-15 12:41:13,462 - ERROR -    2. FAILED: Syntax check: greenwtest1.py - Return code: 1
+2025-06-15 12:41:13,462 - ERROR -    3. FAILED: GREENWIRE Brute Help - Return code: 1
+2025-06-15 12:41:13,467 - INFO - 
+[REPORT] Detailed results saved to: F:\repo\GREENWIRE\test_results.json
+2025-06-15 12:41:13,467 - WARNING - [WARNING] Some tests failed. Please review the errors above.
+<<<<<<< Updated upstream
+2025-06-15 12:43:31,085 - INFO - [INFO] Starting GREENWIRE Comprehensive Test Suite
+2025-06-15 12:43:31,086 - INFO - Working directory: F:\repo\GREENWIRE
+2025-06-15 12:43:31,086 - INFO - ================================================================================
+2025-06-15 12:43:31,086 - INFO - ==================================================
+2025-06-15 12:43:31,086 - INFO - TESTING FILE EXISTENCE
+2025-06-15 12:43:31,087 - INFO - ==================================================
+2025-06-15 12:43:31,087 - INFO - [PASS] Found: greenwire_ui.py
+2025-06-15 12:43:31,088 - INFO - [PASS] Found: greenwire-brute.py
+2025-06-15 12:43:31,088 - ERROR - [FAIL] Missing required file: test_cli.py
+2025-06-15 12:43:31,088 - ERROR - [FAIL] Missing required file: test_hsm.py
+2025-06-15 12:43:31,089 - ERROR - [FAIL] Missing required file: smartcard_utils.py
+2025-06-15 12:43:31,089 - ERROR - [FAIL] Missing required file: analysis.py
+2025-06-15 12:43:31,089 - INFO - ==================================================
+2025-06-15 12:43:31,090 - INFO - TESTING DEPENDENCIES
+2025-06-15 12:43:31,090 - INFO - ==================================================
+2025-06-15 12:43:31,090 - INFO - Running test: Dependency check: argparse
+2025-06-15 12:43:31,090 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import argparse; print(f'argparse is available')
+2025-06-15 12:43:31,280 - INFO - [PASS] Dependency check: argparse
+2025-06-15 12:43:31,280 - INFO - Running test: Dependency check: logging
+2025-06-15 12:43:31,280 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import logging; print(f'logging is available')
+2025-06-15 12:43:31,498 - INFO - [PASS] Dependency check: logging
+2025-06-15 12:43:31,498 - INFO - Running test: Dependency check: subprocess
+2025-06-15 12:43:31,498 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import subprocess; print(f'subprocess is available')
+2025-06-15 12:43:31,707 - INFO - [PASS] Dependency check: subprocess
+2025-06-15 12:43:31,707 - INFO - Running test: Dependency check: json
+2025-06-15 12:43:31,708 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import json; print(f'json is available')
+2025-06-15 12:43:31,888 - INFO - [PASS] Dependency check: json
+2025-06-15 12:43:31,888 - INFO - Running test: Dependency check: os
+2025-06-15 12:43:31,888 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import os; print(f'os is available')
+2025-06-15 12:43:32,027 - INFO - [PASS] Dependency check: os
+2025-06-15 12:43:32,027 - INFO - Running test: Dependency check: sys
+2025-06-15 12:43:32,028 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import sys; print(f'sys is available')
+2025-06-15 12:43:32,164 - INFO - [PASS] Dependency check: sys
+2025-06-15 12:43:32,299 - INFO - [PASS] Optional dependency: cryptography
+2025-06-15 12:43:32,299 - INFO - ==================================================
+2025-06-15 12:43:32,300 - INFO - TESTING PYTHON SYNTAX
+2025-06-15 12:43:32,300 - INFO - ==================================================
+2025-06-15 12:43:32,300 - INFO - Running test: Syntax check: greenwire-brute-improved.py
+2025-06-15 12:43:32,301 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\greenwire-brute-improved.py
+2025-06-15 12:43:32,536 - ERROR - FAILED: Syntax check: greenwire-brute-improved.py - Return code: 1
+2025-06-15 12:43:32,536 - INFO - Running test: Syntax check: greenwire-brute.py
+2025-06-15 12:43:32,537 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\greenwire-brute.py
+2025-06-15 12:43:32,812 - ERROR - FAILED: Syntax check: greenwire-brute.py - Return code: 1
+2025-06-15 12:43:32,812 - INFO - Running test: Syntax check: greenwire_ui.py
+2025-06-15 12:43:32,812 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\greenwire_ui.py
+2025-06-15 12:43:33,072 - INFO - [PASS] Syntax check: greenwire_ui.py
+2025-06-15 12:43:33,088 - INFO - Running test: Syntax check: greenwtest1.py
+2025-06-15 12:43:33,088 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -m py_compile F:\repo\GREENWIRE\greenwtest1.py
+2025-06-15 12:43:33,297 - ERROR - FAILED: Syntax check: greenwtest1.py - Return code: 1
+2025-06-15 12:43:33,297 - INFO - ==================================================
+2025-06-15 12:43:33,297 - INFO - TESTING UI IMPORTS
+2025-06-15 12:43:33,297 - INFO - ==================================================
+2025-06-15 12:43:33,298 - INFO - Running test: Import test: greenwire_ui
+2025-06-15 12:43:33,298 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import greenwire_ui; print('greenwire_ui imported successfully')
+2025-06-15 12:43:33,487 - INFO - [PASS] Import test: greenwire_ui
+2025-06-15 12:43:33,487 - INFO - Running test: Import test: smartcard_utils
+2025-06-15 12:43:33,487 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import smartcard_utils; print('smartcard_utils imported successfully')
+2025-06-15 12:43:33,679 - ERROR - FAILED: Import test: smartcard_utils - Return code: 1
+2025-06-15 12:43:33,680 - INFO - Running test: Import test: analysis
+2025-06-15 12:43:33,680 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import analysis; print('analysis imported successfully')
+2025-06-15 12:43:33,881 - ERROR - FAILED: Import test: analysis - Return code: 1
+2025-06-15 12:43:33,881 - INFO - ==================================================
+2025-06-15 12:43:33,881 - INFO - TESTING GREENWIRE UI FUNCTIONALITY
+2025-06-15 12:43:33,882 - INFO - ==================================================
+2025-06-15 12:43:33,882 - INFO - Running test: GREENWIRE UI Import Test
+2025-06-15 12:43:33,882 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe -c import greenwire_ui; print('UI module loaded successfully')
+2025-06-15 12:43:34,097 - INFO - [PASS] GREENWIRE UI Import Test
+2025-06-15 12:43:34,098 - INFO - ==================================================
+2025-06-15 12:43:34,098 - INFO - TESTING GREENWIRE BRUTE HELP
+2025-06-15 12:43:34,099 - INFO - ==================================================
+2025-06-15 12:43:34,099 - INFO - Running test: GREENWIRE Brute Help
+2025-06-15 12:43:34,099 - INFO - Command: F:\repo\GREENWIRE\.venv\Scripts\python.exe greenwire-brute.py --help
+2025-06-15 12:43:34,300 - ERROR - FAILED: GREENWIRE Brute Help - Return code: 1
+2025-06-15 12:43:34,301 - INFO - ================================================================================
+2025-06-15 12:43:34,301 - INFO - [FINAL] TEST SUITE COMPLETE
+2025-06-15 12:43:34,301 - INFO - ================================================================================
+2025-06-15 12:43:34,301 - INFO - [SUMMARY] RESULTS:
+2025-06-15 12:43:34,301 - INFO -    Total Tests: 22
+2025-06-15 12:43:34,301 - INFO -    Passed: 12 [PASS]
+2025-06-15 12:43:34,302 - INFO -    Failed: 10 [FAIL]
+2025-06-15 12:43:34,302 - INFO -    Success Rate: 54.5%
+2025-06-15 12:43:34,302 - INFO -    Duration: 3.21 seconds
+2025-06-15 12:43:34,302 - INFO - 
+[ERRORS] ENCOUNTERED:
+2025-06-15 12:43:34,302 - ERROR -    1. Missing required file: test_cli.py
+2025-06-15 12:43:34,302 - ERROR -    2. Missing required file: test_hsm.py
+2025-06-15 12:43:34,303 - ERROR -    3. Missing required file: smartcard_utils.py
+2025-06-15 12:43:34,303 - ERROR -    4. Missing required file: analysis.py
+2025-06-15 12:43:34,303 - ERROR -    5. FAILED: Syntax check: greenwire-brute-improved.py - Return code: 1
+2025-06-15 12:43:34,304 - ERROR -    6. FAILED: Syntax check: greenwire-brute.py - Return code: 1
+2025-06-15 12:43:34,304 - ERROR -    7. FAILED: Syntax check: greenwtest1.py - Return code: 1
+2025-06-15 12:43:34,305 - ERROR -    8. FAILED: Import test: smartcard_utils - Return code: 1
+2025-06-15 12:43:34,305 - ERROR -    9. FAILED: Import test: analysis - Return code: 1
+2025-06-15 12:43:34,305 - ERROR -    10. FAILED: GREENWIRE Brute Help - Return code: 1
+2025-06-15 12:43:34,306 - INFO - 
+[REPORT] Detailed results saved to: F:\repo\GREENWIRE\test_results.json
+2025-06-15 12:43:34,307 - WARNING - [WARNING] Some tests failed. Please review the errors above.
+=======
+>>>>>>> Stashed changes

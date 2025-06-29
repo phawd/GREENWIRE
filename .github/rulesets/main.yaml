@@ -1,0 +1,26 @@
+# Protects the main branch
+version: 1
+rules:
+  - name: Protect main branch
+    target:
+      - branches:
+          - "main"
+    rules:
+      # Disable force pushes
+      - type: "required_push_signatures"
+        parameters: {}
+      # Prevent direct pushes
+      - type: "required_status_checks"
+        parameters:
+          strict: true
+          contexts:
+            - "ci/build"
+            - "ci/test"
+      # Enforce PR reviews
+      - type: "required_pull_request_reviews"
+        parameters:
+          required_approving_review_count: 1
+          dismiss_stale_reviews: true
+      # Block deletions
+      - type: "block_deletions"
+        parameters: {}

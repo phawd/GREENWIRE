@@ -7,6 +7,11 @@ from greenwire.core.nfc_emv import ContactlessEMVTerminal, NFCEMVProcessor
 from greenwire.core.nfc_iso import ISO14443ReaderWriter
 from greenwire.nfc_vuln import scan_nfc_vulnerabilities
 from greenwire.core.fuzzer import SmartcardFuzzer
+from greenwire.core.file_fuzzer import (
+    fuzz_image_file,
+    fuzz_binary_file,
+    fuzz_unusual_input,
+)
 
 
 MENU = """\
@@ -31,7 +36,8 @@ GREENWIRE Menu
 18. Import card data from JSON
 19. Reset card (simulated)
 20. Detect card OS
-21. Quit
+21. Fuzz file parser
+22. Quit
 """
 
 
@@ -132,6 +138,21 @@ def detect_card_os() -> None:
     else:
         print("No reader or tag detected")
 
+
+def fuzz_file_menu() -> None:
+    """Prompt for a file and fuzz its parser."""
+    path = Path(input("Seed file path: ").strip())
+    category = input("Type (image/binary/unusual): ").strip().lower()
+    if category == "image":
+        results = fuzz_image_file(path)
+    elif category == "binary":
+        results = fuzz_binary_file(path)
+    else:
+        base = path.read_text(errors="ignore")
+        results = fuzz_unusual_input(lambda s: s.encode("utf-8"), base)
+    for r in results:
+        print(r)
+
 # ---------------------------------------------------------------------------
 # Main interactive loop
 # ---------------------------------------------------------------------------
@@ -212,6 +233,8 @@ def main() -> None:
         elif choice == "20":
             detect_card_os()
         elif choice == "21":
+            fuzz_file_menu()
+        elif choice == "22":
             break
         else:
             print("Invalid choice")
