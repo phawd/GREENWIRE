@@ -170,6 +170,29 @@ Different card families offer varying memory sizes, crypto algorithms,
 and reader compatibility.  Greenwire aims to handle these standards via
 its menu-driven CLI and tree menu.
 
+### EMV Card Brands and History
+
+While most current payment cards comply with the EMV specifications,
+their underlying operating systems and silicon chips come from different
+manufacturers.  Early EMV deployments in the late 1990s relied on
+simple "SDA" cards manufactured by **Gemplus** and **Schlumberger**. By
+the mid‑2000s dynamic data authentication ("DDA") was introduced with
+platforms such as **JCOP** from **NXP** (formerly Philips) and **CardOS**
+from **Siemens/Infineon**.  Modern cards generally implement combined
+dynamic authentication ("CDA") and often support both contact and
+contactless interfaces in a single module.
+
+Major chip families include **Infineon SLE66**, **NXP SmartMX**, and
+**STMicroelectronics ST23/ST25**.  The antennas used in dual‑interface
+cards may be a thin etched copper coil around the module or a printed
+inductive loop laminated into the body.  Contactless terminals typically
+use a larger loop antenna connected to an NFC controller such as the
+PN532 or a secure POS module.
+
+SDA‑only cards were largely phased out around 2015.  DDA and CDA models
+continue to be issued today, with most banks migrating to contactless
+dual‑interface cards after 2017.
+
 ```bash
 python3 greenwire-brute.py --emulate terminal --reader android
 ```
