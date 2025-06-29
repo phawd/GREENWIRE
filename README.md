@@ -140,6 +140,11 @@ transaction log, demonstrating how a real JCOP applet might track terminal
 interactions. Once a terminal type is detected, ``fuzz_after_identification``
 can generate HSM-backed keys (using the crypto engine) and send mutated APDUs,
 logging the outcomes directly on the card.
+The ``attack_terminal`` method extends this by running a full sequence of ATM
+commands when an ATM is detected. Otherwise it rapidly loops through standard
+APDUs for fifty cycles and then issues ``GENERATE_AC`` for fifty additional
+cycles before attempting a simple transaction. The results are logged on the
+card for later analysis.
 
 ### Supported Hardware
 GREENWIRE works with most PC/SC readers including **ACR122U**, **PN532**,
