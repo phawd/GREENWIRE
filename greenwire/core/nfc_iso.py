@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from typing import Dict, Optional, Sequence
+import subprocess
 
 try:  # Optional nfcpy import
     import nfc
@@ -161,3 +162,42 @@ class ISO18092ReaderWriter(_BaseReaderWriter):
     def connect(self, device: str = "usb") -> bool:
         # pragma: no cover - hardware dependent
         return super().connect(device, targets=["212F", "424F"])
+
+
+class AndroidReaderWriter(_BaseReaderWriter):
+    """Reader/writer using an Android device over ADB.
+
+    This helper enables basic NFC operations when an Android phone is
+    connected via the Android Debug Bridge. It relies on the ``adb`` tool to
+    forward APDU commands to a helper application running on the device. The
+    implementation is intentionally lightweight so that unit tests can run
+    without requiring hardware.
+    """
+
+    def __init__(self, serial: Optional[str] = None) -> None:
+        super().__init__()
+        self.serial = serial
+
+    def _adb(self, *args: str) -> str:
+        cmd = ["adb"]
+        if self.serial:
+            cmd += ["-s", self.serial]
+        cmd += list(args)
+        proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+        return proc.stdout.strip()
+
+    def connect(self, device: str = "adb") -> bool:  # pragma: no cover
+        self._adb("shell", "svc", "nfc", "enable")
+        return True
+
+    def disconnect(self) -> None:  # pragma: no cover
+        self._adb("shell", "svc", "nfc", "disable")
+        super().disconnect()
+
+    def transceive(self, data: bytes) -> bytes:
+        hex_data = data.hex()
+        resp = self._adb("shell", "cmd", "nfc", "transceive", hex_data)
+        try:
+            return bytes.fromhex(resp)
+        except ValueError:
+            return b""
