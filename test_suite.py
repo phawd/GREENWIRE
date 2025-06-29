@@ -41,13 +41,14 @@ class GreenWireTestSuite:
         
         try:
             result = subprocess.run(
-                cmd, 
-                capture_output=True, 
-                text=True, 
+                cmd,
+                capture_output=True,
+                text=True,
                 timeout=timeout,
                 cwd=self.base_path
             )
-              if result.returncode == 0:
+
+            if result.returncode == 0:
                 self.test_results['passed'] += 1
                 logger.info(f"[PASS] {description}")
                 self.test_results['details'].append({
