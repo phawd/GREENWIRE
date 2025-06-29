@@ -200,6 +200,20 @@ process commands according to each standard. The accompanying
 simple confirmation string for any supported standard, ensuring GlobalPlatform
 issuer and cardholder requirements as well as Card OS rules are tracked.
 
+### Code Structure
+
+The repository is organized as a small package under `greenwire/`:
+
+- `core/backend.py` manages a SQLite database for issuing and tracking test cards.
+- `core/crypto_engine.py` wraps common RSA, ECC and AES operations for use in
+  tests and emulation tools.
+- `core/symm_analysis.py` provides entropy checks and pattern detection for
+  symmetric keys.
+- `nfc_vuln.py` scans NFC tags for weaknesses such as default keys.
+- `menu_cli.py` offers an interactive menu that ties the tools together.
+
+Tests for these modules reside in `greenwire/tests/`.
+
 ## Development and Testing
 
 Install the test dependencies (including `pexpect`) and run the unit test
