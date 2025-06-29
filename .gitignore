@@ -9,3 +9,6 @@ gen
 
 .fake
 GREENWIRE-1
+# Python bytecode
+__pycache__/
+*.pyc
