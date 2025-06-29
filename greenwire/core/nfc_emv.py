@@ -126,6 +126,11 @@ class NFCEMVProcessor:
         return entries
 
     def _read_log_records(self, tag, sfi: int, count: int) -> List[bytes]:
+        """Read transaction log records using READ RECORD APDUs."""
+
+        # The command ``0x00 B2 <rec> <p2>`` reads a specific record from
+        # the card. ``p2`` encodes the short file identifier (SFI) in the
+        # upper 5 bits and the record number in the lower bits.
         logs = []
         for rec in range(1, count + 1):
             resp = tag.send_apdu(0x00, 0xB2, rec, (sfi << 3) | 4, b"")
@@ -142,7 +147,10 @@ class NFCEMVProcessor:
                 raise RuntimeError("Tag does not support ISO-DEP")
 
             aid_bytes = bytes.fromhex(aid)
+            # SELECT (00 A4 04 00) selects the application by AID
             select_resp = tag.send_apdu(0x00, 0xA4, 0x04, 0x00, aid_bytes)
+            # GET PROCESSING OPTIONS (80 A8 00 00) requests the AFL and
+            # application data. The command data (83 00) denotes an empty PDOL.
             gpo_resp = tag.send_apdu(0x80, 0xA8, 0x00, 0x00, b"\x83\x00")
 
             result: Dict[str, object] = {
@@ -159,6 +167,7 @@ class NFCEMVProcessor:
             if afl:
                 for sfi, first, last in self._parse_afl(afl):
                     for rec in range(first, last + 1):
+                        # READ RECORD to fetch each application record
                         data = tag.send_apdu(
                             0x00, 0xB2, rec, (sfi << 3) | 4, b""
                         )
@@ -191,7 +200,10 @@ class NFCEMVProcessor:
                 raise RuntimeError("Tag does not support ISO-DEP")
 
             aid_bytes = bytes.fromhex(aid)
+            # SELECT the payment application on the card
             select_resp = tag.send_apdu(0x00, 0xA4, 0x04, 0x00, aid_bytes)
+            # Issue GET PROCESSING OPTIONS to retrieve the application file
+            # locator (AFL) and related data
             gpo_resp = tag.send_apdu(0x80, 0xA8, 0x00, 0x00, b"\x83\x00")
             return {"select": bytes(select_resp), "gpo": bytes(gpo_resp)}
 
