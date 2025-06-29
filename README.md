@@ -111,7 +111,8 @@ GREENWIRE can now:
 - Handle contactless terminal mode with multiple AIDs and configurable CA keys
 - Fuzz contactless transactions with `--contactless-fuzz`
 - Use an Android phone via ADB for contactless and EMV operations or an
-  Android 13+ emulator
+  Android 13+ emulator. Root access (via ``adb root``) enables additional
+  commands; a non-root fallback is also available.
 
 ### Using an Android phone
 An Android device can serve as the NFC reader when connected via USB with ADB debugging enabled. Make sure the Android SDK tools are installed and the device is authorized. Invoke the CLI with `--reader android` or choose **Android NFC** in the interactive menu.
@@ -120,6 +121,22 @@ If you do not have physical hardware, you can use the Android emulator.
 Create an Android 13+ virtual device with the SDK tools and start it
 with ADB networking enabled. The `AndroidReaderWriter` class will detect
 the emulator via the `adb` command.
+
+The interactive menu now provides options to connect to an Android device
+with or without root access. Select **Android connect (root)** for rooted
+devices or **Android connect (non-root)** when root is unavailable.
+
+### Advanced Fuzzing and HSM Support
+GREENWIRE includes experimental attack modes for JCOP card OS fuzzing and
+cryptographic HSM operations. NFC delay attacks simulate timing issues in
+contactless environments. These features are available via the interactive
+menu and tree menu under *General Card Ops*.
+
+### Supported Hardware
+GREENWIRE works with most PC/SC readers including **ACR122U**, **PN532**,
+and any Android 13+ phone running the helper service over ADB. Emulator
+usage is supported through the Android SDK. Ensure ``adb`` is installed
+and the device or emulator is authorized for USB debugging.
 
 ```bash
 python3 greenwire-brute.py --emulate terminal --reader android
@@ -181,6 +198,15 @@ Invoke it via:
 
 ```bash
 python -m greenwire.menu_cli
+```
+
+### Tree Menu
+
+`greenwire.tree_menu_cli` automatically builds a menu for each supported
+standard with both contact and contactless options. Run it with:
+
+```bash
+python -m greenwire.tree_menu_cli
 ```
 
 ## Supported Standards

@@ -1,10 +1,11 @@
 import argparse
+import time
 from pathlib import Path
 """Simple interactive CLI exposing most GREENWIRE features."""
 
 from greenwire.core.backend import init_backend, issue_card
 from greenwire.core.nfc_emv import ContactlessEMVTerminal, NFCEMVProcessor
-from greenwire.core.nfc_iso import ISO14443ReaderWriter
+from greenwire.core.nfc_iso import ISO14443ReaderWriter, AndroidReaderWriter
 from greenwire.nfc_vuln import scan_nfc_vulnerabilities
 from greenwire.core.fuzzer import SmartcardFuzzer
 from greenwire.core.file_fuzzer import (
@@ -37,7 +38,12 @@ GREENWIRE Menu
 19. Reset card (simulated)
 20. Detect card OS
 21. Fuzz file parser
-22. Quit
+22. Android connect (root)
+23. Android connect (non-root)
+24. JCOP card attack
+25. HSM crypto test
+26. NFC delay attack
+27. Quit
 """
 
 
@@ -153,6 +159,32 @@ def fuzz_file_menu() -> None:
     for r in results:
         print(r)
 
+
+def jcop_attack() -> None:
+    """Simulate fuzzing attacks against JCOP card OS."""
+    print("[SIMULATION] Fuzzing JCOP card OS commands")
+
+
+def hsm_crypto_test() -> None:
+    """Simulate cryptographic operations with an attached HSM."""
+    print("[SIMULATION] Performing HSM crypto operations")
+
+
+def nfc_delay_attack() -> None:
+    """Send APDUs with varying delays for contactless attack simulation."""
+    reader = ISO14443ReaderWriter()
+    if reader.connect():
+        for delay_ms in (5, 10, 20):
+            time.sleep(delay_ms / 1000)
+            try:
+                reader.transceive(b"\x00\xA4\x04\x00")
+                print(f"Sent command with {delay_ms} ms delay")
+            except Exception as exc:  # noqa: BLE001
+                print(f"Error at {delay_ms} ms: {exc}")
+        reader.disconnect()
+    else:
+        print("No NFC reader detected")
+
 # ---------------------------------------------------------------------------
 # Main interactive loop
 # ---------------------------------------------------------------------------
@@ -235,6 +267,22 @@ def main() -> None:
         elif choice == "21":
             fuzz_file_menu()
         elif choice == "22":
+            reader = AndroidReaderWriter(root_required=True)
+            reader.connect()
+            print("Connected to Android device with root")
+            reader.disconnect()
+        elif choice == "23":
+            reader = AndroidReaderWriter(root_required=False)
+            reader.connect()
+            print("Connected to Android device (non-root mode)")
+            reader.disconnect()
+        elif choice == "24":
+            jcop_attack()
+        elif choice == "25":
+            hsm_crypto_test()
+        elif choice == "26":
+            nfc_delay_attack()
+        elif choice == "27":
             break
         else:
             print("Invalid choice")

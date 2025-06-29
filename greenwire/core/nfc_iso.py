@@ -167,16 +167,21 @@ class ISO18092ReaderWriter(_BaseReaderWriter):
 class AndroidReaderWriter(_BaseReaderWriter):
     """Reader/writer using an Android device over ADB.
 
+    Requires Android 13+ (SDK 33) for full contactless support."
+
     This helper enables basic NFC operations when an Android phone is
     connected via the Android Debug Bridge. It relies on the ``adb`` tool to
     forward APDU commands to a helper application running on the device. The
     implementation is intentionally lightweight so that unit tests can run
-    without requiring hardware.
+    without requiring hardware. Some advanced functions require ``adb`` to be
+    running as root. Set ``root_required=True`` to automatically attempt
+    ``adb root`` on connection.
     """
 
-    def __init__(self, serial: Optional[str] = None) -> None:
+    def __init__(self, serial: Optional[str] = None, root_required: bool = False) -> None:
         super().__init__()
         self.serial = serial
+        self.root_required = root_required
 
     def _adb(self, *args: str) -> str:
         cmd = ["adb"]
@@ -186,7 +191,22 @@ class AndroidReaderWriter(_BaseReaderWriter):
         proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
         return proc.stdout.strip()
 
+    def _android_version(self) -> int:
+        """Return the device SDK level or ``0`` on failure."""
+        out = self._adb("shell", "getprop", "ro.build.version.sdk")
+        try:
+            return int(out.strip())
+        except ValueError:
+            return 0
+
     def connect(self, device: str = "adb") -> bool:  # pragma: no cover
+        if self.root_required:
+            self._adb("root")
+
+        sdk = self._android_version()
+        if sdk and sdk < 33:
+            print("Warning: Android 13+ recommended for NFC operations")
+
         self._adb("shell", "svc", "nfc", "enable")
         return True
 

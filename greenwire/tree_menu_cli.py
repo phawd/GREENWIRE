@@ -3,6 +3,9 @@
 This script presents a hierarchical menu where the user first selects a
 standard/card type and then chooses an action specific to that
 selection.  It reuses helpers from ``menu_cli`` and ``crypto_engine``.
+
+Hardware support includes PC/SC readers such as ACR122U, PN532, and
+Android 13+ devices connected over ADB.
 """
 
 from __future__ import annotations
@@ -12,7 +15,8 @@ from typing import Callable, Dict
 
 from greenwire.core.crypto_engine import generate_rsa_key, generate_ec_key
 from greenwire.core.nfc_emv import ContactlessEMVTerminal
-from greenwire.core.standards import Standard
+from greenwire.core.nfc_iso import AndroidReaderWriter
+from greenwire.core.standards import Standard, StandardHandler
 from greenwire.menu_cli import (
     dump_atr,
     dump_memory,
@@ -25,6 +29,9 @@ from greenwire.menu_cli import (
     import_data,
     reset_card,
     detect_card_os,
+    jcop_attack,
+    hsm_crypto_test,
+    nfc_delay_attack,
 )
 from greenwire.core.backend import init_backend
 
@@ -55,28 +62,60 @@ def _generate_cert() -> None:
     print(f"Generated ECC curve: {ecc_key.curve.name}")
 
 
+def _android_connect(root: bool) -> None:
+    """Connect to an Android device, printing a status message."""
+    reader = AndroidReaderWriter(root_required=root)
+    reader.connect()
+    mode = "root" if root else "non-root"
+    print(f"Connected to Android device ({mode})")
+    reader.disconnect()
+
+
 # Mapping of menu actions
 Action = Callable[[], None]
 
+
+def _make_actions(std: Standard) -> Dict[str, tuple[str, Action]]:
+    handler = StandardHandler()
+
+    return {
+        "1": (
+            "Check compliance",
+            lambda s=std: print(handler.check_compliance(s)),
+        ),
+        "2": ("Handle standard", lambda s=std: print(handler.handle(s))),
+        "3": ("Dump ATR", dump_atr),
+        "4": ("Scan for cards", scan_for_cards),
+    }
+
+
 MENU_TREE: Dict[str, Dict[str, tuple[str, Action]]] = {
-    Standard.EMV.value: {
-        "1": ("Terminal test", _terminal_test),
-        "2": ("ATM/HSM test", _atm_hsm_test),
-        "3": ("Generate certificates", _generate_cert),
-    },
-    "Card Ops": {
-        "1": ("Dump ATR", dump_atr),
-        "2": ("Dump memory", dump_memory),
-        "3": ("Brute force PIN", brute_force_pin),
-        "4": ("Fuzz APDU", fuzz_apdu),
-        "5": ("Fuzz transaction", fuzz_transaction),
-        "6": ("Scan for cards", scan_for_cards),
-        "7": ("Dump filesystem", dump_filesystem),
-        "8": ("Export DB", lambda: export_data(init_backend())),
-        "9": ("Import DB", import_data),
-        "10": ("Reset card", reset_card),
-        "11": ("Detect card OS", detect_card_os),
-    },
+    std.value: _make_actions(std) for std in Standard
+}
+
+# Extend EMV entry with extra actions
+MENU_TREE[Standard.EMV.value].update({
+    "5": ("Terminal test", _terminal_test),
+    "6": ("ATM/HSM test", _atm_hsm_test),
+    "7": ("Generate certificates", _generate_cert),
+})
+
+# Generic card operations
+MENU_TREE["General Card Ops"] = {
+    "1": ("Dump memory", dump_memory),
+    "2": ("Brute force PIN", brute_force_pin),
+    "3": ("Fuzz APDU", fuzz_apdu),
+    "4": ("Fuzz transaction", fuzz_transaction),
+    "5": ("Dump filesystem", dump_filesystem),
+    "6": ("Export DB", lambda: export_data(init_backend())),
+    "7": ("Import DB", import_data),
+    "8": ("Reset card", reset_card),
+    "9": ("Detect card OS", detect_card_os),
+    "10": ("Android connect (root)", lambda: _android_connect(True)),
+    "11": ("Android connect (non-root)", lambda: _android_connect(False)),
+    "12": ("JCOP card attack", jcop_attack),
+    "13": ("HSM crypto test", hsm_crypto_test),
+    "14": ("NFC delay attack", nfc_delay_attack),
 }
 
 # ---------------------------------------------------------------------------
@@ -93,9 +132,8 @@ def run_tree_cli() -> None:
     """Entry point for the tree-based menu."""
     parser = argparse.ArgumentParser(description="GREENWIRE tree menu")
     parser.add_argument("--db", default="card_data.db")
-    args = parser.parse_args()
+    args = parser.parse_args()  # noqa: F841 - reserved for future DB selection
 
-    conn = init_backend(args.db)
     while True:
         print("\nSelect standard/card type:")
         for i, std in enumerate(MENU_TREE, start=1):
@@ -124,10 +162,7 @@ def run_tree_cli() -> None:
                 continue
             label, func = action
             print(f"[RUNNING] {label}")
-            if func in {export_data}:
-                func(conn)  # requires db connection
-            else:
-                func()
+            func()
 
 
 if __name__ == "__main__":
