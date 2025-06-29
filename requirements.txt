@@ -1,0 +1,14 @@
+## Core dependencies
+pyscard>=2.0.0
+
+## NFC/MIFARE/RFID support
+nfcpy>=1.0.4
+
+## Database
+# sqlite3 is part of Python stdlib
+
+## Testing
+pytest>=6.0.0
+pytest-cov>=2.0.0
+pexpect>=4.0
+cryptography>=41.0.0
