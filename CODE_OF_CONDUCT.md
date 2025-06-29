@@ -1,128 +1,112 @@
-# Contributor Covenant Code of Conduct
+I. PURPOSE & VALUES
 
-## Our Pledge
+The NEXA community is built on the foundation of respectful collaboration, technical excellence, and mutual accountability. Our shared spaces are designed to foster professional engagement and innovation in an environment free from discrimination, harassment, or abuse of any kind.
 
-We as members, contributors, and leaders pledge to make participation in our
-community a harassment-free experience for everyone, regardless of age, body
-size, visible or invisible disability, ethnicity, sex characteristics, gender
-identity and expression, level of experience, education, socio-economic status,
-nationality, personal appearance, race, religion, or sexual identity
-and orientation.
+By participating in this community, members agree to uphold the spirit and intent of this Code of Conduct. This document exists not to police, but to protect the integrity, inclusivity, and professionalism that define our work.
 
-We pledge to act and interact in ways that contribute to an open, welcoming,
-diverse, inclusive, and healthy community.
+We welcome all contributors regardless of age, body size, visible or invisible disability, ethnicity, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, sexual identity, or sexual orientation.
 
-## Our Standards
+II. EXPECTED BEHAVIOR
 
-Examples of behavior that contributes to a positive environment for our
-community include:
+To ensure a thriving, productive, and welcoming community, members are expected to:
 
-* Demonstrating empathy and kindness toward other people
-* Being respectful of differing opinions, viewpoints, and experiences
-* Giving and gracefully accepting constructive feedback
-* Accepting responsibility and apologizing to those affected by our mistakes,
-  and learning from the experience
-* Focusing on what is best not just for us as individuals, but for the
-  overall community
+Demonstrate Empathy and Kindness: Communicate with consideration and care. Assume good intentions but clarify misunderstandings promptly.
 
-Examples of unacceptable behavior include:
+Respect Different Opinions and Backgrounds: Diversity in thought, background, and experience is a strength. Engage in dialogue rather than debate. Critique ideas, not individuals.
 
-* The use of sexualized language or imagery, and sexual attention or
-  advances of any kind
-* Trolling, insulting or derogatory comments, and personal or political attacks
-* Public or private harassment
-* Publishing others' private information, such as a physical or email
-  address, without their explicit permission
-* Other conduct which could reasonably be considered inappropriate in a
-  professional setting
+Offer and Receive Constructive Feedback: Feedback should be specific, relevant, and considerate. Respond to critique with a mindset of growth and curiosity, not defensiveness.
 
-## Enforcement Responsibilities
+Take Ownership of Mistakes: Acknowledge errors, apologize sincerely, and take meaningful steps to rectify any harm done.
 
-Community leaders are responsible for clarifying and enforcing our standards of
-acceptable behavior and will take appropriate and fair corrective action in
-response to any behavior that they deem inappropriate, threatening, offensive,
-or harmful.
+Support the Greater Good: Make decisions that benefit the collective community rather than personal ambition. Prioritize sustainability, clarity, and collaboration.
 
-Community leaders have the right and responsibility to remove, edit, or reject
-comments, commits, code, wiki edits, issues, and other contributions that are
-not aligned to this Code of Conduct, and will communicate reasons for moderation
-decisions when appropriate.
+III. UNACCEPTABLE BEHAVIOR
 
-## Scope
+Certain actions are inconsistent with our community values and will not be tolerated. These include:
 
-This Code of Conduct applies within all community spaces, and also applies when
-an individual is officially representing the community in public spaces.
-Examples of representing our community include using an official e-mail address,
-posting via an official social media account, or acting as an appointed
-representative at an online or offline event.
+Sexualized Language or Imagery: Includes inappropriate jokes, content, or behavior, whether online or in person.
 
-## Enforcement
+Personal Attacks and Insults: This includes name-calling, demeaning language, or malicious mockery of individuals or groups.
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the community leaders responsible for enforcement at
-github@nexa.work.
-All complaints will be reviewed and investigated promptly and fairly.
+Harassment: Includes repeated unwanted contact, stalking, intimidation, threats, or disparagement in any form.
 
-All community leaders are obligated to respect the privacy and security of the
-reporter of any incident.
+Disclosure of Private Information Without Consent: This includes doxing, publishing personal or identifying information without explicit permission.
 
-## Enforcement Guidelines
+Aggressive or Disruptive Conduct: Sustained interruptions, hijacking discussions, or behavior that significantly detracts from productive engagement.
 
-Community leaders will follow these Community Impact Guidelines in determining
-the consequences for any action they deem in violation of this Code of Conduct:
+IV. SCOPE OF APPLICATION
 
-### 1. Correction
+This Code applies across all official community spaces including:
 
-**Community Impact**: Use of inappropriate language or other behavior deemed
-unprofessional or unwelcome in the community.
+Public repositories, forums, chat channels, mailing lists, and collaborative platforms.
 
-**Consequence**: A private, written warning from community leaders, providing
-clarity around the nature of the violation and an explanation of why the
-behavior was inappropriate. A public apology may be requested.
+Events, meetings, and conferences (virtual or physical) under the NEXA name or representation.
 
-### 2. Warning
+Any context where a community member is officially representing NEXA, such as speaking engagements or social media activity linked to their role in the project.
 
-**Community Impact**: A violation through a single incident or series
-of actions.
+Note: Actions in personal venues (e.g., personal social media or blogs) may be considered within scope if they directly affect the integrity or safety of the community.
 
-**Consequence**: A warning with consequences for continued behavior. No
-interaction with the people involved, including unsolicited interaction with
-those enforcing the Code of Conduct, for a specified period of time. This
-includes avoiding interactions in community spaces as well as external channels
-like social media. Violating these terms may lead to a temporary or
-permanent ban.
+V. REPORTING AND CONFIDENTIALITY
 
-### 3. Temporary Ban
+Violations of this Code may be reported to the enforcement team at:
+github@nexa.work
 
-**Community Impact**: A serious violation of community standards, including
-sustained inappropriate behavior.
+Reports will be handled discreetly and promptly. We are committed to:
 
-**Consequence**: A temporary ban from any sort of interaction or public
-communication with the community for a specified period of time. No public or
-private interaction with the people involved, including unsolicited interaction
-with those enforcing the Code of Conduct, is allowed during this period.
-Violating these terms may lead to a permanent ban.
+Ensuring the confidentiality and security of the reporter.
 
-### 4. Permanent Ban
+Treating all parties with respect throughout the review process.
 
-**Community Impact**: Demonstrating a pattern of violation of community
-standards, including sustained inappropriate behavior,  harassment of an
-individual, or aggression toward or disparagement of classes of individuals.
+Providing timely, transparent communication (where appropriate) regarding the resolution.
 
-**Consequence**: A permanent ban from any sort of public interaction within
-the community.
+Anonymous reports may also be investigated, though supporting evidence is encouraged for proper resolution.
 
-## Attribution
+VI. ENFORCEMENT FRAMEWORK
 
-This Code of Conduct is adapted from the [Contributor Covenant][homepage],
-version 2.0, available at
-https://www.contributor-covenant.org/version/2/0/code_of_conduct.html.
+Tiered Responses to Misconduct:
 
-Community Impact Guidelines were inspired by [Mozilla's code of conduct
-enforcement ladder](https://github.com/mozilla/diversity).
+1. Correction (Informal Warning)
 
-[homepage]: https://www.contributor-covenant.org
+When used: For low-impact, likely unintentional behavior.
 
-For answers to common questions about this code of conduct, see the FAQ at
-https://www.contributor-covenant.org/faq. Translations are available at
-https://www.contributor-covenant.org/translations.
+Response: A private, respectful message clarifying the issue, encouraging reflection, and outlining preferred conduct.
+
+Expectation: Behavior is corrected without public notice or escalation.
+
+2. Formal Warning
+
+When used: For repeated low-level offenses or a single notable breach.
+
+Response: A written warning detailing the violation and expected changes. May include a no-contact request or temporary removal from specific forums.
+
+Expectation: Member cooperates and avoids further infractions.
+
+3. Temporary Suspension
+
+When used: For behavior deemed significantly disruptive or harmful.
+
+Response: Suspension from participation in community spaces or events for a defined period. Conditions for reentry may be stipulated.
+
+Expectation: Member reflects, acknowledges impact, and agrees to abide by guidelines moving forward.
+
+4. Permanent Ban
+
+When used: For severe violations including harassment, sustained abuse, threats, or hate speech.
+
+Response: Immediate and permanent revocation of access to all community participation.
+
+Expectation: Community safety and cohesion are prioritized. There is no obligation to reinstate the banned member.
+
+All disciplinary decisions are documented internally. Appeals may be made if new context or information becomes available.
+
+VII. ATTRIBUTION
+
+This Code of Conduct is a customized adaptation of the Contributor Covenant v2.0, expanded for the needs and cultural expectations of the NEXA project and its community.
+
+Additional inspiration was drawn from open-source governance models used by Mozilla, Python, and Rust.
+
+For questions or clarifications, please contact the NEXA moderation team at the email ethics@nexa.work
+
+
+END OF DOCUMENT
+
