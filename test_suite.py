@@ -41,25 +41,27 @@ class GreenWireTestSuite:
         
         try:
             result = subprocess.run(
-                cmd, 
-                capture_output=True, 
-                text=True, 
+                cmd,
+                capture_output=True,
+                text=True,
                 timeout=timeout,
-                cwd=self.base_path
+                cwd=self.base_path,
             )
-              if result.returncode == 0:
+            if result.returncode == 0:
                 self.test_results['passed'] += 1
                 logger.info(f"[PASS] {description}")
                 self.test_results['details'].append({
                     'test': description,
                     'status': 'PASSED',
                     'stdout': result.stdout,
-                    'stderr': result.stderr
+                    'stderr': result.stderr,
                 })
                 return True
             else:
                 self.test_results['failed'] += 1
-                error_msg = f"FAILED: {description} - Return code: {result.returncode}"
+                error_msg = (
+                    f"FAILED: {description} - Return code: {result.returncode}"
+                )
                 logger.error(error_msg)
                 self.test_results['errors'].append(error_msg)
                 self.test_results['details'].append({
@@ -67,7 +69,7 @@ class GreenWireTestSuite:
                     'status': 'FAILED',
                     'returncode': result.returncode,
                     'stdout': result.stdout,
-                    'stderr': result.stderr
+                    'stderr': result.stderr,
                 })
                 return False
                 

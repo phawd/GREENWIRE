@@ -154,6 +154,25 @@ Terminal emulation supports Dynamic Data Authentication (DDA) and can operate in
 
 See CLI help (`-h`) for all options.
 
+## HSM/ATM Emulator
+
+GREENWIRE ships with a lightweight HSM emulator inspired by modern
+Thales and Futurex devices. The `HSMEmulator` class can generate a
+signed EMV applet for testing terminal flows without physical HSM
+hardware:
+
+```python
+from greenwire import HSMEmulator
+
+hsm = HSMEmulator(issuer="Demo Bank")
+applet = hsm.generate_e_applet()
+print(applet.card)
+```
+
+The returned `EMVApplet` contains the generated card data, the RSA
+public modulus, and a signature that proves authenticity of the card
+details.
+
 ## Contact vs Contactless Cards
 
 Traditional **contact** smartcards follow the ISO 7816 specification and
