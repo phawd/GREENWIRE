@@ -109,6 +109,15 @@ GREENWIRE can now:
 - Perform basic contactless EMV transactions via `--nfc-action` flags
 - Handle contactless terminal mode with multiple AIDs and configurable CA keys
 - Fuzz contactless transactions with `--contactless-fuzz`
+- Use an Android phone via ADB for contactless and EMV operations
+
+### Using an Android phone
+An Android device can serve as the NFC reader when connected via USB with ADB debugging enabled. Make sure the Android SDK tools are installed and the device is authorized. Invoke the CLI with `--reader android` or choose **Android NFC** in the interactive menu.
+
+```bash
+python3 greenwire-brute.py --emulate terminal --reader android
+```
+
 
 ### Usage
 
