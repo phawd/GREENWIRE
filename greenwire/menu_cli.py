@@ -34,6 +34,7 @@ GREENWIRE Menu
 21. Quit
 """
 
+
 # ---------------------------------------------------------------------------
 # Helper functions for each menu option
 # ---------------------------------------------------------------------------
@@ -42,7 +43,10 @@ def dump_atr() -> None:
     """Attempt to print the card ATR/ATS if available."""
     reader = ISO14443ReaderWriter()
     if reader.connect():
-        atr = getattr(reader.tag, "ats", None) or getattr(reader.tag, "atr", None)
+        atr = (
+            getattr(reader.tag, "ats", None)
+            or getattr(reader.tag, "atr", None)
+        )
         if atr:
             print(f"ATR/ATS: {atr.hex()}")
         else:
@@ -116,7 +120,10 @@ def detect_card_os() -> None:
     """Attempt to identify the card OS based on ATR patterns."""
     reader = ISO14443ReaderWriter()
     if reader.connect():
-        atr = getattr(reader.tag, "ats", None) or getattr(reader.tag, "atr", None)
+        atr = (
+            getattr(reader.tag, "ats", None)
+            or getattr(reader.tag, "atr", None)
+        )
         if atr and atr.startswith(bytes.fromhex("3B8F")):
             print(f"Detected card OS: JCOP (ATR {atr.hex()})")
         else:
@@ -128,6 +135,7 @@ def detect_card_os() -> None:
 # ---------------------------------------------------------------------------
 # Main interactive loop
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="GREENWIRE interactive menu")
