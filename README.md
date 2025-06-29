@@ -237,6 +237,11 @@ Each run of the interactive menus automatically issues 5-10 sample cards and
 prints their details. These cards include a placeholder SLE SDA certificate so
 they can be written to either contactless or contact test hardware.
 
+To generate a placeholder JCOP or CardOS applet for testing:
+```bash
+python3 -m greenwire.core.applet_generator --os JCOP --output sample.cap
+```
+
 Terminal emulation supports Dynamic Data Authentication (DDA) and can operate in wireless/contactless mode when requested.
 
 See CLI help (`-h`) for all options.
