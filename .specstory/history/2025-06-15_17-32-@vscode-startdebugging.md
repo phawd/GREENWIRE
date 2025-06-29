@@ -22,7 +22,6 @@ _**User**_
 
 _**Assistant**_
 
-<<<<<<< Updated upstream
 I understand you want to enable Claude Sonnet 4 (Preview) for all clients, but I'm not able to modify VS Code settings or client configurations. That type of setting would typically be managed through:
 
 1. **VS Code Settings**: If this is a VS Code extension setting, you'd need to go to File > Preferences > Settings and search for the specific setting
@@ -794,7 +793,6 @@ logger.info("Connected to card: {0}", card);
 ```
 
 Would you like me to refactor the code to address these issues?
-=======
 I'll help you start debugging your project. Let me first examine your workspace to understand the project structure and determine the best way to set up debugging. Let me check other key Python files to understand the main entry point: Now let me check if there's a `launch.json` file for debugging configuration: I can see there's a `` directory but no `launch.json` file yet. Let me create a debugging configuration for this Python project. Based on the code structure, it appears to be a smart card testing/fuzzing tool with a main UI in `greenwire_ui.py`. Let me fix the deprecation warnings by updating the Python debugger type: 
 ```
 
@@ -871,23 +869,18 @@ The file has significant formatting issues. Let me rewrite the test suite with p
 
 ```
 Now let me check the failing files to understand what needs to be fixed: Copilot has been working on this problem for a while. It can continue to iterate, or you can send a new message to refine your prompt.
->>>>>>> Stashed changes
 
 ---
 
 _**User**_
 
-<<<<<<< Updated upstream
 fix the above files so they work together using a common pyython interfae
-=======
 @agent Continue: "Continue to iterate?"
->>>>>>> Stashed changes
 
 ---
 
 _**Assistant**_
 
-<<<<<<< Updated upstream
 ### Observations from the Files:
 
 #### `greenwire-brute.py`:
@@ -1127,9 +1120,7 @@ Make certain the file and all of it's CLI and Menu commands work
 _**Assistant**_
 
 
-=======
 Now I understand the issues. Let me install the missing dependencies and then provide you with a comprehensive summary: 
->>>>>>> Stashed changes
 
 ---
 
