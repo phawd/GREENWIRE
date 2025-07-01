@@ -1,9 +1,11 @@
 import sqlite3
 import hashlib
+import logging
 from pathlib import Path
 from typing import Optional
 
 from .emv_generator import generate_card
+from .nfc_iso import AndroidReaderWriter
 
 # Secret used for hashing; in real deployments this should come from
 # a secure source such as an environment variable or secrets manager.
@@ -61,3 +63,22 @@ def is_duplicate(conn: sqlite3.Connection, pan: str) -> bool:
         ).fetchone()
         is not None
     )
+
+
+def issue_contactless_card(
+    conn: sqlite3.Connection,
+    reader: AndroidReaderWriter | None = None,
+    issuer: str = "TEST BANK",
+    iin: str = "400000",
+) -> dict:
+    """Issue a card and write minimal data via a contactless reader."""
+
+    card = issue_card(conn, issuer, iin)
+    device = reader or AndroidReaderWriter()
+    try:
+        if device.connect():
+            device.write_block(1, card["pan"].encode())
+            device.disconnect()
+    except Exception as exc:  # noqa: BLE001
+        logging.warning("Contactless write failed: %s", exc)
+    return card
