@@ -5,4 +5,4 @@
 - `pytest -q` failed due to missing modules (`cryptography`, `pexpect`, `PIL`).
 
 ## TODO Review
-- Found TODO placeholders in `.git/hooks/sendemail-validate.sample`.
+- No remaining TODO markers in `.git/hooks/sendemail-validate.sample`.
