@@ -15,7 +15,7 @@ from greenwire.core.file_fuzzer import (
 
 
 MENU = """\
-GREENWIRE Menu
+GREENWIRE Menu (22 options)
  1. Issue new card
  2. Card count
  3. List issued cards

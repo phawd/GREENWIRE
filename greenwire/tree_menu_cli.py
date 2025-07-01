@@ -85,6 +85,7 @@ MENU_TREE: Dict[str, Dict[str, tuple[str, Action]]] = {
 
 
 def _print_menu(options: Dict[str, tuple[str, Action]]) -> None:
+    print(f"({len(options)} options)")
     for key, (label, _) in sorted(options.items(), key=lambda x: int(x[0])):
         print(f"{key}. {label}")
 
@@ -97,7 +98,7 @@ def run_tree_cli() -> None:
 
     conn = init_backend(args.db)
     while True:
-        print("\nSelect standard/card type:")
+        print(f"\nSelect standard/card type ({len(MENU_TREE)} categories):")
         for i, std in enumerate(MENU_TREE, start=1):
             print(f"{i}. {std}")
         print("Q. Quit")
