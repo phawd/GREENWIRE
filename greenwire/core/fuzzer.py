@@ -1085,3 +1085,15 @@ class SmartcardFuzzer:
             results.extend(terminal.run())
 
         return results
+
+    def fuzz_applet_emulation(self, emulator, aid: str, iterations: int = 1) -> List[dict]:
+        """Fuzz an AID using a card emulator by issuing random APDUs."""
+        aid_bytes = bytes.fromhex(aid)
+        results: List[dict] = []
+        for _ in range(iterations):
+            select_resp = emulator.send_apdu(0x00, 0xA4, 0x04, 0x00, aid_bytes)
+            p1 = random.randint(0, 255)
+            p2 = random.randint(0, 255)
+            fuzz_resp = emulator.send_apdu(0x00, 0xB0, p1, p2, b"")
+            results.append({"aid": aid, "select": bytes(select_resp), "fuzz_resp": bytes(fuzz_resp)})
+        return results
