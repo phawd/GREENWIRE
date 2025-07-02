@@ -26,7 +26,9 @@ def _mutate_bytes(data: bytes, mutations: int = 1) -> bytes:
     return bytes(arr)
 
 
-def fuzz_image_file(path: Path, iterations: int = 10) -> List[Dict[str, object]]:
+def fuzz_image_file(
+    path: Path, iterations: int = 10
+) -> List[Dict[str, object]]:
     """Repeatedly corrupt an image file and attempt to parse it.
 
     Parameters
@@ -84,7 +86,8 @@ def fuzz_unusual_input(
     results: List[Dict[str, object]] = []
     for i in range(iterations):
         mutated = base + "".join(
-            chr(random.randint(0x80, 0x10FFFF)) for _ in range(random.randint(1, 3))
+            chr(random.randint(0x80, 0x10FFFF))
+            for _ in range(random.randint(1, 3))
         )
         try:
             parser(mutated)
