@@ -1,3 +1,9 @@
+/*
+ * JCOPCardManager communicates with JCOP-based smartcards using the
+ * Java Smart Card I/O API (javax.smartcardio). Ensure a PC/SC service
+ * and compatible reader driver are installed (e.g. pcscd and
+ * libpcsclite on Linux) as well as JDK 17 or later.
+ */
 import javax.smartcardio.*;
 import java.util.List;
 import java.util.Random;
