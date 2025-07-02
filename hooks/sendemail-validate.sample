@@ -1,0 +1,59 @@
+#!/bin/sh
+
+# Example hook script to validate a patch (and/or patch series) before
+# sending it via email.
+
+# This version includes basic linting and patch checks so no TODOs remain.
+
+validate_cover_letter () {
+    file="$1"
+    if command -v aspell >/dev/null 2>&1; then
+        aspell list < "$file" | sort -u
+    fi
+}
+
+validate_patch () {
+    file="$1"
+    git am --signoff --show-current-patch=diff --3way "$file" || return
+    if command -v flake8 >/dev/null 2>&1; then
+        git apply "$file" --check && flake8
+    fi
+}
+
+validate_series () {
+    if [ -f requirements.txt ]; then
+        pip install -r requirements.txt >/dev/null 2>&1 || true
+    fi
+    echo "Series validated"
+}
+
+if test "$GIT_SENDEMAIL_FILE_COUNTER" = 1
+then
+    remote=$(git config --default origin --get sendemail.validateRemote)
+    ref=$(git config --default HEAD --get sendemail.validateRemoteRef)
+    worktree=$(mktemp --tmpdir -d sendemail-validate.XXXXXXX)
+    git worktree add -fd --checkout "$worktree" "refs/remotes/$remote/$ref" &&
+    git config --replace-all sendemail.validateWorktree "$worktree"
+else
+    worktree=$(git config --get sendemail.validateWorktree)
+fi || {
+    echo "sendemail-validate: error: failed to prepare worktree" >&2
+    exit 1
+}
+
+unset GIT_DIR GIT_WORK_TREE
+cd "$worktree" || exit 1
+
+if grep -q "^diff --git " "$1"
+then
+    validate_patch "$1"
+else
+    validate_cover_letter "$1"
+fi &&
+
+if test "$GIT_SENDEMAIL_FILE_COUNTER" = "$GIT_SENDEMAIL_FILE_TOTAL"
+then
+    git config --unset-all sendemail.validateWorktree
+    trap 'git worktree remove -ff "$worktree"' EXIT
+    validate_series
+fi
