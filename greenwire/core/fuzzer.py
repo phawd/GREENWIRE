@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+"""SmartcardFuzzer: full-featured fuzzing and EMV analysis suite.
+
+Dependencies
+------------
+- ``pyscard`` for PC/SC communication
+- ``nfcpy`` for contactless terminal emulation
+- ``cryptography`` and ``pillow`` for crypto and file helpers
+- Java 17/Gradle build providing ``JCOPCardManager`` in ``GREENWIRE.jar``
+"""
 
 import sys
 import time
@@ -18,6 +27,7 @@ from concurrent.futures import ThreadPoolExecutor
 import csv
 import sqlite3
 import os
+import subprocess
 import re
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Union
@@ -1097,3 +1107,35 @@ class SmartcardFuzzer:
             fuzz_resp = emulator.send_apdu(0x00, 0xB0, p1, p2, b"")
             results.append({"aid": aid, "select": bytes(select_resp), "fuzz_resp": bytes(fuzz_resp)})
         return results
+
+    # --- JCOP integration helpers -------------------------------------------------
+
+    def _call_jcop_manager(self, method: str, *args: str) -> str:
+        """Invoke the Java ``JCOPCardManager`` class via ``subprocess``."""
+        command = [
+            "java",
+            "-cp",
+            "./build/libs/GREENWIRE.jar",
+            "JCOPCardManager",
+            method,
+            *args,
+        ]
+        result = subprocess.run(
+            command, capture_output=True, text=True, check=False
+        )
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr.strip())
+        return result.stdout.strip()
+
+    def issue_jcop_card(self, card_type: str, lun: str, key_data: str) -> str:
+        """Issue a DDA-compliant JCOP card using the Java backend."""
+        lun_arg = lun or ""
+        return self._call_jcop_manager("issueCard", card_type, lun_arg, key_data)
+
+    def read_jcop_card(self) -> str:
+        """Read data from a connected JCOP card."""
+        return self._call_jcop_manager("identifyCard")
+
+    def fuzz_jcop_apdu(self, pattern: str) -> str:
+        """Fuzz APDU commands on a JCOP card."""
+        return self._call_jcop_manager("fuzzAPDU", pattern)
