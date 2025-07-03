@@ -13,6 +13,7 @@ from greenwire.core.file_fuzzer import (
     fuzz_binary_file,
     fuzz_unusual_input,
 )
+from greenwire.sms_tools import build_pdu, DEFAULT_SMSC_LIST
 
 
 MENU_HEADER = "GREENWIRE Menu"
@@ -196,6 +197,19 @@ def fuzz_pcsc() -> None:
         print(r)
 
 
+def send_sms() -> None:
+    """Build and display an SMS PDU."""
+    smsc = input("SMSC (blank for default): ").strip()
+    if not smsc:
+        smsc = DEFAULT_SMSC_LIST[0]
+    dest = input("Destination number: ").strip()
+    msg = input("Message text: ")
+    flash = input("Flash SMS? (y/n): ").strip().lower() == "y"
+    stk = input("STK payload? (y/n): ").strip().lower() == "y"
+    pdu = build_pdu(dest, msg, smsc=smsc, flash=flash, stk=stk)
+    print(f"PDU: {pdu}")
+
+
 OPTIONS: Dict[str, Tuple[str, Callable[[object, object], None] | None]] = {
     "1": ("Issue new card", lambda conn, proc: issue_new_card(conn)),
     "2": ("Card count", lambda conn, proc: show_card_count(conn)),
@@ -219,6 +233,7 @@ OPTIONS: Dict[str, Tuple[str, Callable[[object, object], None] | None]] = {
     "20": ("Detect card OS", lambda conn, proc: detect_card_os()),
     "21": ("Fuzz file parser", lambda conn, proc: fuzz_file_menu()),
     "22": ("Random fuzz PC/SC", lambda conn, proc: fuzz_pcsc()),
+    "23": ("Build SMS PDU", lambda conn, proc: send_sms()),
     "Q": ("Quit", None),
 }
 

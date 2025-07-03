@@ -22,6 +22,7 @@ def test_menu_functions(monkeypatch, tmp_path, capsys):
     class DummyTerminal:
         def __init__(self, aids):
             pass
+
         def run(self):
             return [{"aid": "A"}]
     monkeypatch.setattr(menu_cli, "ContactlessEMVTerminal", DummyTerminal)
@@ -30,6 +31,7 @@ def test_menu_functions(monkeypatch, tmp_path, capsys):
         def __init__(self):
             super().__init__()
             self.tag = type("Tag", (), {"ats": b"\x3B\x00"})()
+
         def connect(self, device: str = "usb") -> bool:
             return True
     monkeypatch.setattr(menu_cli, "ISO14443ReaderWriter", DummyReader)
@@ -40,11 +42,17 @@ def test_menu_functions(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr(menu_cli, "fuzz_image_file", lambda p: ["img"])
     monkeypatch.setattr(menu_cli, "fuzz_binary_file", lambda p: ["bin"])
     monkeypatch.setattr(menu_cli, "fuzz_unusual_input", lambda f, b: ["unusual"])
+    monkeypatch.setattr(menu_cli, "build_pdu", lambda *a, **k: "PDUOUT")
 
     inputs = iter([
         "0",        # read_nfc_block
         "0", "00",  # write_nfc_block
         str(tmp_path / "seed.txt"), "unusual",  # fuzz_file_menu
+        "",         # send_sms: smsc (blank -> default)
+        "1234",    # destination number
+        "hi",      # message text
+        "n",       # flash
+        "n",       # stk
     ])
     import builtins
     monkeypatch.setattr(builtins, "input", lambda _: next(inputs))
@@ -74,6 +82,7 @@ def test_menu_functions(monkeypatch, tmp_path, capsys):
     menu_cli.detect_card_os()
     menu_cli.fuzz_file_menu()
     menu_cli.fuzz_pcsc()
+    menu_cli.send_sms()
 
     captured = capsys.readouterr()
     assert "Issued card" in captured.out
