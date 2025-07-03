@@ -101,6 +101,31 @@ def aes_decrypt(key: bytes, ciphertext: bytes, iv: bytes) -> bytes:
     return padded[:-pad_len]
 
 
+def aes_gcm_encrypt(key: bytes, plaintext: bytes, iv: bytes, aad: bytes = b"") -> tuple[bytes, bytes]:
+    """Encrypt ``plaintext`` using AES-GCM with optional ``aad``."""
+    cipher = Cipher(
+        algorithms.AES(key),
+        modes.GCM(iv),
+        backend=default_backend(),
+    )
+    encryptor = cipher.encryptor()
+    encryptor.authenticate_additional_data(aad)
+    ciphertext = encryptor.update(plaintext) + encryptor.finalize()
+    return ciphertext, encryptor.tag
+
+
+def aes_gcm_decrypt(key: bytes, ciphertext: bytes, iv: bytes, tag: bytes, aad: bytes = b"") -> bytes:
+    """Decrypt AES-GCM ``ciphertext`` verifying ``tag`` and ``aad``."""
+    cipher = Cipher(
+        algorithms.AES(key),
+        modes.GCM(iv, tag),
+        backend=default_backend(),
+    )
+    decryptor = cipher.decryptor()
+    decryptor.authenticate_additional_data(aad)
+    return decryptor.update(ciphertext) + decryptor.finalize()
+
+
 def sha256(data: bytes) -> str:
     """Return the hex SHA-256 hash of data."""
     return hashlib.sha256(data).hexdigest()

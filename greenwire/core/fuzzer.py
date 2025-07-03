@@ -1139,3 +1139,26 @@ class SmartcardFuzzer:
     def fuzz_jcop_apdu(self, pattern: str) -> str:
         """Fuzz APDU commands on a JCOP card."""
         return self._call_jcop_manager("fuzzAPDU", pattern)
+
+    def generate_cap_file(self, project_dir: str, output: str) -> str:
+        """Generate a CAP file from a Java Card project using GlobalPlatform tools."""
+        command = [
+            "java",
+            "-jar",
+            "gp.jar",
+            "--create-cap",
+            project_dir,
+            output,
+        ]
+        result = subprocess.run(command, capture_output=True, text=True, check=False)
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr.strip())
+        return result.stdout.strip()
+
+    def install_cap_file(self, cap_path: str) -> str:
+        """Install a CAP file onto a card via GlobalPlatformPro."""
+        command = ["gp", cap_path]
+        result = subprocess.run(command, capture_output=True, text=True, check=False)
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr.strip())
+        return result.stdout.strip()
