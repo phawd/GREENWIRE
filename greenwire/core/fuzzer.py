@@ -1139,3 +1139,69 @@ class SmartcardFuzzer:
     def fuzz_jcop_apdu(self, pattern: str) -> str:
         """Fuzz APDU commands on a JCOP card."""
         return self._call_jcop_manager("fuzzAPDU", pattern)
+
+    def fuzz_pcsc_random(self, reader_index: int = 0, iterations: int = 10) -> List[dict]:
+        """Send random APDU commands via a PC/SC reader.
+
+        Parameters
+        ----------
+        reader_index:
+            Index of the PC/SC reader to use.
+        iterations:
+            Number of random commands to transmit.
+
+        Returns
+        -------
+        list of dict
+            A list of command/response dictionaries. If ``pyscard`` is not
+            available or no reader is detected, an empty list is returned.
+        """
+        try:  # ``pyscard`` may not be installed or pcscd may be missing
+            avail = readers()
+        except Exception:  # pragma: no cover - environment dependent
+            logging.error("pyscard not available or PC/SC service missing")
+            return []
+
+        if not avail:
+            logging.error("No PC/SC readers found")
+            return []
+
+        try:
+            reader = avail[reader_index]
+        except IndexError:
+            logging.error("Invalid reader index %s", reader_index)
+            return []
+
+        conn = reader.createConnection()
+        try:
+            conn.connect()
+        except Exception as exc:  # pragma: no cover - hardware dependent
+            logging.error("Failed to connect to reader: %s", exc)
+            return []
+
+        results: List[dict] = []
+        for _ in range(iterations):
+            # Create a minimally valid APDU: CLA INS P1 P2 + optional data
+            apdu = os.urandom(4) + os.urandom(random.randint(0, 8))
+            apdu_list = list(apdu)
+            start = time.perf_counter()
+            try:
+                resp, sw1, sw2 = conn.transmit(apdu_list)
+                elapsed = time.perf_counter() - start
+                results.append(
+                    {
+                        "apdu": apdu,
+                        "response": bytes(resp),
+                        "sw1": sw1,
+                        "sw2": sw2,
+                        "time": elapsed,
+                    }
+                )
+            except Exception as exc:  # pragma: no cover - hardware dependent
+                results.append({"apdu": apdu, "error": str(exc)})
+
+        try:
+            conn.disconnect()
+        except Exception:  # pragma: no cover - hardware dependent
+            pass
+        return results

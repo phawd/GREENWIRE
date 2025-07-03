@@ -1,5 +1,6 @@
 import argparse
 from pathlib import Path
+from typing import Callable, Dict, Tuple
 """Simple interactive CLI exposing most GREENWIRE features."""
 
 from greenwire.core.backend import init_backend, issue_card
@@ -14,31 +15,7 @@ from greenwire.core.file_fuzzer import (
 )
 
 
-MENU = """\
-GREENWIRE Menu (22 options)
- 1. Issue new card
- 2. Card count
- 3. List issued cards
- 4. Contactless EMV transaction
- 5. Scan NFC vulnerabilities
- 6. Fuzz contactless card
- 7. Read NFC block
- 8. Write NFC block
- 9. Show NFC tag UID
-10. Dump ATR
-11. Dump full card memory
-12. Brute force PIN (simulated)
-13. Fuzz APDU sequence
-14. Fuzz contactless transaction
-15. Scan for contactless cards
-16. Dump card filesystem (simulated)
-17. Export card data to JSON
-18. Import card data from JSON
-19. Reset card (simulated)
-20. Detect card OS
-21. Fuzz file parser
-22. Quit
-"""
+MENU_HEADER = "GREENWIRE Menu"
 
 
 # ---------------------------------------------------------------------------
@@ -153,6 +130,98 @@ def fuzz_file_menu() -> None:
     for r in results:
         print(r)
 
+
+# ---------------------------------------------------------------------------
+# Menu option helpers
+# ---------------------------------------------------------------------------
+
+def issue_new_card(conn) -> None:
+    card = issue_card(conn)
+    print("Issued card:\n", card)
+
+
+def show_card_count(conn) -> None:
+    count = conn.execute("SELECT COUNT(*) FROM cards").fetchone()[0]
+    print(f"{count} cards stored")
+
+
+def list_cards(conn) -> None:
+    rows = conn.execute(
+        "SELECT verification_code, pan_hash FROM cards"
+    ).fetchall()
+    for row in rows:
+        print(row)
+
+
+def run_contactless_txn() -> None:
+    terminal = ContactlessEMVTerminal(["A0000000031010"])
+    for res in terminal.run():
+        print(res)
+
+
+def scan_vulnerabilities() -> None:
+    reader = ISO14443ReaderWriter()
+    vulns = scan_nfc_vulnerabilities(reader)
+    if vulns:
+        for v in vulns:
+            print(v)
+    else:
+        print("No vulnerabilities detected")
+
+
+def read_nfc_block() -> None:
+    reader = ISO14443ReaderWriter()
+    blk = int(input("Block number: "))
+    data = reader.read_block(blk)
+    print(data.hex())
+
+
+def write_nfc_block() -> None:
+    reader = ISO14443ReaderWriter()
+    blk = int(input("Block number: "))
+    data = bytes.fromhex(input("Hex data: "))
+    reader.write_block(blk, data)
+    print("Wrote block")
+
+
+def show_uid(processor: NFCEMVProcessor) -> None:
+    uid = processor.read_uid()
+    print(f"UID: {uid}")
+
+
+def fuzz_pcsc() -> None:
+    sf = SmartcardFuzzer({"dry_run": False})
+    results = sf.fuzz_pcsc_random()
+    for r in results:
+        print(r)
+
+
+OPTIONS: Dict[str, Tuple[str, Callable[[object, object], None] | None]] = {
+    "1": ("Issue new card", lambda conn, proc: issue_new_card(conn)),
+    "2": ("Card count", lambda conn, proc: show_card_count(conn)),
+    "3": ("List issued cards", lambda conn, proc: list_cards(conn)),
+    "4": ("Contactless EMV transaction", lambda conn, proc: run_contactless_txn()),
+    "5": ("Scan NFC vulnerabilities", lambda conn, proc: scan_vulnerabilities()),
+    "6": ("Fuzz contactless card", lambda conn, proc: fuzz_transaction()),
+    "7": ("Read NFC block", lambda conn, proc: read_nfc_block()),
+    "8": ("Write NFC block", lambda conn, proc: write_nfc_block()),
+    "9": ("Show NFC tag UID", lambda conn, proc: show_uid(proc)),
+    "10": ("Dump ATR", lambda conn, proc: dump_atr()),
+    "11": ("Dump full card memory", lambda conn, proc: dump_memory()),
+    "12": ("Brute force PIN", lambda conn, proc: brute_force_pin()),
+    "13": ("Fuzz APDU sequence", lambda conn, proc: fuzz_apdu()),
+    "14": ("Fuzz contactless transaction", lambda conn, proc: fuzz_transaction()),
+    "15": ("Scan for contactless cards", lambda conn, proc: scan_for_cards()),
+    "16": ("Dump card filesystem", lambda conn, proc: dump_filesystem()),
+    "17": ("Export card data to JSON", lambda conn, proc: export_data(conn)),
+    "18": ("Import card data from JSON", lambda conn, proc: import_data()),
+    "19": ("Reset card", lambda conn, proc: reset_card()),
+    "20": ("Detect card OS", lambda conn, proc: detect_card_os()),
+    "21": ("Fuzz file parser", lambda conn, proc: fuzz_file_menu()),
+    "22": ("Random fuzz PC/SC", lambda conn, proc: fuzz_pcsc()),
+    "Q": ("Quit", None),
+}
+
 # ---------------------------------------------------------------------------
 # Main interactive loop
 # ---------------------------------------------------------------------------
@@ -167,77 +236,25 @@ def main() -> None:
     processor = NFCEMVProcessor()
 
     while True:
-        print(MENU)
-        choice = input("Select option: ").strip()
-        if choice == "1":
-            card = issue_card(conn)
-            print("Issued card:\n", card)
-        elif choice == "2":
-            count = conn.execute("SELECT COUNT(*) FROM cards").fetchone()[0]
-            print(f"{count} cards stored")
-        elif choice == "3":
-            rows = conn.execute(
-                "SELECT verification_code, pan_hash FROM cards"
-            ).fetchall()
-            for row in rows:
-                print(row)
-        elif choice == "4":
-            terminal = ContactlessEMVTerminal(["A0000000031010"])
-            results = terminal.run()
-            for res in results:
-                print(res)
-        elif choice == "5":
-            reader = ISO14443ReaderWriter()
-            vulns = scan_nfc_vulnerabilities(reader)
-            if vulns:
-                for v in vulns:
-                    print(v)
+        print(f"\n{MENU_HEADER} ({len(OPTIONS)} options)")
+        for key, (label, _) in OPTIONS.items():
+            if key == "Q":
+                print("Q. Quit")
             else:
-                print("No vulnerabilities detected")
-        elif choice == "6":
-            fuzz_transaction()
-        elif choice == "7":
-            reader = ISO14443ReaderWriter()
-            blk = int(input("Block number: "))
-            data = reader.read_block(blk)
-            print(data.hex())
-        elif choice == "8":
-            reader = ISO14443ReaderWriter()
-            blk = int(input("Block number: "))
-            data = bytes.fromhex(input("Hex data: "))
-            reader.write_block(blk, data)
-            print("Wrote block")
-        elif choice == "9":
-            uid = processor.read_uid()
-            print(f"UID: {uid}")
-        elif choice == "10":
-            dump_atr()
-        elif choice == "11":
-            dump_memory()
-        elif choice == "12":
-            brute_force_pin()
-        elif choice == "13":
-            fuzz_apdu()
-        elif choice == "14":
-            fuzz_transaction()
-        elif choice == "15":
-            scan_for_cards()
-        elif choice == "16":
-            dump_filesystem()
-        elif choice == "17":
-            export_data(conn)
-        elif choice == "18":
-            import_data()
-        elif choice == "19":
-            reset_card()
-        elif choice == "20":
-            detect_card_os()
-        elif choice == "21":
-            fuzz_file_menu()
-        elif choice == "22":
-            break
-        else:
+                print(f"{key}. {label}")
+
+        choice = input("Select option: ").strip().upper()
+        action = OPTIONS.get(choice)
+        if not action:
             print("Invalid choice")
+            continue
+        label, func = action
+        if func is None:
+            break
+        try:
+            func(conn, processor)
+        except Exception as exc:  # pragma: no cover - runtime safety
+            print(f"Error running {label}: {exc}")
 
 
 if __name__ == "__main__":
