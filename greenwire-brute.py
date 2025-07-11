@@ -111,9 +111,6 @@ from dataclasses import dataclass
 from greenwire.core.fuzzer import SmartcardFuzzer
 import subprocess
 
-# Debugging: Print Python module search paths
-print('sys.path:', sys.path)
-exit()
 
 # Database Schema Version
 DB_VERSION = 1
