@@ -14,13 +14,29 @@ from greenwire.core.file_fuzzer import (
 )
 
 
+CONFIG = {
+    "dump_blocks": 16,
+    "fuzz_iterations": 1,
+}
+
+HELP_TEXT = """\
+GREENWIRE interactive menu
+
+Each option triggers a different smartcard test or NFC operation. Some
+functions use values from the configurable settings (see option 24). The
+current settings are:
+  dump_blocks      Number of blocks read when dumping memory
+  fuzz_iterations  Iterations for contactless fuzzing
+
+"""
+
 MENU = """\
-GREENWIRE Menu (22 options)
- 1. Issue new card
- 2. Card count
- 3. List issued cards
- 4. Contactless EMV transaction
- 5. Scan NFC vulnerabilities
+GREENWIRE Menu (25 options)
+1. Issue new card
+2. Card count
+3. List issued cards
+4. Contactless EMV transaction
+5. Scan NFC vulnerabilities
  6. Fuzz contactless card
  7. Read NFC block
  8. Write NFC block
@@ -37,7 +53,10 @@ GREENWIRE Menu (22 options)
 19. Reset card (simulated)
 20. Detect card OS
 21. Fuzz file parser
-22. Quit
+22. Show APDU log
+23. Configure settings
+24. Help
+25. Quit
 """
 
 
@@ -62,8 +81,10 @@ def dump_atr() -> None:
         print("No reader or tag detected")
 
 
-def dump_memory(blocks: int = 16) -> None:
+def dump_memory(blocks: int | None = None) -> None:
     """Read and display a range of blocks from the card."""
+    if blocks is None:
+        blocks = CONFIG["dump_blocks"]
     reader = ISO14443ReaderWriter()
     for blk in range(blocks):
         try:
@@ -83,10 +104,14 @@ def fuzz_apdu() -> None:
     print("[SIMULATION] Fuzzing APDU commands")
 
 
-def fuzz_transaction() -> None:
+def fuzz_transaction(iterations: int | None = None) -> None:
     """Run a contactless fuzzing transaction using SmartcardFuzzer."""
+    if iterations is None:
+        iterations = CONFIG["fuzz_iterations"]
     fuzzer = SmartcardFuzzer({"dry_run": True})
-    results = fuzzer.fuzz_contactless(["A0000000031010"], iterations=1)
+    results = fuzzer.fuzz_contactless(
+        ["A0000000031010"], iterations=iterations
+    )
     for r in results:
         print(r)
 
@@ -137,6 +162,45 @@ def detect_card_os() -> None:
         reader.disconnect()
     else:
         print("No reader or tag detected")
+
+
+def show_apdu_log(conn) -> None:
+    """Display recent APDU commands stored in the database."""
+    query = (
+        "SELECT timestamp, apdu, response, sw1, sw2 "
+        "FROM commands ORDER BY id DESC LIMIT 10"
+    )
+    rows = conn.execute(query).fetchall()
+    if not rows:
+        print("No APDU log entries found")
+        return
+    print("Last 10 APDU exchanges:")
+    for ts, apdu, resp, sw1, sw2 in rows:
+        print(f"{ts}: APDU {apdu} -> {resp} ({sw1:02X}{sw2:02X})")
+
+
+def configure_settings() -> None:
+    """Allow user to modify global configuration values."""
+    try:
+        blocks_prompt = (
+            f"Blocks to read when dumping memory [{CONFIG['dump_blocks']}]: "
+        )
+        blocks = int(input(blocks_prompt) or CONFIG["dump_blocks"])
+        iters_prompt = (
+            f"Fuzz iterations for transactions [{CONFIG['fuzz_iterations']}]: "
+        )
+        iters = int(input(iters_prompt) or CONFIG["fuzz_iterations"])
+        CONFIG["dump_blocks"] = blocks
+        CONFIG["fuzz_iterations"] = iters
+    except ValueError:
+        print("Invalid input; configuration unchanged")
+
+
+def show_help() -> None:
+    """Print detailed help information."""
+    print(HELP_TEXT)
+    for key, value in CONFIG.items():
+        print(f"{key}: {value}")
 
 
 def fuzz_file_menu() -> None:
@@ -235,6 +299,12 @@ def main() -> None:
         elif choice == "21":
             fuzz_file_menu()
         elif choice == "22":
+            show_apdu_log(conn)
+        elif choice == "23":
+            configure_settings()
+        elif choice == "24":
+            show_help()
+        elif choice == "25":
             break
         else:
             print("Invalid choice")
