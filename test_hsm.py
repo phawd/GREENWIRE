@@ -112,7 +112,7 @@ def test_sign_verify(private_key, public_key):
     print("Signing and verification test passed.")
 
 def generate_self_signed_ca(private_key, subject_name="EMV Test CA"):
-    from cryptography.x509 import NameOID, Name, CertificateBuilder, random_serial_number, BasicConstraints, SubjectAlternativeName
+    from cryptography.x509 import NameOID, Name, CertificateBuilder, random_serial_number, BasicConstraints
     import cryptography.x509 as x509
     subject = issuer = Name([
         x509.NameAttribute(NameOID.COMMON_NAME, subject_name),
