@@ -1062,10 +1062,19 @@ class SmartcardFuzzer:
         }
 
     def analyze_rsa_key(self, data):
+        results = {
+            'key_length': None,
+            'is_weak': False,
+            'error': None
+        }
         try:
             # Example RSA key analysis logic
             key_length = len(data) * 8
+            results['key_length'] = key_length
             if key_length < 2048:
+                results['is_weak'] = True
                 logging.warning(f"Weak RSA key detected: {key_length} bits")
         except Exception as e:
+            results['error'] = str(e)
             logging.error(f"Error analyzing RSA key: {e}")
+        return results
