@@ -1,12 +1,24 @@
 import javax.smartcardio.*;
 import java.util.List;
 import java.util.Random;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
 
 public class JCOPCardManager {
     private CardTerminal terminal;
     private Card card;
     private CardChannel channel;
 
+    /**
+     * JCOPCardManager is a class responsible for managing JCOP smart card operations.
+    public JCOPCardManager() throws Exception {
+        // Ensure compatibility with Python by exposing functionality via REST API
+    }
+     *
+     * @throws Exception if no smart card terminals are found during initialization.
+     */
     public JCOPCardManager() throws Exception {
         TerminalFactory factory = TerminalFactory.getDefault();
         List<CardTerminal> terminals = factory.terminals().list();
@@ -56,17 +68,9 @@ public class JCOPCardManager {
     }
 
     public void disconnect() {
-        if (card != null) {
-            card.disconnect(false);
-            System.out.println("Disconnected from card.");
-        }
-    }
-
     public static void main(String[] args) {
-        try {
-            JCOPCardManager manager = new JCOPCardManager();
-            manager.connect();
-            manager.issueCard("visa", null);
+            SpringApplication.run(JCOPCardManager.class, args);
+        }
             manager.searchRootCA("DDA");
             manager.disconnect();
         } catch (Exception e) {
