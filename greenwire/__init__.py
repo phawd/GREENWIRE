@@ -7,6 +7,11 @@ from .core.nfc_iso import (
     AndroidReaderWriter,
 )
 from .nfc_vuln import scan_nfc_vulnerabilities
+from .qmi_cli import (
+    get_device_ids,
+    get_signal_strength,
+    send_raw_message,
+)
 
 __all__ = [
     "ISO14443ReaderWriter",
@@ -14,4 +19,7 @@ __all__ = [
     "ISO18092ReaderWriter",
     "AndroidReaderWriter",
     "scan_nfc_vulnerabilities",
+    "get_device_ids",
+    "get_signal_strength",
+    "send_raw_message",
 ]

@@ -12,6 +12,16 @@
 `greenwire.py` is a unified command-line tool for both EMV card issuing and SMS PDU building. It wraps the Python EMV issuer and the Perl SMS CLI.
 Additional features and programs will be added over time.
 
+### QMI Utilities
+
+The ``greenwire.qmi_cli`` module wraps the external ``qmicli`` binary to
+interact with modems. You can query device IDs, read signal strength or send
+raw QMI messages. Example::
+
+    python -m greenwire.qmi_cli ids --device /dev/cdc-wdm0
+
+These helpers make it easier to communicate with the FX3100 embedded modem.
+
 GREENWIRE CLI Interface
 
 Advanced EMV and smartcard security testing tool implementing EMVCo specified
