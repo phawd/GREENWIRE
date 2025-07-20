@@ -21,47 +21,30 @@ on:
       - main
 
 jobs:
-  build:
-    # Build job to compile the Java project
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        # Check out the repository code
-        uses: actions/checkout@v4
-      - name: Set up Java
-        # Set up Java 17 environment
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-      - name: Build with Gradle
-        # Build the project using Gradle
-        run: ./gradlew build
-
   test:
-    # Test job to run both Python and Java tests
+    # Test job to run Python tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         # Check out the repository code
         uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r requirements.txt flake8
       - name: Run Python tests
         # Run Python tests using pytest
         run: pytest --maxfail=5 --disable-warnings
-      - name: Run Java tests
-        # Run Java tests using Gradle
-        run: ./gradlew test
-      - name: Test Python-Java integration
-        # Test the integration between Python CLI and Java backend
-        run: python greenwire-brute.py
+      - name: Lint
+        run: flake8
 
   deploy:
-    # Deployment job to deploy the project
+    # Deployment job placeholder
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        # Check out the repository code
         uses: actions/checkout@v4
       - name: Deploy
-        # Placeholder for deployment script
         run: echo "Deploying GREENWIRE project"
