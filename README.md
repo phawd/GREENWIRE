@@ -12,6 +12,29 @@
 `greenwire.py` is a unified command-line tool for both EMV card issuing and SMS PDU building. It wraps the Python EMV issuer and the Perl SMS CLI.
 Additional features and programs will be added over time.
 
+### QMI Utilities
+
+The ``greenwire.qmi_cli`` module wraps the external ``qmicli`` binary to
+interact with modems. You can query device IDs, read signal strength or send
+raw QMI messages. Example::
+
+    python -m greenwire.qmi_cli ids --device /dev/cdc-wdm0
+
+These helpers make it easier to communicate with the FX3100 embedded modem.
+If ``qmicli`` is not available, the script lists any detected ``/dev/ttyUSB*``
+or ``/dev/ttyACM*`` ports so you can fall back to a serial connection.
+
+### JCOP Applet Configuration
+
+The ``greenwire.core.jcop_applet_config`` module defines
+``JCOPAppletConfig``. It exposes **39** boolean feature flags that can be
+toggled on or off. This provides a starting point for experimenting with
+GlobalPlatform-compatible JCOP applets. Example::
+
+    from greenwire.core.jcop_applet_config import JCOPAppletConfig
+    cfg = JCOPAppletConfig()
+    cfg.toggle("feature_01", True)
+
 GREENWIRE CLI Interface
 
 Advanced EMV and smartcard security testing tool implementing EMVCo specified
