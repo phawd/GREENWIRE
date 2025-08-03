@@ -1,6 +1,17 @@
 # Remaining TODO and stub sections
 
-This repository previously referenced unfinished placeholders in `.git/hooks/sendemail-validate.sample`.
-Those placeholder checks are now implemented in `hooks/sendemail-validate.sample` within the repository.
+This repository currently contains a few placeholder comments indicating unfinished implementations.
 
-Currently there are no other TODO markers in the codebase.
+## .git/hooks/sendemail-validate.sample
+- Line 22: Replace TODO placeholders with appropriate checks
+- Line 27: TODO check for cover letter
+- Line 35: TODO patch checks
+- Line 41: TODO checks for whole series
+
+## greenwire-brute.py
+# (none)
+
+## greenwtest1.py
+# (none)
+
+These markers indicate parts of the project that may require future work or additional functionality.
