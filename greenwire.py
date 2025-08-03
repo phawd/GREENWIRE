@@ -1222,6 +1222,27 @@ def main():
         help="CAP file to use in Audit mode"
     )
 
+    install_parser = subparsers.add_parser(
+        "install-cap",
+        help="Install a .cap file on a smart card using GlobalPlatformPro or OpenSC."
+    )
+    install_parser.add_argument(
+        "--cap-file",
+        required=True,
+        help="Path to the .cap file to install."
+    )
+    install_parser.add_argument(
+        "--tool",
+        choices=["gpp", "opensc"],
+        default="gpp",
+        help="Tool to use for installation: gpp (GlobalPlatformPro) or opensc (OpenSC). Default: gpp."
+    )
+    install_parser.add_argument(
+        "--aid",
+        default=None,
+        help="AID to use for installation (optional)."
+    )
+
     args = parser.parse_args()
 
     # Ensure dummy cap file exists
@@ -1469,6 +1490,38 @@ def main():
             logger.log('audit', 'APDU', f"APDU: {apdu}, RESP: {resp}")
         logger.persist_logs_in_cap()
         print("Audit transaction complete.")
+    elif args.command == "install-cap":
+        """
+        Installs a .cap file on a smart card using the selected tool.
+        Requires GlobalPlatformPro (gpp) or OpenSC to be installed and available in PATH.
+        """
+        cap_file = args.cap_file
+        aid = args.aid or "A0000000031010"  # Default Visa AID if not provided
+        if args.tool == "gpp":
+            # GlobalPlatformPro command
+            cmd = [
+                "java", "-jar", "globalplatformpro.jar",
+                "--install", cap_file,
+                "--package", aid,
+                "--applet", aid
+            ]
+            print(f"Installing {cap_file} with GlobalPlatformPro (AID: {aid})...")
+        else:
+            # OpenSC command
+            cmd = [
+                "opensc-tool", "-s",
+                f"00A40400{len(aid)//2:02X}{aid}"
+            ]
+            print(f"Installing {cap_file} with OpenSC (AID: {aid})...")
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            print(result.stdout)
+            if result.stderr:
+                print("[stderr]", result.stderr)
+            print("Installation complete.")
+        except Exception as e:
+            print(f"Installation failed: {e}")
+
 
 if __name__ == "__main__":
     main()
