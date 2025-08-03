@@ -1212,6 +1212,16 @@ def main():
         help="CAP file to use in Decoy mode"
     )
 
+    audit_parser = subparsers.add_parser(
+        "audit",
+        help="Audit .cap: EMV compliant, logs all APDUs, only Visa/Mastercard/Amex AIDs"
+    )
+    audit_parser.add_argument(
+        "--cap-file",
+        required=True,
+        help="CAP file to use in Audit mode"
+    )
+
     args = parser.parse_args()
 
     # Ensure dummy cap file exists
@@ -1439,6 +1449,26 @@ def main():
         logger.log('decoy', 'SELECT', f"AID {selected} selected, response: {response}")
         logger.persist_logs_in_cap()
         print("Decoy transaction complete.")
+    elif args.command == "audit":
+        logger = CapFileLogger(args.cap_file)
+        print("Audit .cap: EMV compliant, logs all APDUs, only Visa/Mastercard/Amex AIDs")
+        # Visa, Mastercard, Amex AIDs (examples)
+        visa_aid = 'A0000000031010'
+        mc_aid = 'A0000000041010'
+        amex_aid = 'A00000002501'
+        aids = [visa_aid, mc_aid, amex_aid]
+        selected = random.choice(aids)
+        apdu = '00A40400'  # EMV SELECT
+        response = '9000'
+        print(f"Selected AID: {selected}")
+        logger.log('audit', 'SELECT', f"AID {selected} selected, response: {response}")
+        # Simulate logging all APDUs (for demo, log 5 random APDUs)
+        for _ in range(5):
+            apdu = ''.join(random.choices('0123456789ABCDEF', k=16))
+            resp = ''.join(random.choices('0123456789ABCDEF', k=32)) + '9000'
+            logger.log('audit', 'APDU', f"APDU: {apdu}, RESP: {resp}")
+        logger.persist_logs_in_cap()
+        print("Audit transaction complete.")
 
 if __name__ == "__main__":
     main()
