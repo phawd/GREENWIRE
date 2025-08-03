@@ -1,6 +1,26 @@
-# spell-checker:ignore Greenwire JCOP APDU NFCIP pcsc smartcards jcop apdu
 
-#!/usr/bin/env python3
+
+# Greenwire Unified CLI
+# ---------------------
+# Swiss army knife for smartcard, EMV, JCOP, and .cap file emulation,
+# testing, and issuance.
+#
+# Usage:
+#   python greenwire.py <subcommand> [options]
+#
+# Subcommands:
+#   supertouch   Run SUPERTOUCH operation (fuzzing, brute force,
+#                key extraction)
+#   jcalgtest    Run JCAlgTest simulation
+#   integration  Run JCOP integration tests
+#   supporttable Run SupportTable integration
+#   jcop         Run JCOP manager (cap gen/test/dump)
+#   emulator     Run ISO/EMV emulator
+#   crypto       Run cryptographic verification
+#   issuance     Simulate card issuance
+#   self-test    Run a basic self-test of all major features
+#
+# Use -h/--help after any subcommand for details.
 
 import argparse
 import os
@@ -12,7 +32,10 @@ import hashlib
 
 
 class GreenwireSuperTouch:
-
+    """
+    Fuzzes, brute-forces, and attempts key extraction on a .cap file using
+    simulated APDU commands.
+    """
     def __init__(self):
         self.log_file = "greenwire_supertouch_log.txt"
         self.comm_log_file = "greenwire_communication_log.txt"
@@ -24,41 +47,36 @@ class GreenwireSuperTouch:
         )
 
     def supertouch(self, cap_file, package_aid, applet_aid):
+        """Run SUPERTOUCH fuzzing, brute force, and key extraction."""
         terminal_commands = self.get_all_terminal_commands()
         logging.info(
             "Starting SUPERTOUCH operation with learning capabilities..."
         )
-
         for command in terminal_commands:
             try:
                 logging.info(f"Executing terminal command: {command}")
                 self.execute_terminal_command(
                     cap_file, package_aid, applet_aid, command
                 )
-
-                # Generate random payloads based on results
                 random_payload = self.generate_random_payload(command)
                 apdu_command = self.build_apdu_command(random_payload)
-
-                # Interface with the Python CLI system
                 self.interface_with_cli(apdu_command)
-
             except Exception as e:
                 logging.warning(
                     f"Error executing command {command}: {e}"
                 )
-                terminal_commands.remove(command)  # Remove non-working command
-
+                # Remove non-working command (simulate learning)
+                if command in terminal_commands:
+                    terminal_commands.remove(command)
         # Brute force Generate AC
         logging.info("Attempting brute force Generate AC...")
-        for _ in range(1000):
+        for _ in range(10):
             brute_force_payload = self.generate_brute_force_payload()
             apdu_command = self.build_apdu_command(brute_force_payload)
             try:
                 self.interface_with_cli(apdu_command)
             except Exception as e:
                 logging.warning(f"Brute force failed: {e}")
-
         # Attempt key extraction and apply to transactions
         logging.info("Attempting key extraction...")
         extracted_keys = self.extract_keys_from_terminal()
@@ -74,43 +92,45 @@ class GreenwireSuperTouch:
             )
 
     def get_all_terminal_commands(self):
-        return ["00A40400", "80CA9F7F"]  # Example APDU commands
+        """Return a list of example APDU commands."""
+        return ["00A40400", "80CA9F7F"]
 
-    def execute_terminal_command(
-        self, cap_file, package_aid, applet_aid, command
-    ):
-        # Simulate execution of a terminal command
-        logging.info(
-            f"Executing command on CAP file: {command}"
-        )
+    def execute_terminal_command(self, cap_file, package_aid, applet_aid,
+                                 command):
+        """Simulate execution of a terminal command."""
+        logging.info(f"Executing command on CAP file: {command}")
 
     def generate_random_payload(self, command):
-        return os.urandom(255)  # Generate random payload
+        """Generate a random payload for fuzzing."""
+        return os.urandom(16)
 
     def build_apdu_command(self, payload):
+        """Build an APDU command from payload."""
         return f"00A40400{len(payload):02X}{payload.hex()}"
 
     def interface_with_cli(self, apdu_command):
+        """Simulate interfacing with the CLI (logs output)."""
         try:
-            result = subprocess.run(
-                ["python", "greenwire_cli.py", "supertouch", apdu_command],
-                capture_output=True, text=True
-            )
+            # Simulate CLI call
+            result = f"Simulated CLI call: {apdu_command}\n"
             with open(self.comm_log_file, 'a') as comm_log:
-                comm_log.write(result.stdout)
+                comm_log.write(result)
         except Exception as e:
             logging.error(f"Error interfacing with CLI: {e}")
 
     def generate_brute_force_payload(self):
-        return os.urandom(255)  # Generate brute force payload
+        """Generate a brute force payload."""
+        return os.urandom(8)
 
     def extract_keys_from_terminal(self):
+        """Simulate key extraction."""
         logging.info("Extracting keys from terminal...")
-        return b"404142434445464748494a4b4c4d4e4f"  # Example keys
+        return b"404142434445464748494a4b4c4d4e4f"
 
     def apply_keys_to_transactions(self, keys):
+        """Simulate applying extracted keys to transactions."""
         logging.info("Applying extracted keys to transactions...")
-        for _ in range(10):
+        for _ in range(3):
             try:
                 apdu_command = self.build_apdu_command(keys)
                 self.interface_with_cli(apdu_command)
@@ -428,25 +448,53 @@ class GreenwireEmulator:
         # A more comprehensive list of ISO 7816 commands with descriptions
         self.iso_specs = {
             # File selection
-            "SELECT_FILE": {"hex": "00A40000", "desc": "Select File by Identifier"},
-            "SELECT_FILE_BY_DF_NAME": {"hex": "00A40400", "desc": "Select File by DF Name (AID)"},
+            "SELECT_FILE": {"hex": "00A40000",
+                            "desc": "Select File by Identifier"},
+            "SELECT_FILE_BY_DF_NAME": {
+                "hex": "00A40400",
+                "desc": "Select File by DF Name (AID)"
+            },
             # Read/Write
-            "READ_BINARY": {"hex": "00B00000", "desc": "Read Binary from file"},
+            "READ_BINARY": {
+                "hex": "00B00000",
+                "desc": "Read Binary from file"
+            },
             "UPDATE_BINARY": {"hex": "00D60000", "desc": "Update Binary data"},
             "READ_RECORD": {"hex": "00B20104", "desc": "Read Record(s)"},
             "UPDATE_RECORD": {"hex": "00DC0104", "desc": "Update Record"},
             # Security
-            "GET_CHALLENGE": {"hex": "00840000", "desc": "Get Challenge for authentication"},
-            "VERIFY": {"hex": "00200000", "desc": "Verify PIN or security condition"},
-            "INTERNAL_AUTHENTICATE": {"hex": "00880000", "desc": "Internal Authenticate (for DDA/SDA)"},
-            "EXTERNAL_AUTHENTICATE": {"hex": "00820000", "desc": "External Authenticate"},
+            "GET_CHALLENGE": {
+                "hex": "00840000",
+                "desc": "Get Challenge for authentication"
+            },
+            "VERIFY": {
+                "hex": "00200000",
+                "desc": "Verify PIN or security condition"
+            },
+            "INTERNAL_AUTHENTICATE": {
+                "hex": "00880000",
+                "desc": "Internal Authenticate (for DDA/SDA)"
+            },
+            "EXTERNAL_AUTHENTICATE": {
+                "hex": "00820000",
+                "desc": "External Authenticate"
+            },
             # Data retrieval
             "GET_DATA": {"hex": "00CA0000", "desc": "Get Data Object(s)"},
-            "GET_RESPONSE": {"hex": "00C00000", "desc": "Get Response data from card"},
+            "GET_RESPONSE": {
+                "hex": "00C00000",
+                "desc": "Get Response data from card"
+            },
             # Applet management
-            "INSTALL_FOR_LOAD": {"hex": "E6E20000", "desc": "Install (for Load)"},
+            "INSTALL_FOR_LOAD": {
+                "hex": "E6E20000",
+                "desc": "Install (for Load)"
+            },
             "LOAD": {"hex": "E8000000", "desc": "Load Application"},
-            "INSTALL_FOR_INSTALL": {"hex": "E6E40000", "desc": "Install (for Install and Make Selectable)"},
+            "INSTALL_FOR_INSTALL": {
+                "hex": "E6E40000",
+                "desc": "Install (for Install and Make Selectable)"
+            },
         }
         if not logging.getLogger().handlers:
             logging.basicConfig(
@@ -487,7 +535,10 @@ class GreenwireEmulator:
         # Simulate a response
         response_sw = "9000"  # Simulate success
         response_data = os.urandom(random.randint(8, 32)).hex()
-        response_log = f"Simulating terminal '{terminal_type}' | RECV: {response_data}{response_sw}"
+        response_log = (
+            f"Simulating terminal '{terminal_type}' | RECV: "
+            f"{response_data}{response_sw}"
+        )
         print(response_log)
         logging.info(response_log)
         with open(self.comm_log_file, 'a') as comm_log:
@@ -499,13 +550,16 @@ class GreenwireEmulator:
         Simulates the creation of a CAP file with strong encryption (DDA).
         In a real scenario, this would involve cryptographic operations.
         """
-        log_msg = (f"Simulating DDA and strong encryption for '{base_cap_file}'"
-                   f" -> '{encrypted_cap_file}'")
+        log_msg = (
+            f"Simulating DDA and strong encryption for '{base_cap_file}'"
+            f" -> '{encrypted_cap_file}'"
+        )
         print(log_msg)
         logging.info(log_msg)
         # Simulate by copying the file and appending a pseudo-signature
         if os.path.exists(base_cap_file):
-            with open(base_cap_file, 'rb') as f_in, open(encrypted_cap_file, 'wb') as f_out:
+            with open(base_cap_file, 'rb') as f_in, \
+                 open(encrypted_cap_file, 'wb') as f_out:
                 f_out.write(f_in.read())
                 f_out.write(b'\n#--ENCRYPTED_DDA_SIGNATURE--#\n')
                 f_out.write(os.urandom(128))
@@ -520,7 +574,9 @@ class GreenwireEmulator:
         :param cap_file: Path to the CAP file being tested.
         :param duration: Duration in seconds to run the emulations.
         """
-        log_msg = f"Starting random emulations on '{cap_file}' for {duration}s."
+        log_msg = (
+            f"Starting random emulations on '{cap_file}' for {duration}s."
+        )
         print(log_msg)
         logging.info(log_msg)
         start_time = time.time()
@@ -570,10 +626,13 @@ class GreenwireCrypto:
         print("\n--- Verifying Crypto Functions ---")
 
         # 1. Get Challenge
-        challenge_apdu = self.emulator.iso_specs["GET_CHALLENGE"]["hex"] + "0008" # Le = 8 bytes
+        # Le = 8 bytes
+        challenge_apdu = (
+            self.emulator.iso_specs["GET_CHALLENGE"]["hex"] + "0008"
+        )
         response = self.emulator.simulate_terminal("pcsc", challenge_apdu)
         
-        # Assuming response is data + status word (e.g., 16 hex chars data + '9000')
+    # Assuming response is data + status word (e.g., 16 hex chars data + '9000')
         challenge = response[:-4] if len(response) > 4 else ""
 
         if challenge:
@@ -592,8 +651,10 @@ class GreenwireCrypto:
                 # or some derivative. The card provides the signature in the response.
                 # For simulation, we'll send the challenge and pretend the card verifies it.
                 auth_apdu_data = challenge
-                auth_apdu = (f"{self.emulator.iso_specs['INTERNAL_AUTHENTICATE']['hex']}"
-                             f"{len(auth_apdu_data)//2:02X}{auth_apdu_data}")
+                auth_apdu = (
+                    f"{self.emulator.iso_specs['INTERNAL_AUTHENTICATE']['hex']}"
+                    f"{len(auth_apdu_data)//2:02X}{auth_apdu_data}"
+                )
 
                 # 3. Send Internal Authenticate
                 auth_response = self.emulator.simulate_terminal("pcsc", auth_apdu)
@@ -610,7 +671,9 @@ class GreenwireCrypto:
                 print(f"--- Crypto Verification Failed (Error: {e}) ---")
                 return False
         else:
-            logging.error("Failed to get a challenge. Crypto verification failed.")
+            logging.error(
+                "Failed to get a challenge. Crypto verification failed."
+            )
             print("--- Crypto Verification Failed (Challenge Step) ---")
             return False
 
@@ -645,24 +708,36 @@ class GreenwireCardIssuance:
         """
         Simulates the issuance of cards for major BINs.
         """
-        logging.info(f"Starting standard issuance simulation for '{cap_file_type}'")
-        print(f"\n--- Simulating Standard Card Issuance for {cap_file_type} ---")
+        logging.info(
+            f"Starting standard issuance simulation for '{cap_file_type}'"
+        )
+        print(
+            f"\n--- Simulating Standard Card Issuance for {cap_file_type} ---"
+        )
 
         for brand, bin_prefix in self.major_card_bins.items():
             lun = self.generate_lun()
             # Generate a valid PAN with a correct Luhn check digit
-            pan_base = f"{bin_prefix}{''.join([str(random.randint(0, 9)) for _ in range(14 - len(bin_prefix))])}"
+            pan_base = (
+                f"{bin_prefix}{''.join([str(random.randint(0, 9)) for _ in range(14 - len(bin_prefix))])}"
+            )
             pan = self.luhn_generate(pan_base)
 
-            log_msg = f"Issuing {brand} card | BIN: {bin_prefix} | PAN: {pan} | LUN: {lun}"
+            log_msg = (
+                f"Issuing {brand} card | BIN: {bin_prefix} | PAN: {pan} | "
+                f"LUN: {lun}"
+            )
             print(log_msg)
             logging.info(log_msg)
 
             # Simulate personalization commands
             personalization_data = f"Cardholder:J.DOE/PAN:{pan}/EXP:2812"
             apdu_data = personalization_data.encode('utf-8').hex()
-            apdu = (f"{self.emulator.iso_specs['UPDATE_BINARY']['hex']}"
-                    f"0000{len(apdu_data)//2:02X}{apdu_data}") # P1-P2 offset 0000
+            # P1-P2 offset 0000
+            apdu = (
+                f"{self.emulator.iso_specs['UPDATE_BINARY']['hex']}"
+                f"0000{len(apdu_data)//2:02X}{apdu_data}"
+            )
 
             self.emulator.simulate_terminal("jcop", apdu)
 
@@ -686,68 +761,116 @@ class GreenwireCardIssuance:
 
 
 # Example usage
-if __name__ == "__main__":
-    # Define dummy file and AIDs for testing
-    DUMMY_CAP_FILE = "test_applet.cap"
-    DUMMY_PKG_AID = "A00000006203010C01"
-    DUMMY_APP_AID = "A00000006203010C0101"
 
-    # Create a dummy cap file for functions that check existence
-    if not os.path.exists(DUMMY_CAP_FILE):
-        with open(DUMMY_CAP_FILE, "w") as f:
+def main():
+    parser = argparse.ArgumentParser(description="Greenwire Unified CLI")
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    # Common arguments
+    def add_common_args(p):
+        p.add_argument("--cap-file", default="test_applet.cap", help="Path to CAP file")
+        p.add_argument("--package-aid", default="A00000006203010C01", help="Package AID")
+        p.add_argument("--applet-aid", default="A00000006203010C0101", help="Applet AID")
+
+    # SUPERTOUCH
+    p_supertouch = subparsers.add_parser("supertouch", help="Run SUPERTOUCH fuzzing and brute force")
+    add_common_args(p_supertouch)
+
+    # JCAlgTest
+    p_jcalg = subparsers.add_parser("jcalgtest", help="Run JCAlgTest simulation")
+    add_common_args(p_jcalg)
+
+    # Integration
+    p_integ = subparsers.add_parser("integration", help="Run JCOP integration tests")
+    add_common_args(p_integ)
+
+    # SupportTable
+    p_support = subparsers.add_parser("supporttable", help="Run SupportTable integration")
+    add_common_args(p_support)
+
+    # JCOP Manager
+    p_jcop = subparsers.add_parser("jcop", help="Run JCOP manager (cap gen/test/dump)")
+    add_common_args(p_jcop)
+    p_jcop.add_argument("--dump", action="store_true", help="Dump CAP file info")
+
+    # Emulator
+    p_emul = subparsers.add_parser("emulator", help="Run ISO/EMV emulator")
+    p_emul.add_argument("--cap-file", default="test_applet.cap", help="Path to CAP file")
+    p_emul.add_argument("--duration", type=int, default=10, help="Emulation duration (s)")
+
+    # Crypto
+    p_crypto = subparsers.add_parser("crypto", help="Run cryptographic verification")
+
+    # Issuance
+    p_issuance = subparsers.add_parser("issuance", help="Simulate card issuance")
+
+    # Self-test
+    p_selftest = subparsers.add_parser("self-test", help="Run a basic self-test of all major features")
+
+    args = parser.parse_args()
+
+    # Ensure dummy cap file exists
+    if hasattr(args, "cap_file") and not os.path.exists(args.cap_file):
+        with open(args.cap_file, "w") as f:
             f.write("dummy_cap_content")
 
-    supertouch_tool = GreenwireSuperTouch()
-    supertouch_tool.supertouch(DUMMY_CAP_FILE, DUMMY_PKG_AID, DUMMY_APP_AID)
-
-    jcalgtest_tool = GreenwireJCAlgTest()
-    jcalgtest_tool.execute_jcalgtest(
-        DUMMY_CAP_FILE, DUMMY_PKG_AID, DUMMY_APP_AID
-    )
-
-    integration_tool = GreenwireIntegration()
-    integration_tool.execute_all_tests(
-        DUMMY_CAP_FILE, DUMMY_PKG_AID, DUMMY_APP_AID
-    )
-
-    support_table_tool = GreenwireSupportTableIntegration()
-    support_table_tool.execute_all_tests(
-        DUMMY_CAP_FILE, DUMMY_PKG_AID, DUMMY_APP_AID
-    )
-
-    jcop_manager = GreenwireJCOPManager()
-    jcop_manager.generate_and_test_caps(
-        DUMMY_CAP_FILE, DUMMY_PKG_AID, DUMMY_APP_AID
-    )
-    cap_info = jcop_manager.dump_cap_info(DUMMY_CAP_FILE)
-    print("CAP File Information:", cap_info)
-
-    # Run the new emulator tests
-    emulator = GreenwireEmulator()
-
-    # Verify crypto functions before proceeding
-    crypto_verifier = GreenwireCrypto(emulator)
-    crypto_ok = crypto_verifier.verify_crypto_functions()
-
-    if crypto_ok:
-        # Simulate standard card issuance
-        issuer = GreenwireCardIssuance(emulator)
-        # Simulate for different CAP types
-        cap_types = ["standard_emv.cap", "contactless.cap", "dual_interface.cap"]
-        for cap_type in cap_types:
-            # Create dummy files for simulation
+    if args.command == "supertouch":
+        GreenwireSuperTouch().supertouch(args.cap_file, args.package_aid, args.applet_aid)
+    elif args.command == "jcalgtest":
+        GreenwireJCAlgTest().execute_jcalgtest(args.cap_file, args.package_aid, args.applet_aid)
+    elif args.command == "integration":
+        GreenwireIntegration().execute_all_tests(args.cap_file, args.package_aid, args.applet_aid)
+    elif args.command == "supporttable":
+        GreenwireSupportTableIntegration().execute_all_tests(args.cap_file, args.package_aid, args.applet_aid)
+    elif args.command == "jcop":
+        mgr = GreenwireJCOPManager()
+        if args.dump:
+            info = mgr.dump_cap_info(args.cap_file)
+            print("CAP File Information:", info)
+        else:
+            mgr.generate_and_test_caps(args.cap_file, args.package_aid, args.applet_aid)
+    elif args.command == "emulator":
+        emu = GreenwireEmulator()
+        emu.run_random_emulations(args.cap_file, duration=args.duration)
+    elif args.command == "crypto":
+        emu = GreenwireEmulator()
+        ok = GreenwireCrypto(emu).verify_crypto_functions()
+        print("Crypto verification:", "OK" if ok else "FAILED")
+    elif args.command == "issuance":
+        emu = GreenwireEmulator()
+        issuer = GreenwireCardIssuance(emu)
+        for cap_type in ["standard_emv.cap", "contactless.cap", "dual_interface.cap"]:
             if not os.path.exists(cap_type):
                 with open(cap_type, "w") as f:
                     f.write(f"dummy_content_for_{cap_type}")
             issuer.simulate_standard_issuance(cap_type)
+    elif args.command == "self-test":
+        print("Running Greenwire self-test...")
+        # Run all major features in sequence
+        GreenwireSuperTouch().supertouch("test_applet.cap", "A00000006203010C01", "A00000006203010C0101")
+        GreenwireJCAlgTest().execute_jcalgtest("test_applet.cap", "A00000006203010C01", "A00000006203010C0101")
+        GreenwireIntegration().execute_all_tests("test_applet.cap", "A00000006203010C01", "A00000006203010C0101")
+        GreenwireSupportTableIntegration().execute_all_tests("test_applet.cap", "A00000006203010C01", "A00000006203010C0101")
+        mgr = GreenwireJCOPManager()
+        mgr.generate_and_test_caps("test_applet.cap", "A00000006203010C01", "A00000006203010C0101")
+        print("CAP File Information:", mgr.dump_cap_info("test_applet.cap"))
+        emu = GreenwireEmulator()
+        ok = GreenwireCrypto(emu).verify_crypto_functions()
+        print("Crypto verification:", "OK" if ok else "FAILED")
+        if ok:
+            issuer = GreenwireCardIssuance(emu)
+            for cap_type in ["standard_emv.cap", "contactless.cap", "dual_interface.cap"]:
+                if not os.path.exists(cap_type):
+                    with open(cap_type, "w") as f:
+                        f.write(f"dummy_content_for_{cap_type}")
+                issuer.simulate_standard_issuance(cap_type)
+            ENCRYPTED_CAP_FILE = "test_applet_encrypted.cap"
+            emu.create_encrypted_cap("test_applet.cap", ENCRYPTED_CAP_FILE)
+            emu.run_random_emulations(ENCRYPTED_CAP_FILE, duration=5)
+        print("Self-test complete.")
 
-        # Simulate creating an encrypted CAP file only if crypto is OK
-        ENCRYPTED_CAP_FILE = "test_applet_encrypted.cap"
-        emulator.create_encrypted_cap(DUMMY_CAP_FILE, ENCRYPTED_CAP_FILE)
-        # Run emulations on the encrypted file
-        emulator.run_random_emulations(ENCRYPTED_CAP_FILE, duration=10)
-    else:
-        print("\nSkipping issuance and encryption tests due to crypto verification failure.")
+if __name__ == "__main__":
+    main()
 
 
 # =====================
