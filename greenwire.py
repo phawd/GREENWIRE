@@ -974,6 +974,11 @@ class GreenwireCardIssuance:
         return f"{card_number}{check_digit}"
 
 
+def random_aid():
+    """Generate a random 16-character hex AID."""
+    return ''.join(random.choices('0123456789ABCDEF', k=16))
+
+
 # Example usage
 
 def main():
@@ -1158,6 +1163,17 @@ def main():
         help="CAP file to seal logs for"
     )
 
+    # CLI: Add IdentityCrisis option
+    idc_parser = subparsers.add_parser(
+        "identitycrisis",
+        help="Enable IdentityCrisis mode: random AID for each transaction"
+    )
+    idc_parser.add_argument(
+        "--cap-file",
+        required=True,
+        help="CAP file to use in IdentityCrisis mode"
+    )
+
     args = parser.parse_args()
 
     # Ensure dummy cap file exists
@@ -1278,7 +1294,34 @@ def main():
         logger = CapFileLogger(args.cap_file)
         logger.seal_logs()
         print(f"Log area sealed for {args.cap_file}")
-
+    elif args.command == "identitycrisis":
+        logger = CapFileLogger(args.cap_file)
+        aid = random_aid()
+        logger.log('identitycrisis', 'SELECT', f"Random AID used: {aid}")
+        print(f"IdentityCrisis mode: using random AID {aid}")
+        blacklist = set()
+        # Simulate transaction loop
+        for attempt in range(5):
+            # ...simulate transaction with this AID...
+            if aid in blacklist:
+                aid = random_aid()
+                logger.log('identitycrisis', 'BLACKLIST', f"AID {aid} was blacklisted, new AID generated")
+                logger.persist_logs_in_cap()
+                continue
+            result = random.choice(['9000', '6A82', '6985'])  # Simulate status
+            logger.log('identitycrisis', 'RESULT', f"AID {aid} result: {result}")
+            logger.persist_logs_in_cap()
+            if result == '9000':
+                print(f"Transaction succeeded with AID {aid}")
+                break
+            else:
+                blacklist.add(aid)
+                logger.log('identitycrisis', 'EVADE', f"Negative result {result}, evading with new AID")
+                logger.persist_logs_in_cap()
+                aid = random_aid()
+                logger.log('identitycrisis', 'SELECT', f"Random AID used: {aid}")
+                logger.persist_logs_in_cap()
+                print(f"Evading: new random AID {aid}")
 
 if __name__ == "__main__":
     main()
