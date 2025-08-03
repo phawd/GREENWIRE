@@ -768,70 +768,147 @@ def main():
 
     # Common arguments
     def add_common_args(p):
-        p.add_argument("--cap-file", default="test_applet.cap", help="Path to CAP file")
-        p.add_argument("--package-aid", default="A00000006203010C01", help="Package AID")
-        p.add_argument("--applet-aid", default="A00000006203010C0101", help="Applet AID")
+        p.add_argument(
+            "--cap-files",
+            nargs="*",
+            default=["test_applet.cap"],
+            help=(
+                "List up to 5 CAP file paths (space separated, max 5)"
+            )
+        )
+        p.add_argument(
+            "--package-aids",
+            nargs="*",
+            default=["A00000006203010C01"],
+            help=(
+                "List of Package AIDs (space separated, "
+                "matches cap-files order)"
+            )
+        )
+        p.add_argument(
+            "--applet-aids",
+            nargs="*",
+            default=["A00000006203010C0101"],
+            help=(
+                "List of Applet AIDs (space separated, "
+                "matches cap-files order)"
+            )
+        )
 
     # SUPERTOUCH
-    p_supertouch = subparsers.add_parser("supertouch", help="Run SUPERTOUCH fuzzing and brute force")
+    p_supertouch = subparsers.add_parser(
+        "supertouch",
+        help="Run SUPERTOUCH fuzzing and brute force"
+    )
     add_common_args(p_supertouch)
 
-    # JCAlgTest
-    p_jcalg = subparsers.add_parser("jcalgtest", help="Run JCAlgTest simulation")
+    p_jcalg = subparsers.add_parser(
+        "jcalgtest",
+        help="Run JCAlgTest simulation"
+    )
     add_common_args(p_jcalg)
 
-    # Integration
-    p_integ = subparsers.add_parser("integration", help="Run JCOP integration tests")
+    p_integ = subparsers.add_parser(
+        "integration",
+        help="Run JCOP integration tests"
+    )
     add_common_args(p_integ)
 
-    # SupportTable
-    p_support = subparsers.add_parser("supporttable", help="Run SupportTable integration")
+    p_support = subparsers.add_parser(
+        "supporttable",
+        help="Run SupportTable integration"
+    )
     add_common_args(p_support)
 
-    # JCOP Manager
-    p_jcop = subparsers.add_parser("jcop", help="Run JCOP manager (cap gen/test/dump)")
+    p_jcop = subparsers.add_parser(
+        "jcop",
+        help="Run JCOP manager (cap gen/test/dump)"
+    )
     add_common_args(p_jcop)
-    p_jcop.add_argument("--dump", action="store_true", help="Dump CAP file info")
+    p_jcop.add_argument(
+        "--dump",
+        action="store_true",
+        help="Dump CAP file info"
+    )
 
-    # Emulator
-    p_emul = subparsers.add_parser("emulator", help="Run ISO/EMV emulator")
-    p_emul.add_argument("--cap-file", default="test_applet.cap", help="Path to CAP file")
-    p_emul.add_argument("--duration", type=int, default=10, help="Emulation duration (s)")
+    p_emul = subparsers.add_parser(
+        "emulator",
+        help="Run ISO/EMV emulator"
+    )
+    p_emul.add_argument(
+        "--cap-file",
+        default="test_applet.cap",
+        help="Path to CAP file"
+    )
+    p_emul.add_argument(
+        "--duration",
+        type=int,
+        default=10,
+        help="Emulation duration (s)"
+    )
 
-    # Crypto
-    p_crypto = subparsers.add_parser("crypto", help="Run cryptographic verification")
-
-    # Issuance
-    p_issuance = subparsers.add_parser("issuance", help="Simulate card issuance")
-
-    # Self-test
-    p_selftest = subparsers.add_parser("self-test", help="Run a basic self-test of all major features")
+    subparsers.add_parser(
+        "crypto",
+        help="Run cryptographic verification"
+    )
+    subparsers.add_parser(
+        "issuance",
+        help="Simulate card issuance"
+    )
+    subparsers.add_parser(
+        "self-test",
+        help="Run a basic self-test of all major features"
+    )
 
     args = parser.parse_args()
 
     # Ensure dummy cap file exists
-    if hasattr(args, "cap_file") and not os.path.exists(args.cap_file):
-        with open(args.cap_file, "w") as f:
-            f.write("dummy_cap_content")
+    # Cap file argument validation and limiting
+    cap_files = args.cap_files[:5]
+    package_aids = (args.package_aids + [args.package_aids[-1]] * 5)[:5]
+    applet_aids = (args.applet_aids + [args.applet_aids[-1]] * 5)[:5]
+    # Ensure all files exist
+    for cap_file in cap_files:
+        if not os.path.exists(cap_file):
+            with open(cap_file, "w") as f:
+                f.write("dummy_cap_content")
 
     if args.command == "supertouch":
-        GreenwireSuperTouch().supertouch(args.cap_file, args.package_aid, args.applet_aid)
+        for cap_file, pkg_aid, app_aid in zip(
+                cap_files, package_aids, applet_aids):
+            GreenwireSuperTouch().supertouch(
+                cap_file, pkg_aid, app_aid)
     elif args.command == "jcalgtest":
-        GreenwireJCAlgTest().execute_jcalgtest(args.cap_file, args.package_aid, args.applet_aid)
+        for cap_file, pkg_aid, app_aid in zip(
+                cap_files, package_aids, applet_aids):
+            GreenwireJCAlgTest().execute_jcalgtest(
+                cap_file, pkg_aid, app_aid)
     elif args.command == "integration":
-        GreenwireIntegration().execute_all_tests(args.cap_file, args.package_aid, args.applet_aid)
+        for cap_file, pkg_aid, app_aid in zip(
+                cap_files, package_aids, applet_aids):
+            GreenwireIntegration().execute_all_tests(
+                cap_file, pkg_aid, app_aid)
     elif args.command == "supporttable":
-        GreenwireSupportTableIntegration().execute_all_tests(args.cap_file, args.package_aid, args.applet_aid)
+        for cap_file, pkg_aid, app_aid in zip(
+                cap_files, package_aids, applet_aids):
+            GreenwireSupportTableIntegration().execute_all_tests(
+                cap_file, pkg_aid, app_aid)
     elif args.command == "jcop":
         mgr = GreenwireJCOPManager()
         if args.dump:
-            info = mgr.dump_cap_info(args.cap_file)
-            print("CAP File Information:", info)
+            for cap_file in cap_files:
+                info = mgr.dump_cap_info(cap_file)
+                print("CAP File Information:", info)
         else:
-            mgr.generate_and_test_caps(args.cap_file, args.package_aid, args.applet_aid)
+            for cap_file, pkg_aid, app_aid in zip(
+                    cap_files, package_aids, applet_aids):
+                mgr.generate_and_test_caps(
+                    cap_file, pkg_aid, app_aid)
     elif args.command == "emulator":
         emu = GreenwireEmulator()
-        emu.run_random_emulations(args.cap_file, duration=args.duration)
+        for cap_file in cap_files:
+            emu.run_random_emulations(
+                cap_file, duration=args.duration)
     elif args.command == "crypto":
         emu = GreenwireEmulator()
         ok = GreenwireCrypto(emu).verify_crypto_functions()
@@ -839,35 +916,40 @@ def main():
     elif args.command == "issuance":
         emu = GreenwireEmulator()
         issuer = GreenwireCardIssuance(emu)
-        for cap_type in ["standard_emv.cap", "contactless.cap", "dual_interface.cap"]:
-            if not os.path.exists(cap_type):
-                with open(cap_type, "w") as f:
-                    f.write(f"dummy_content_for_{cap_type}")
-            issuer.simulate_standard_issuance(cap_type)
+        for cap_file in cap_files:
+            issuer.simulate_standard_issuance(cap_file)
     elif args.command == "self-test":
         print("Running Greenwire self-test...")
-        # Run all major features in sequence
-        GreenwireSuperTouch().supertouch("test_applet.cap", "A00000006203010C01", "A00000006203010C0101")
-        GreenwireJCAlgTest().execute_jcalgtest("test_applet.cap", "A00000006203010C01", "A00000006203010C0101")
-        GreenwireIntegration().execute_all_tests("test_applet.cap", "A00000006203010C01", "A00000006203010C0101")
-        GreenwireSupportTableIntegration().execute_all_tests("test_applet.cap", "A00000006203010C01", "A00000006203010C0101")
-        mgr = GreenwireJCOPManager()
-        mgr.generate_and_test_caps("test_applet.cap", "A00000006203010C01", "A00000006203010C0101")
-        print("CAP File Information:", mgr.dump_cap_info("test_applet.cap"))
+        # Run all major features in sequence for all cap files
+        for cap_file, pkg_aid, app_aid in zip(
+                cap_files, package_aids, applet_aids):
+            GreenwireSuperTouch().supertouch(
+                cap_file, pkg_aid, app_aid)
+            GreenwireJCAlgTest().execute_jcalgtest(
+                cap_file, pkg_aid, app_aid)
+            GreenwireIntegration().execute_all_tests(
+                cap_file, pkg_aid, app_aid)
+            GreenwireSupportTableIntegration().execute_all_tests(
+                cap_file, pkg_aid, app_aid)
+            mgr = GreenwireJCOPManager()
+            mgr.generate_and_test_caps(
+                cap_file, pkg_aid, app_aid)
+            print("CAP File Information:",
+                  mgr.dump_cap_info(cap_file))
         emu = GreenwireEmulator()
         ok = GreenwireCrypto(emu).verify_crypto_functions()
         print("Crypto verification:", "OK" if ok else "FAILED")
         if ok:
             issuer = GreenwireCardIssuance(emu)
-            for cap_type in ["standard_emv.cap", "contactless.cap", "dual_interface.cap"]:
-                if not os.path.exists(cap_type):
-                    with open(cap_type, "w") as f:
-                        f.write(f"dummy_content_for_{cap_type}")
-                issuer.simulate_standard_issuance(cap_type)
+            for cap_file in cap_files:
+                issuer.simulate_standard_issuance(cap_file)
             ENCRYPTED_CAP_FILE = "test_applet_encrypted.cap"
-            emu.create_encrypted_cap("test_applet.cap", ENCRYPTED_CAP_FILE)
-            emu.run_random_emulations(ENCRYPTED_CAP_FILE, duration=5)
+            emu.create_encrypted_cap(
+                cap_files[0], ENCRYPTED_CAP_FILE)
+            emu.run_random_emulations(
+                ENCRYPTED_CAP_FILE, duration=5)
         print("Self-test complete.")
+
 
 if __name__ == "__main__":
     main()
