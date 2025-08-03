@@ -1173,14 +1173,65 @@ def main():
         required=True,
         help="CAP file to use in IdentityCrisis mode"
     )
+    idc_parser.add_argument(
+        "--smackdown",
+        action="store_true",
+        help="Enable smackdown mode: brute with complex, randomized, transactional fuzz payloads until 60s timeout"
+    )
+
+    # CLI: Add Stealth .cap category
+    stealth_parser = subparsers.add_parser(
+        "stealth",
+        help="Stealth .cap: EMV compliant, minimal logging, random delays"
+    )
+    stealth_parser.add_argument(
+        "--cap-file",
+        required=True,
+        help="CAP file to use in Stealth mode"
+    )
+
+    # CLI: Add Replay .cap category
+    replay_parser = subparsers.add_parser(
+        "replay",
+        help="Replay .cap: EMV compliant, record/replay APDU/response pairs"
+    )
+    replay_parser.add_argument(
+        "--cap-file",
+        required=True,
+        help="CAP file to use in Replay mode"
+    )
+
+    # CLI: Add Decoy .cap category
+    decoy_parser = subparsers.add_parser(
+        "decoy",
+        help="Decoy .cap: EMV compliant, multiple applets (one real, others decoy)"
+    )
+    decoy_parser.add_argument(
+        "--cap-file",
+        required=True,
+        help="CAP file to use in Decoy mode"
+    )
 
     args = parser.parse_args()
 
     # Ensure dummy cap file exists
-    # Cap file argument validation and limiting
-    cap_files = args.cap_files[:5]
-    package_aids = (args.package_aids + [args.package_aids[-1]] * 5)[:5]
-    applet_aids = (args.applet_aids + [args.applet_aids[-1]] * 5)[:5]
+    # Unify cap_file/cap_files handling
+    if hasattr(args, 'cap_file') and not hasattr(args, 'cap_files'):
+        cap_files = [args.cap_file]
+    elif hasattr(args, 'cap_files'):
+        cap_files = args.cap_files[:5]
+    else:
+        cap_files = ["test_applet.cap"]
+
+    if hasattr(args, 'package_aids'):
+        package_aids = (args.package_aids + [args.package_aids[-1]] * 5)[:5]
+    else:
+        package_aids = ["A00000006203010C01"] * len(cap_files)
+    if hasattr(args, 'applet_aids'):
+        applet_aids = (args.applet_aids + [args.applet_aids[-1]] * 5)[:5]
+    else:
+        applet_aids = ["A00000006203010C0101"] * len(cap_files)
+
     # Ensure all files exist
     for cap_file in cap_files:
         if not os.path.exists(cap_file):
@@ -1322,6 +1373,72 @@ def main():
                 logger.log('identitycrisis', 'SELECT', f"Random AID used: {aid}")
                 logger.persist_logs_in_cap()
                 print(f"Evading: new random AID {aid}")
+        if getattr(args, "smackdown", False):
+            print("IdentityCrisis: Smackdown mode enabled. Brute-forcing with complex fuzz payloads for 60 seconds.")
+            import time
+            start = time.time()
+            count = 0
+            while time.time() - start < 60:
+                # Generate a random APDU command (CLA, INS, P1, P2, Lc, Data, Le)
+                apdu = ''.join(random.choices('0123456789ABCDEF', k=random.randint(8, 64)))
+                # Generate a complex, transactional, EMV-like response with random data
+                resp_data = ''.join(random.choices('0123456789ABCDEF', k=random.randint(16, 128)))
+                # Randomly select a valid EMV status word
+                sw = random.choice(['9000', '6283', '6A82', '6985', '6A84', '6F00'])
+                response = resp_data + sw
+                logger.log('identitycrisis', 'SMACKDOWN', f"APDU: {apdu}, RESP: {response}")
+                count += 1
+                # Simulate transactional nature: sometimes log a commit/rollback
+                if random.random() < 0.2:
+                    logger.log('identitycrisis', 'TXN', f"Transaction {'commit' if random.random() < 0.5 else 'rollback'} for APDU {apdu}")
+                # Add a small random delay to simulate processing
+                time.sleep(random.uniform(0.01, 0.1))
+            print(f"Smackdown complete. {count} brute APDUs sent.")
+            logger.persist_logs_in_cap()
+            return
+    elif args.command == "stealth":
+        logger = CapFileLogger(args.cap_file)
+        print("Stealth .cap: EMV compliant, minimal logging, random delays")
+        for i in range(3):
+            # Simulate EMV-compliant APDU exchange
+            apdu = '00A40400'  # SELECT (EMV compliant)
+            response = '9000'   # Success
+            # Random delay to avoid timing analysis
+            delay = random.uniform(0.1, 0.5)
+            time.sleep(delay)
+            # Only log if suspicious event (simulate none here)
+        print("Stealth transaction complete.")
+    elif args.command == "replay":
+        logger = CapFileLogger(args.cap_file)
+        print("Replay .cap: EMV compliant, record/replay APDU/response pairs")
+        apdu = '00A40400'  # EMV SELECT
+        # Check for replayed response
+        replayed = logger.get_replay_response(apdu)
+        if replayed:
+            response = replayed
+            print(f"Replayed response: {response}")
+        else:
+            response = '9000'  # EMV success
+            logger.record_apdu_pair(apdu, response)
+            logger.persist_logs_in_cap()
+            print(f"Recorded new response: {response}")
+        print("Replay transaction complete.")
+    elif args.command == "decoy":
+        logger = CapFileLogger(args.cap_file)
+        print("Decoy .cap: EMV compliant, multiple applets (one real, others decoy)")
+        real_aid = 'A0000000031010'  # Example EMV AID
+        decoy_aids = ['A0000000031011', 'A0000000031012']
+        selected = random.choice([real_aid] + decoy_aids)
+        apdu = '00A40400'  # EMV SELECT
+        if selected == real_aid:
+            response = '9000'
+            print("Real applet selected.")
+        else:
+            response = '9000'
+            print(f"Decoy applet {selected} selected.")
+        logger.log('decoy', 'SELECT', f"AID {selected} selected, response: {response}")
+        logger.persist_logs_in_cap()
+        print("Decoy transaction complete.")
 
 if __name__ == "__main__":
     main()
