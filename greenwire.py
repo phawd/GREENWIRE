@@ -1,5 +1,3 @@
-
-
 # Greenwire Unified CLI
 # ---------------------
 # Swiss army knife for smartcard, EMV, JCOP, and .cap file emulation,
@@ -29,6 +27,211 @@ import logging
 import time
 import random
 import hashlib
+import string
+import json
+import secrets
+
+
+def generate_random_aid():
+    """Generate a random AID (Application Identifier)."""
+    return ''.join(random.choices(string.hexdigits.upper(), k=16))
+
+
+def obfuscate_cap_content(content):
+    """Obfuscate the content of a .cap file."""
+    return ''.join(chr((ord(c) + 3) % 256) for c in content)
+
+
+def encrypt_cap_content(content, key="default_key"):
+    """Encrypt the content of a .cap file using a simple XOR cipher."""
+    return ''.join(
+        chr(ord(c) ^ ord(key[i % len(key)]))
+        for i, c in enumerate(content)
+    )
+
+
+def enhance_cap_file(file_path):
+
+    """
+    Enhance a .cap file with randomized metadata, dynamic AID,
+    obfuscation, and encryption.
+    """
+    if not os.path.exists(file_path):
+        with open(file_path, "w") as f:
+            f.write("dummy_cap_content")
+
+    with open(file_path, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    # Add randomized metadata
+    metadata = f"# Randomized Metadata: {generate_random_aid()}\n"
+
+    # Obfuscate and encrypt content
+    obfuscated_content = obfuscate_cap_content(content)
+    encrypted_content = encrypt_cap_content(obfuscated_content)
+
+    # Write enhanced content back to the file
+    with open(file_path, "w", encoding="utf-8") as f:
+        f.write(metadata + encrypted_content)
+
+
+def store_logs_in_cap(cap_file, log_data):
+    """Append logs to a reserved section in the .cap file after #LOGS_START marker."""
+    marker = "#LOGS_START\n"
+    with open(cap_file, "r", encoding="utf-8") as f:
+        content = f.read()
+    if marker not in content:
+        content += f"\n{marker}"
+    # Remove any previous logs after marker
+    content = content.split(marker)[0] + marker
+    # Append new logs
+    content += json.dumps(log_data, indent=2)
+    with open(cap_file, "w", encoding="utf-8") as f:
+        f.write(content)
+
+
+class CapFileLogger:
+    """Logger for .cap file APDU/command exchanges."""
+    FINGERPRINTING_APDUS = [
+        '80CA',  # GET DATA
+        '80CB',  # GET DATA (proprietary)
+        '80E2',  # Some proprietary commands
+        # Add more as needed
+    ]
+    GHOST_APPLET_AIDS = [
+        'A00000006203010C99',
+        'A00000006203010C98',
+        # Add more as needed
+    ]
+
+    def __init__(self, cap_file):
+        self.cap_file = cap_file
+        self.log_file = f"{cap_file}.log.json"
+        self.entries = []
+        self.positive_mode = False
+        if os.path.exists(self.log_file):
+            with open(self.log_file, "r", encoding="utf-8") as f:
+                try:
+                    self.entries = json.load(f)
+                except Exception:
+                    self.entries = []
+
+    def log(self, direction, apdu, response):
+        if self.is_fingerprinting_apdu(apdu):
+            self.log_suspicious(apdu, "Fingerprinting APDU detected, masking response")
+            response = '9000'  # Always positive, generic
+        self.entries.append({
+            "direction": direction,  # 'sent' or 'received'
+            "apdu": apdu,
+            "response": response,
+            "timestamp": time.time()
+        })
+        with open(self.log_file, "w", encoding="utf-8") as f:
+            json.dump(self.entries, f, indent=2)
+        self.persist_logs_in_cap()
+
+    def persist_logs_in_cap(self):
+        store_logs_in_cap(self.cap_file, self.entries)
+
+    def dump(self):
+        return self.entries
+
+    def set_positive_mode(self, enable=True):
+        self.positive_mode = enable
+        # Optionally persist this flag in the log file
+        if self.entries and isinstance(self.entries, list):
+            self.entries.append({
+                "positive_mode": enable,
+                "timestamp": time.time()
+            })
+            with open(self.log_file, "w", encoding="utf-8") as f:
+                json.dump(self.entries, f, indent=2)
+
+    def record_apdu_pair(self, apdu, response):
+        if not hasattr(self, 'replay_pairs'):
+            self.replay_pairs = {}
+        self.replay_pairs[apdu] = response
+        # Optionally persist replay pairs
+        with open(f"{self.cap_file}.replay.json", "w", encoding="utf-8") as f:
+            json.dump(self.replay_pairs, f, indent=2)
+
+    def get_replay_response(self, apdu):
+        if hasattr(self, 'replay_pairs') and apdu in self.replay_pairs:
+            return self.replay_pairs[apdu]
+        return None
+
+    def import_replay_log(self, path):
+        with open(path, "r", encoding="utf-8") as f:
+            self.replay_pairs = json.load(f)
+
+    def export_replay_log(self, path):
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(self.replay_pairs, f, indent=2)
+
+    def log_suspicious(self, apdu, reason):
+        if not hasattr(self, 'suspicious_events'):
+            self.suspicious_events = []
+        self.suspicious_events.append({
+            "apdu": apdu,
+            "reason": reason,
+            "timestamp": time.time()
+        })
+        with open(f"{self.cap_file}.suspicious.json", "w", encoding="utf-8") as f:
+            json.dump(self.suspicious_events, f, indent=2)
+
+    def dump_suspicious(self):
+        if hasattr(self, 'suspicious_events'):
+            return self.suspicious_events
+        return []
+
+    def learn_from_session(self):
+        # After a positive session, update replay log and suspicious log
+        if hasattr(self, 'entries'):
+            for entry in self.entries:
+                if entry.get('response') == '9000':
+                    self.record_apdu_pair(entry['apdu'], entry['response'])
+        # Optionally, clear suspicious events if session was positive
+        if hasattr(self, 'suspicious_events'):
+            self.suspicious_events = [
+                e for e in self.suspicious_events if e.get('response') != '9000']
+            with open(f"{self.cap_file}.suspicious.json", "w", encoding="utf-8") as f:
+                json.dump(self.suspicious_events, f, indent=2)
+
+    def is_fingerprinting_apdu(self, apdu):
+        return any(apdu.startswith(prefix) for prefix in self.FINGERPRINTING_APDUS)
+
+    def randomize_response_fields(self, apdu):
+        # Example: If APDU expects unpredictable number, return random
+        if apdu.startswith('00840000'):  # GET CHALLENGE
+            rand_bytes = secrets.token_hex(4)
+            self.log('randomized', apdu, rand_bytes)
+            return rand_bytes + '9000'
+        # Add more randomization logic as needed
+        return None
+
+    def log_timing(self, apdu, last_time):
+        now = time.time()
+        delta = now - last_time if last_time else None
+        if delta is not None and (delta < 0.05 or delta > 2.0):
+            self.log_suspicious(apdu, f"Timing anomaly: {delta:.3f}s since last APDU")
+        return now
+
+    def is_ghost_applet(self, aid):
+        return aid in self.GHOST_APPLET_AIDS
+
+    def log_ghost_applet(self, aid, apdu):
+        self.log('ghost_applet', apdu, f"Ghost applet {aid} interaction")
+
+    def seal_logs(self):
+        marker = "#LOGS_START\n"
+        with open(self.cap_file, "r", encoding="utf-8") as f:
+            content = f.read()
+        if marker in content:
+            logs = content.split(marker)[1]
+            log_hash = hashlib.sha256(logs.encode("utf-8")).hexdigest()
+            with open(f"{self.cap_file}.loghash.txt", "w", encoding="utf-8") as f:
+                f.write(log_hash)
+            self.log('seal', 'LOGS', f"Log area sealed with hash {log_hash}")
 
 
 class GreenwireSuperTouch:
@@ -397,7 +600,8 @@ class GreenwireJCOPManager:
         :param applet_aid: Applet AID for the CAP file.
         """
         logging.info(
-            f"Generating CAP file at {cap_file} with Package AID {package_aid} "
+            f"Generating CAP file at {cap_file} with "
+            f"Package AID {package_aid} "
             f"and Applet AID {applet_aid}."
         )
         # Simulate CAP file generation logic
@@ -533,17 +737,16 @@ class GreenwireEmulator:
         with open(self.comm_log_file, 'a') as comm_log:
             comm_log.write(f"[{time.asctime()}] {log_msg}\n")
         # Simulate a response
-        response_sw = "9000"  # Simulate success
-        response_data = os.urandom(random.randint(8, 32)).hex()
+        response = '9000'  # Simulate positive response
         response_log = (
             f"Simulating terminal '{terminal_type}' | RECV: "
-            f"{response_data}{response_sw}"
+            f"{response}"
         )
         print(response_log)
         logging.info(response_log)
         with open(self.comm_log_file, 'a') as comm_log:
             comm_log.write(f"[{time.asctime()}] {response_log}\n")
-        return f"{response_data}{response_sw}"
+        return response
 
     def create_encrypted_cap(self, base_cap_file, encrypted_cap_file):
         """
@@ -574,6 +777,7 @@ class GreenwireEmulator:
         :param cap_file: Path to the CAP file being tested.
         :param duration: Duration in seconds to run the emulations.
         """
+        logger = CapFileLogger(cap_file)
         log_msg = (
             f"Starting random emulations on '{cap_file}' for {duration}s."
         )
@@ -593,6 +797,8 @@ class GreenwireEmulator:
                 terminal = random.choice(["pcsc", "jcop", "custom_serial"])
 
                 self.simulate_terminal(terminal, apdu)
+                response = '9000'  # Simulate positive response
+                logger.log('sent', apdu, response)
                 time.sleep(random.uniform(0.05, 0.2))
             except Exception as e:
                 logging.error(f"Error during random emulation: {e}")
@@ -631,8 +837,9 @@ class GreenwireCrypto:
             self.emulator.iso_specs["GET_CHALLENGE"]["hex"] + "0008"
         )
         response = self.emulator.simulate_terminal("pcsc", challenge_apdu)
-        
-    # Assuming response is data + status word (e.g., 16 hex chars data + '9000')
+
+    # Assuming response is data + status word
+    # (e.g., 16 hex chars data + '9000')
         challenge = response[:-4] if len(response) > 4 else ""
 
         if challenge:
@@ -640,24 +847,28 @@ class GreenwireCrypto:
             print(f"Received challenge: {challenge}")
 
             # 2. Simulate signing the challenge (Internal Authenticate)
-            # In a real scenario, the card would sign this with its private key.
-            # Here we just hash the challenge as a simulation.
+            # In a real scenario, the card would sign this
+            # with its private key.
             try:
-                signature = hashlib.sha256(bytes.fromhex(challenge)).hexdigest()
+                signature = hashlib.sha256(
+                    bytes.fromhex(challenge)
+                ).hexdigest()
                 logging.info(f"Simulated signature (SHA256): {signature}")
                 print(f"Simulated signature of challenge: {signature[:32]}...")
 
-                # The data for INTERNAL AUTHENTICATE is typically the challenge itself
-                # or some derivative. The card provides the signature in the response.
-                # For simulation, we'll send the challenge and pretend the card verifies it.
-                auth_apdu_data = challenge
+                # The data for INTERNAL AUTHENTICATE is typically
+                # the challenge itself or some derivative. The card
+                # provides the signature in the response.
+                # For simulation, we'll send the challenge and
+                # pretend the card verifies it.
                 auth_apdu = (
                     f"{self.emulator.iso_specs['INTERNAL_AUTHENTICATE']['hex']}"
-                    f"{len(auth_apdu_data)//2:02X}{auth_apdu_data}"
                 )
 
                 # 3. Send Internal Authenticate
-                auth_response = self.emulator.simulate_terminal("pcsc", auth_apdu)
+                auth_response = self.emulator.simulate_terminal(
+                    "pcsc", auth_apdu
+                )
                 if auth_response.endswith("9000"):
                     logging.info("Crypto function verification successful.")
                     print("--- Crypto Verification Complete ---")
@@ -719,7 +930,10 @@ class GreenwireCardIssuance:
             lun = self.generate_lun()
             # Generate a valid PAN with a correct Luhn check digit
             pan_base = (
-                f"{bin_prefix}{''.join([str(random.randint(0, 9)) for _ in range(14 - len(bin_prefix))])}"
+                bin_prefix + ''.join([
+                    str(random.randint(0, 9))
+                    for _ in range(14 - len(bin_prefix))
+                ])
             )
             pan = self.luhn_generate(pan_base)
 
@@ -860,6 +1074,90 @@ def main():
         help="Run a basic self-test of all major features"
     )
 
+    dump_log_parser = subparsers.add_parser(
+        "dump-log",
+        help="Dump .cap communication log"
+    )
+    dump_log_parser.add_argument(
+        "--cap-file",
+        required=True,
+        help="CAP file to dump log for"
+    )
+
+    sim_parser = subparsers.add_parser(
+        "simulate-positive",
+        help="Simulate positive transaction results for a .cap file"
+    )
+    sim_parser.add_argument(
+        "--cap-file",
+        required=True,
+        help="CAP file to simulate"
+    )
+    sim_parser.add_argument(
+        "--enable",
+        action="store_true",
+        help="Enable positive simulation mode"
+    )
+
+    export_parser = subparsers.add_parser(
+        "export-replay",
+        help="Export APDU replay log for a .cap file"
+    )
+    export_parser.add_argument(
+        "--cap-file",
+        required=True,
+        help="CAP file to export replay log for"
+    )
+    export_parser.add_argument(
+        "--output",
+        required=True,
+        help="Output path for replay log"
+    )
+    import_parser = subparsers.add_parser(
+        "import-replay",
+        help="Import APDU replay log for a .cap file"
+    )
+    import_parser.add_argument(
+        "--cap-file",
+        required=True,
+        help="CAP file to import replay log for"
+    )
+    import_parser.add_argument(
+        "--input",
+        required=True,
+        help="Input path for replay log"
+    )
+
+    suspicious_parser = subparsers.add_parser(
+        "dump-suspicious",
+        help="Dump suspicious events for a .cap file"
+    )
+    suspicious_parser.add_argument(
+        "--cap-file",
+        required=True,
+        help="CAP file to dump suspicious events for"
+    )
+
+    learn_parser = subparsers.add_parser(
+        "learn-session",
+        help="Update replay/suspicious logs after a positive session"
+    )
+    learn_parser.add_argument(
+        "--cap-file",
+        required=True,
+        help="CAP file to learn from"
+    )
+
+    seal_parser = subparsers.add_parser(
+        "seal-logs",
+        help="Seal reserved log area in .cap with hash/signature"
+    )
+    seal_parser.add_argument(
+        "--cap-file",
+        required=True,
+        help="CAP file to seal logs for"
+    )
+
     args = parser.parse_args()
 
     # Ensure dummy cap file exists
@@ -872,6 +1170,10 @@ def main():
         if not os.path.exists(cap_file):
             with open(cap_file, "w") as f:
                 f.write("dummy_cap_content")
+
+    # Enhance .cap files
+    for cap_file in cap_files:
+        enhance_cap_file(cap_file)
 
     if args.command == "supertouch":
         for cap_file, pkg_aid, app_aid in zip(
@@ -949,6 +1251,33 @@ def main():
             emu.run_random_emulations(
                 ENCRYPTED_CAP_FILE, duration=5)
         print("Self-test complete.")
+    elif args.command == "dump-log":
+        logger = CapFileLogger(args.cap_file)
+        print(json.dumps(logger.dump(), indent=2))
+    elif args.command == "simulate-positive":
+        logger = CapFileLogger(args.cap_file)
+        logger.set_positive_mode(args.enable)
+        print(f"Positive simulation mode set to {args.enable} for "
+              f"{args.cap_file}")
+    elif args.command == "export-replay":
+        logger = CapFileLogger(args.cap_file)
+        logger.export_replay_log(args.output)
+        print(f"Replay log exported to {args.output}")
+    elif args.command == "import-replay":
+        logger = CapFileLogger(args.cap_file)
+        logger.import_replay_log(args.input)
+        print(f"Replay log imported from {args.input}")
+    elif args.command == "dump-suspicious":
+        logger = CapFileLogger(args.cap_file)
+        print(json.dumps(logger.dump_suspicious(), indent=2))
+    elif args.command == "learn-session":
+        logger = CapFileLogger(args.cap_file)
+        logger.learn_from_session()
+        print(f"Learning complete for {args.cap_file}")
+    elif args.command == "seal-logs":
+        logger = CapFileLogger(args.cap_file)
+        logger.seal_logs()
+        print(f"Log area sealed for {args.cap_file}")
 
 
 if __name__ == "__main__":
