@@ -1,0 +1,82 @@
+plugins {
+    id 'java'
+}
+
+group 'com.greenwire'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    JC_HOME = System.getenv("JC_HOME")
+    GP_PRO = System.getenv("GP_PRO")
+}
+
+if (JC_HOME == null || !new File(JC_HOME).exists()) {
+    throw new Exception("JC_HOME environment variable not set or points to an invalid directory. Please download the Java Card Development Kit 3.0.5 or newer.")
+}
+
+if (GP_PRO == null || !new File(GP_PRO).exists()) {
+    throw new Exception("GP_PRO environment variable not set or points to an invalid directory. Please download GlobalPlatformPro.")
+}
+
+def jcHome = JC_HOME
+def jcApiJar = new File(jcHome, "lib/api.jar")
+def jcConverterJar = new File(jcHome, "lib/converter.jar")
+def jcConverter = "com.sun.javacard.converter.Main"
+
+dependencies {
+    compileOnly files(jcApiJar)
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src'
+        }
+    }
+}
+
+task buildCap(type: JavaExec, dependsOn: 'classes') {
+    main = jcConverter
+    classpath = files(jcConverterJar)
+
+    args = [
+        "-classdir", sourceSets.main.output.classesDirs.asPath,
+        "-d", buildDir.path,
+        "-exportpath", new File(jcHome, "api_export_files").path,
+        "-applet",
+        "0xA0:0x00:0x00:0x06:0x23:0x01:0x47:0x52:0x4E:0x57:0x52",
+        "com.greenwire.applet.GenerateACApplet",
+        "com.greenwire.applet",
+        "0xA0:0x00:0x00:0x06:0x23:0x01:0x47:0x52:0x4E:0x57",
+        "1.0"
+    ]
+
+    doFirst {
+        new File(buildDir.path).mkdirs()
+    }
+
+    doLast {
+        println "---"
+        println ".CAP file and components generated in: ${buildDir.path}/com/greenwire/applet/javacard/"
+        println "You can now load the .CAP file onto a Java Card."
+    }
+}
+
+task deployCap(type: Exec) {
+    description = 'Deploy the .CAP file to a JavaCard using GlobalPlatformPro.'
+    group = 'Deployment'
+
+    commandLine 'java', '-jar', new File(GP_PRO, 'gp.jar').absolutePath,
+        '--install', "${buildDir.path}/com/greenwire/applet/javacard/GenerateACApplet.cap"
+
+    doLast {
+        println "---"
+        println "Applet deployed successfully using GlobalPlatformPro."
+    }
+}
+
+defaultTasks 'buildCap'

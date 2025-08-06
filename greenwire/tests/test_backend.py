@@ -3,12 +3,12 @@ from pathlib import Path
 import pytest
 import sys
 
+# Ensure the greenwire package is on sys.path for absolute imports
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
+# Dynamically import backend and emv_generator modules for isolated testing
 _backend_path = Path(__file__).resolve().parents[1] / "core" / "backend.py"
-spec = importlib.util.spec_from_file_location(
-    "greenwire.core.backend", _backend_path
-)
+spec = importlib.util.spec_from_file_location("greenwire.core.backend", _backend_path)
 backend = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(backend)
 
@@ -18,14 +18,18 @@ emv = importlib.util.module_from_spec(emv_spec)
 emv_spec.loader.exec_module(emv)
 
 
+
 def test_issue_card_stores_data(tmp_path):
+    """Test that issuing a card stores all required data and verifies uniqueness."""
     conn = backend.init_backend(tmp_path / "db.sqlite")
     card = backend.issue_card(conn, issuer="Bank1")
     assert "verification_code" in card
     assert backend.is_duplicate(conn, card["pan"]) is True
 
 
+
 def test_duplicate_detection(tmp_path):
+    """Test that duplicate PANs are detected and raise an error."""
     conn = backend.init_backend(tmp_path / "db.sqlite")
     pan = emv.random_pan()
     backend.issue_card(conn, pan=pan)

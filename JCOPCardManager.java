@@ -9,11 +9,15 @@ import java.util.List;
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.smartcardio.*;
 
-    private String generateRandomLUN() {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+import javax.smartcardio.Card;
+import javax.smartcardio.CardChannel;
+import javax.smartcardio.CardException;
+import javax.smartcardio.CardTerminal;
+import javax.smartcardio.CommandAPDU;
+import javax.smartcardio.ResponseAPDU;
+import javax.smartcardio.TerminalFactory;
+
 public class JCOPCardManager {
     private static final Logger logger = Logger.getLogger(JCOPCardManager.class.getName());
 
@@ -44,6 +48,12 @@ public class JCOPCardManager {
             card = terminal.connect("T=1");
             channel = card.getBasicChannel();
             logger.log(Level.INFO, "Connected to card: {0}", card);
+        } catch (CardException e) {
+            logger.log(Level.SEVERE, "Connection failed: {0}", e.getMessage());
+            throw new CardException("Connection failed", e);
+        }
+    }
+
     /**
      * Issues a card of the specified type with the given Logical Unit Number (LUN).
      * 
@@ -52,12 +62,6 @@ public class JCOPCardManager {
      * @throws Exception if issuing the card fails
      */
     public void issueCard(String cardType, String lun) throws Exception {
-            logger.log(Level.SEVERE, "Connection failed: {0}", e.getMessage());
-            throw new CardException("Connection failed", e);
-        }
-    }
-
- /* */  public void issueCard(String cardType, String lun) throws Exception {
         if (lun == null || lun.isEmpty()) {
             lun = generateRandomLUN();
         }
@@ -78,6 +82,7 @@ public class JCOPCardManager {
         byte[] apdu = new byte[]{0x00, (byte) 0xCA, 0x00, 0x00, 0x00};
         sendAPDU(apdu);
     }
+
     private void sendAPDU(byte[] apdu) throws CardException {
         if (apdu == null || apdu.length == 0) {
             throw new IllegalArgumentException("APDU cannot be null or empty");
@@ -88,31 +93,21 @@ public class JCOPCardManager {
         try {
             CommandAPDU command = new CommandAPDU(apdu);
             ResponseAPDU response = channel.transmit(command);
-            logger.info("Response: " + response.toString());
+            logger.log(Level.INFO, "Response: {0}", response);
         } catch (CardException | IllegalArgumentException e) {
             logger.log(Level.SEVERE, "Failed to send APDU: {0}", e.getMessage());
             throw new CardException("Failed to send APDU", e);
         }
-    }
-    }
-
-    private String generateRandomLUN() {
-        Random random = new Random();
-        StringBuilder lun = new StringBuilder();
-        for (int i = 0; i < 16; i++) {
-            lun.append(random.nextInt(10));
-        }
-        return lun.toString();
     }
 
     public void disconnect() throws CardException {
         try {
             if (card != null) {
                 card.disconnect(false);
-                logger.info("Disconnected from card.");
+                logger.log(Level.INFO, "Disconnected from card.");
             }
         } catch (CardException e) {
-            logger.severe("Disconnection failed: " + e.getMessage());
+            logger.log(Level.SEVERE, "Disconnection failed: {0}", e.getMessage());
             throw new CardException("Disconnection failed", e);
         }
     }
@@ -125,7 +120,7 @@ public class JCOPCardManager {
             manager.searchRootCA("DDA");
             manager.disconnect();
         } catch (Exception e) {
-            JCOPCardManager.logger.severe("Error: " + e.getMessage());
+            JCOPCardManager.logger.log(Level.SEVERE, "Error: {0}", e.getMessage());
         }
     }
 }

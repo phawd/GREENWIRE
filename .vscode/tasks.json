@@ -11,6 +11,28 @@
 			],
 			"problemMatcher": [],
 			"label": "java (buildArtifact): GREENWIRE"
+		},
+		{
+			"label": "Run GREENWIRE CLI Tests",
+			"type": "shell",
+			"command": "python menu_cli.py",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [
+				"$python"
+			],
+			"group": "test"
+		},
+		{
+			"label": "Generate and Test CAP Files",
+			"type": "shell",
+			"command": "python greenwire.py",
+			"args": [],
+			"isBackground": false,
+			"problemMatcher": [
+				"$python"
+			],
+			"group": "test"
 		}
 	]
 }

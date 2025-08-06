@@ -1,79 +1,155 @@
-# GREENWIRE: Advanced Smart Card .cap File Research and EMV Tool
+
+# GREENWIRE: Advanced Smart Card, EMV, and .cap File Research Tool — Detailed CLI & Field Guide
 
 ## Dependencies
+
 - Python 3.8+
-- argparse (standard library)
-- logging (standard library)
-- subprocess (standard library)
-- os, time, random, hashlib, secrets, json, string (standard library)
+- argparse, logging, subprocess, os, time, random, hashlib, secrets, json, string (stdlib)
+- pyscard, nfcpy, cryptography, pexpect, pillow
 
-## CLI Overview
+---
 
-This tool provides a unified CLI for advanced .cap file research, EMV compliance, fuzzing, logging, replay, and operator feedback. It supports multiple .cap categories, each with unique evasion, compliance, or research features. All major card brands (Visa, Mastercard, Amex) are supported for EMV AIDs.
+## CLI Subcommands — Detailed Reference
 
-### CLI Subcommands
+Each subcommand is designed for both research and field/production use. All support robust logging, operator feedback, and (where relevant) CA certificate/key integration for EMV/field testing.
 
-- `supertouch`: Run SUPERTOUCH fuzzing and brute force
-- `jcalgtest`: Run JCAlgTest simulation
-- `integration`: Run JCOP integration tests
-- `supporttable`: Run SupportTable integration
-- `jcop`: Run JCOP manager (cap gen/test/dump)
-- `emulator`: Run ISO/EMV emulator
-- `crypto`: Run cryptographic verification
-- `issuance`: Simulate card issuance
-- `self-test`: Run a basic self-test of all major features
-- `dump-log`: Dump .cap communication log
-- `simulate-positive`: Simulate positive transaction results for a .cap file
-- `export-replay`: Export APDU replay log for a .cap file
-- `import-replay`: Import APDU replay log for a .cap file
-- `dump-suspicious`: Dump suspicious events for a .cap file
-- `learn-session`: Update replay/suspicious logs after a positive session
-- `seal-logs`: Seal reserved log area in .cap with hash/signature
-- `identitycrisis`: Enable IdentityCrisis mode: random AID for each transaction, with optional smackdown mode
-- `stealth`: Stealth .cap: EMV compliant, minimal logging, random delays
-- `replay`: Replay .cap: EMV compliant, record/replay APDU/response pairs
-- `decoy`: Decoy .cap: EMV compliant, multiple applets (one real, others decoy)
-- `audit`: Audit .cap: EMV compliant, logs all APDUs, only Visa/Mastercard/Amex AIDs
+### `supertouch`
+Fuzzes, brute-forces, and attempts key extraction on a .cap file using simulated APDU commands.
 
-## Function Documentation
-
-All major classes and functions in `greenwire.py` are documented inline with docstrings. See the top of each class/function for detailed descriptions, arguments, and return values.
-
-- `CapFileLogger`: Handles all logging, suspicious event tracking, and log persistence for .cap file operations. Logs are stored in the .cap file (appended as JSON lines for demo purposes).
-- `GreenwireSuperTouch`: Fuzzes, brute-forces, and attempts key extraction on a .cap file using simulated APDU commands.
-- `GreenwireJCAlgTest`: Simulates JCAlgTest operations and logs results.
-- `GreenwireIntegration`: Integrates JCOP functions and runs all tests.
-- `GreenwireSupportTableIntegration`: Integrates SupportTable and compares supported algorithms.
-- `GreenwireJCOPManager`: Manages JCOP functionality, including generating and testing CAP files, retrieving CAP file information, and providing operator feedback.
-- `GreenwireEmulator`: Simulates various terminal environments and runs emulations based on ISO specifications.
-- `GreenwireCrypto`: Handles cryptographic operations and verification to ensure that the underlying crypto functions are working before attempting DDA or encryption.
-- `GreenwireCardIssuance`: Simulates a standard card issuance process, including generating LUNs and using major card BINs for personalization.
-
-## Testing
-
-Each CLI function can be tested by running:
-
-```
-python greenwire.py <subcommand> [options]
+**Example:**
+```bash
+python greenwire.py supertouch --cap-files mytest.cap --csv-output results.csv --hardware
 ```
 
-Example:
-```
-python greenwire.py stealth --cap-file test_stealth.cap
-python greenwire.py replay --cap-file test_replay.cap
-python greenwire.py decoy --cap-file test_decoy.cap
-python greenwire.py audit --cap-file test_audit.cap
-python greenwire.py identitycrisis --cap-file test_identitycrisis.cap --smackdown
+### `jcalgtest`
+Runs JCAlgTest simulation for JavaCard/JCOP applets.
+
+**Example:**
+```bash
+python greenwire.py jcalgtest --cap-files mytest.cap
 ```
 
-## Linting
+### `integration`
+Runs JCOP integration tests (fuzzing, cap management, etc).
 
-To lint the code, run:
+### `supporttable`
+Runs SupportTable integration and algorithm comparison.
+
+### `jcop`
+JCOP manager: generate/test/dump cap files, retrieve info, operator feedback.
+
+**Example:**
+```bash
+python greenwire.py jcop --cap-files mytest.cap --dump
 ```
+
+### `emulator`
+Runs ISO/EMV emulator. Supports hardware/NFC/PCSC profiles and CA key/cert.
+
+**Example:**
+```bash
+python greenwire.py emulator --cap-file mytest.cap --profile nfc --hardware --ca-file ca_keys.json
+```
+
+### `crypto`
+Runs cryptographic verification (DDA, challenge/response, etc).
+
+### `issuance`
+Simulates card issuance, including LUN/BIN personalization and CA key/cert for EMV/field use.
+
+**Example:**
+```bash
+python greenwire.py issuance --csv-output cards.csv --hardware --profile pcsc --ca-file ca_keys.json
+```
+
+### `self-test`
+Runs a full self-test of all major features and logs results.
+
+### `dump-log`, `simulate-positive`, `export-replay`, `import-replay`, `dump-suspicious`, `learn-session`, `seal-logs`
+Advanced .cap file logging, replay, suspicious event tracking, and log sealing for compliance/field audit.
+
+### `identitycrisis`, `stealth`, `replay`, `decoy`, `audit`
+Special .cap categories for advanced EMV compliance, evasion, and field/production scenarios.
+
+### `install-cap`
+Install a .cap file on a smart card using GlobalPlatformPro or OpenSC. Supports custom AID and CA key/cert.
+
+**Example:**
+```bash
+python greenwire.py install-cap --cap-file myapplet.cap --tool gpp --aid A0000000031010 --ca-file ca_keys.json
+```
+
+---
+
+## CA Certificate/Key Usage & Validation
+
+- The CA key file (`ca_keys.json`) is a JSON array of objects with `rid`, `index`, `modulus`, and `exponent` fields.
+- For field/production use, ensure your CA key/cert matches the card/AID and is referenced with `--ca-file`.
+- To add a new CA key/cert, append a new object to `ca_keys.json`.
+- To validate, run `issuance` or `emulator` with your CA file and check logs/output for your CA key details.
+
+**Example CA key entry:**
+```json
+{
+	"rid": "A000000003",
+	"index": "92",
+	"modulus": "...",
+	"exponent": "03"
+}
+```
+
+---
+
+## Field/Production Notes
+
+- Always use `--hardware` and `--profile` for real-world/field testing.
+- Use `--ca-file` for EMV/issuance operations requiring CA key/cert.
+- Use `--csv-output` for compliance/audit logging.
+- For contactless/NFC, ensure `nfcpy` and compatible hardware are installed.
+- For Android NFC, connect via ADB and use the correct profile.
+
+---
+
+## Testing & Linting
+
+Run all tests:
+```bash
+pytest -q
+```
+
+Lint the code:
+```bash
 python -m pylint greenwire.py --disable=R,C
 ```
 
+---
+
+## Advanced Examples
+
+**Card Issuance with Custom CA Key:**
+```bash
+python greenwire.py issuance --csv-output cards.csv --hardware --profile pcsc --ca-file ca_keys.json
+```
+
+**Install .cap File with Custom AID and CA Cert:**
+```bash
+python greenwire.py install-cap --cap-file myapplet.cap --tool gpp --aid A0000000031010 --ca-file ca_keys.json
+```
+
+**Replay Mode:**
+```bash
+python greenwire.py replay --cap-file mytest.cap
+```
+
+**Audit Mode:**
+```bash
+python greenwire.py audit --cap-file mytest.cap
+```
+
+---
+
 ## Notes
+
 - All AIDs for EMV operations are Visa, Mastercard, or Amex compliant where required.
 - All .cap categories are EMV compliant except for fuzzing/research.
-- See inline docstrings for further technical details.
+- See inline docstrings and this file for further technical details.

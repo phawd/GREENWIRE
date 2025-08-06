@@ -1,0 +1,72 @@
+plugins {
+    id 'java'
+}
+
+group 'com.greenwire'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // The Java Card API is needed for compilation
+    compileOnly files(jcApiJar)
+    compileOnly files(globalPlatformProJar) // Adding GlobalPlatformPro dependency
+    implementation 'org.bouncycastle:bcprov-jdk15on:1.70'
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src'
+        }
+    }
+}
+
+// Custom task to convert .class files to a .CAP file
+task buildCap(type: JavaExec, dependsOn: 'classes') {
+    // The converter runs as a Java application
+    main = jcConverter
+    classpath = files(jcConverterJar)
+
+    // Arguments for the converter tool
+    args = [
+        "-classdir", sourceSets.main.output.classesDirs.asPath,
+        "-d", buildDir.path, // Output directory
+        "-exportpath", new File(jcHome, "api_export_files").path,
+        "-applet",
+        "0xA0:0x00:0x00:0x06:0x23:0x01:0x47:0x52:0x4E:0x57:0x52", // Applet AID
+        "com.greenwire.applet.GreenwireApplet",
+        "com.greenwire.applet", // Package name
+        "0xA0:0x00:0x00:0x06:0x23:0x01:0x47:0x52:0x4E:0x57", // Package AID
+        "1.0" // Package version
+    ]
+
+    doFirst {
+        // Create output directory if it doesn't exist
+        new File(buildDir.path).mkdirs()
+    }
+
+    doLast {
+        println "---"
+        println ".CAP file and components generated in: ${buildDir.path}/com/greenwire/applet/javacard/"
+        println "You can now load the .CAP file onto a Java Card."
+    }
+}
+
+defaultTasks 'buildCap'
+task deployCap(type: Exec) {
+    description = 'Deploy the .CAP file to a JavaCard using GlobalPlatformPro.'
+    group = 'Deployment'
+    def gpProPath = GP_PRO
+    if (gpProPath == null || !new File(gpProPath).exists()) {
+        throw new GradleException("GP_PRO environment variable not set or points to an invalid directory. Please download GlobalPlatformPro.")
+    }
+    commandLine 'java', '-jar', new File(gpProPath, 'gp.jar').absolutePath,
+        '--install', "${buildDir.path}/com/greenwire/applet/javacard/GreenwireApplet.cap"
+    doLast {
+        println "---"
+        println "Applet deployed successfully using GlobalPlatformPro."
+    }
+}

@@ -100,7 +100,9 @@ class TLVObject:
     length: int
     value: bytes
     @property
-    def tag_str(self): return self.tag.hex().upper()
+    def tag_str(self):
+        """Return the hexadecimal string representation of the TLV tag."""
+        return self.tag.hex().upper()
     @property
     def name(self): return EMV_TAGS.get(self.tag_str, 'Unknown')
     def __str__(self): return f"{self.tag_str} ({self.name}): {self.value.hex().upper()}"
@@ -234,7 +236,13 @@ def run_fuzz(conn, args, fuzzer, detector):
 
 
 def run_readfuzz(conn, args, fuzzer, detector):
-    """Fuzz READ RECORD commands via contactless interface."""
+    """
+    Fuzz READ RECORD commands via contactless interface.
+
+    Performs fuzzing on READ RECORD commands using the provided fuzzer and analyzes
+    the results with the vulnerability detector. Targets Application Identifiers (AIDs)
+    based on the card type specified in the arguments.
+    """
     logging.info("Running READ RECORD fuzzing...")
     aids = EMV_AIDS.get(args.type, EMV_AIDS.get('visa', []))
     for res in fuzzer.fuzz_contactless(aids, iterations=args.count):
@@ -281,3 +289,16 @@ def main():
 
 if __name__=='__main__':
     main()
+    else:
+        if args.mode=='standard':    run_standard(conn, args, fuzzer, detector)
+        elif args.mode=='simulate':  run_simulate(conn, args, fuzzer, detector)
+        elif args.mode=='fuzz':      run_fuzz(conn, args, fuzzer, detector)
+        elif args.mode=='readfuzz':  run_readfuzz(conn, args, fuzzer, detector)
+        elif args.mode=='extractkeys': run_extractkeys(conn, args, fuzzer, detector)
+    conn.close()
+
+if __name__=='__main__':
+    main()
+
+
+

@@ -1,14 +1,24 @@
 """Lightweight terminal wrapper used for unit tests."""
 
+
 import sys
 import os
 import pathlib
-import pexpect
+import platform
 from typing import Optional
+import subprocess
+try:
+    import pexpect
+except ImportError:
+    pexpect = None
+
 
 
 class TerminalEmulator:
-    """Simple utility to run commands inside a pseudo-terminal."""
+    """
+    Simple utility to run commands inside a pseudo-terminal.
+    Uses subprocess on Windows and pexpect on POSIX for cross-platform compatibility.
+    """
 
     def __init__(self, env: Optional[dict] = None, issuer: str | None = None):
         self.env = env or os.environ.copy()
@@ -17,14 +27,31 @@ class TerminalEmulator:
     def run(self, command, timeout: int = 5) -> str:
         env = self.env.copy()
         env["TERMINAL_ISSUER"] = self.issuer
-        child = pexpect.spawn(
-            command[0],
-            command[1:],
-            env=env,
-            encoding="utf-8",
-        )
-        child.expect(pexpect.EOF, timeout=timeout)
-        return child.before
+        if platform.system() == "Windows" or pexpect is None:
+            # Use subprocess for Windows
+            proc = subprocess.Popen(
+                command,
+                env=env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                encoding="utf-8"
+            )
+            try:
+                out, _ = proc.communicate(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                out, _ = proc.communicate()
+            return out
+        else:
+            # Use pexpect for POSIX
+            child = pexpect.spawn(
+                command[0],
+                command[1:],
+                env=env,
+                encoding="utf-8",
+            )
+            child.expect(pexpect.EOF, timeout=timeout)
+            return child.before
 
 
 def _script_path() -> pathlib.Path:
