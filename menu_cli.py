@@ -1,8 +1,11 @@
+"""Minimal menu-driven interface for the GREENWIRE toolkit."""
+
 import logging
 from greenwire import GreenwireSuperTouch
 
 
 def display_menu():
+    """Print the available command-line menu options."""
     print("\nGREENWIRE CLI Menu")
     print("1. SUPERTOUCH Operation")
     print("2. Execute JavaCard .cap Tests")
@@ -10,6 +13,7 @@ def display_menu():
 
 
 def execute_javacard_tests():
+    """Run a series of JavaCard .cap tests using the SUPERTOUCH tool."""
     logging.info("Starting JavaCard .cap tests...")
     supertouch_tool = GreenwireSuperTouch()
 
@@ -29,6 +33,7 @@ def execute_javacard_tests():
 
 
 def main():
+    """Entry point for the interactive CLI menu."""
     logging.basicConfig(
         level=logging.INFO,
         filename="greenwire_cli_log.txt",
