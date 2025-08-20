@@ -135,6 +135,18 @@ python greenwire.py install-cap --cap-file myapplet.cap --tool gpp --aid A000000
 
 ---
 
+## Simple Menu Interface
+
+For quick experiments, run the lightweight menu-based wrapper:
+
+```bash
+python menu_cli.py
+```
+
+This script offers an interactive menu for common tasks built on top of the main `greenwire` toolkit.
+
+---
+
 ## Field/Production Notes
 
 - For field testing, always use the `--hardware` and `--profile` options to select the correct terminal/HSM profile (e.g., `pcsc`, `nfc`, `hsm`).
