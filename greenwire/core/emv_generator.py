@@ -2,7 +2,7 @@
 
 import random
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 
 def _luhn_checksum(number: str) -> int:
@@ -38,8 +38,11 @@ def random_pan(iin: str = "400000") -> str:
 
 
 def random_expiry(years_valid: int = 3) -> str:
-    """Return an expiration date in YYMM format some years in the future."""
-    exp = datetime.utcnow() + timedelta(days=365 * years_valid)
+    """Return an expiration date in YYMM format some years in the future.
+
+    The current time is taken in UTC to ensure timezone-aware calculations.
+    """
+    exp = datetime.now(UTC) + timedelta(days=365 * years_valid)
     return exp.strftime("%y%m")
 
 
