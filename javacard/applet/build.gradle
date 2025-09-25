@@ -101,4 +101,19 @@ task verifyOfflineSetup {
     }
 }
 
+// Check converter prerequisites explicitly
+task checkConverterPrereqs {
+    doLast {
+        def haveApi = file('../../sdk/javacard/lib/api_classic.jar').exists() ||
+                      !fileTree(dir: '../../sdk/javacard/lib', include: ['api_classic-*.jar']).isEmpty()
+        def haveTools = file('../../sdk/javacard/lib/tools.jar').exists()
+        println "JavaCard converter prerequisites:"
+        println "- API present:   ${haveApi}"
+        println "- tools.jar:     ${haveTools}"
+        if (!haveApi || !haveTools) {
+            println "Hint: Ensure sdk/javacard/lib contains api_classic.jar (or versioned) and tools.jar"
+        }
+    }
+}
+
 defaultTasks 'buildCap'
