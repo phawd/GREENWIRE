@@ -8,23 +8,33 @@ selection.  It reuses helpers from ``menu_cli`` and ``crypto_engine``.
 from __future__ import annotations
 
 import argparse
-from typing import Callable, Dict
+from typing import Callable, Dict, Union
 
 from greenwire.core.crypto_engine import generate_rsa_key, generate_ec_key
-from greenwire.core.nfc_emv import ContactlessEMVTerminal
+from greenwire.core.nfc_emv import ContactlessEMVTerminal, NFCEMVProcessor
 from greenwire.core.standards import Standard
 from greenwire.menu_cli import (
-    dump_atr,
-    dump_memory,
     brute_force_pin,
-    fuzz_apdu,
-    fuzz_transaction,
-    scan_for_cards,
-    dump_filesystem,
-    export_data,
-    import_data,
-    reset_card,
     detect_card_os,
+    dump_atr,
+    dump_filesystem,
+    dump_memory,
+    export_data,
+    fuzz_apdu,
+    fuzz_file_menu,
+    fuzz_pcsc,
+    fuzz_transaction,
+    import_data,
+    issue_new_card,
+    list_cards,
+    read_nfc_block,
+    reset_card,
+    run_contactless_txn,
+    scan_for_cards,
+    scan_vulnerabilities,
+    show_card_count,
+    show_uid,
+    write_nfc_block,
 )
 from greenwire.core.backend import init_backend
 
@@ -57,37 +67,102 @@ def _generate_cert() -> None:
 
 # Mapping of menu actions
 Action = Callable[[], None]
+MenuDict = Dict[str, tuple[str, Union[Action, "MenuDict"]]]
 
-MENU_TREE: Dict[str, Dict[str, tuple[str, Action]]] = {
-    Standard.EMV.value: {
-        "1": ("Terminal test", _terminal_test),
-        "2": ("ATM/HSM test", _atm_hsm_test),
-        "3": ("Generate certificates", _generate_cert),
-    },
-    "Card Ops": {
-        "1": ("Dump ATR", dump_atr),
-        "2": ("Dump memory", dump_memory),
-        "3": ("Brute force PIN", brute_force_pin),
-        "4": ("Fuzz APDU", fuzz_apdu),
-        "5": ("Fuzz transaction", fuzz_transaction),
-        "6": ("Scan for cards", scan_for_cards),
-        "7": ("Dump filesystem", dump_filesystem),
-        "8": ("Export DB", lambda: export_data(init_backend())),
-        "9": ("Import DB", import_data),
-        "10": ("Reset card", reset_card),
-        "11": ("Detect card OS", detect_card_os),
-    },
-}
+
+def _build_menu(conn, processor) -> MenuDict:
+    """Return the nested menu tree using ``conn`` and ``processor``."""
+
+    def _conn_action(func: Callable[[object], None]) -> Action:
+        return lambda: func(conn)
+
+    def _uid_action() -> None:
+        show_uid(processor)
+
+    return {
+        "1": (
+            Standard.EMV.value,
+            {
+                "1": ("Terminal test", _terminal_test),
+                "2": ("ATM/HSM test", _atm_hsm_test),
+                "3": ("Generate certificates", _generate_cert),
+            },
+        ),
+        "2": (
+            "Card Operations",
+            {
+                "1": (
+                    "Information",
+                    {
+                        "1": ("Dump ATR", dump_atr),
+                        "2": ("Dump memory", dump_memory),
+                        "3": ("Show UID", _uid_action),
+                        "4": ("Detect card OS", detect_card_os),
+                    },
+                ),
+                "2": (
+                    "Fuzzing",
+                    {
+                        "1": ("Fuzz APDU", fuzz_apdu),
+                        "2": ("Fuzz transaction", fuzz_transaction),
+                        "3": ("Fuzz file parser", fuzz_file_menu),
+                        "4": ("Random PC/SC fuzz", fuzz_pcsc),
+                    },
+                ),
+                "3": (
+                    "Database",
+                    {
+                        "1": ("Issue new card", _conn_action(issue_new_card)),
+                        "2": ("Card count", _conn_action(show_card_count)),
+                        "3": ("List cards", _conn_action(list_cards)),
+                        "4": ("Export DB", _conn_action(export_data)),
+                        "5": ("Import DB", import_data),
+                    },
+                ),
+                "4": (
+                    "NFC Tools",
+                    {
+                        "1": ("Read block", read_nfc_block),
+                        "2": ("Write block", write_nfc_block),
+                        "3": ("Scan for cards", scan_for_cards),
+                        "4": ("Reset card", reset_card),
+                        "5": ("Scan vulnerabilities", scan_vulnerabilities),
+                        "6": ("Dump filesystem", dump_filesystem),
+                        "7": ("Contactless transaction", run_contactless_txn),
+                    },
+                ),
+            },
+        ),
+    }
 
 # ---------------------------------------------------------------------------
 # Menu helpers
 # ---------------------------------------------------------------------------
 
 
-def _print_menu(options: Dict[str, tuple[str, Action]]) -> None:
+def _print_menu(options: MenuDict) -> None:
     print(f"({len(options)} options)")
-    for key, (label, _) in sorted(options.items(), key=lambda x: int(x[0])):
+    for key, (label, _) in sorted(options.items(), key=lambda x: x[0]):
         print(f"{key}. {label}")
+
+
+def _run_menu(menu: MenuDict, conn, root: bool = False) -> None:
+    while True:
+        _print_menu(menu)
+        print("Q. Quit" if root else "B. Back")
+        choice = input("Choice: ").strip().upper()
+        if (root and choice == "Q") or (not root and choice == "B"):
+            break
+        item = menu.get(choice)
+        if not item:
+            print("Invalid selection")
+            continue
+        label, target = item
+        print(f"[RUNNING] {label}")
+        if isinstance(target, dict):
+            _run_menu(target, conn)
+        else:
+            target()
 
 
 def run_tree_cli() -> None:
@@ -97,38 +172,10 @@ def run_tree_cli() -> None:
     args = parser.parse_args()
 
     conn = init_backend(args.db)
-    while True:
-        print(f"\nSelect standard/card type ({len(MENU_TREE)} categories):")
-        for i, std in enumerate(MENU_TREE, start=1):
-            print(f"{i}. {std}")
-        print("Q. Quit")
-        choice = input("Choice: ").strip().upper()
-        if choice == "Q":
-            break
-        try:
-            selected = list(MENU_TREE.keys())[int(choice) - 1]
-        except (IndexError, ValueError):
-            print("Invalid selection")
-            continue
+    processor = NFCEMVProcessor()
+    menu = _build_menu(conn, processor)
 
-        actions = MENU_TREE[selected]
-        while True:
-            print(f"\n-- {selected} --")
-            _print_menu(actions)
-            print("B. Back")
-            opt = input("Select action: ").strip().upper()
-            if opt == "B":
-                break
-            action = actions.get(opt)
-            if not action:
-                print("Invalid option")
-                continue
-            label, func = action
-            print(f"[RUNNING] {label}")
-            if func in {export_data}:
-                func(conn)  # requires db connection
-            else:
-                func()
+    _run_menu(menu, conn, root=True)
 
 
 if __name__ == "__main__":
