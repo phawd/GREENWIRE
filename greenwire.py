@@ -1675,6 +1675,23 @@ def parse_args() -> argparse.Namespace:
     fido.add_argument("--credential-id", type=str, help="Credential ID for operations")
     fido.add_argument("--relying-party", type=str, default="example.com", help="Relying party ID")
 
+    # APDU4J operations subcommand - Comprehensive APDU command library from martinpaljak/apdu4j
+    apdu4j = sub.add_parser("apdu4j", help="APDU4J operations - ISO 7816-4 compliant smartcard commands with GlobalPlatform support")
+    apdu4j.add_argument("--list-readers", action="store_true", help="List available PC/SC card readers")
+    apdu4j.add_argument("--list-commands", action="store_true", help="List all available APDU4J commands")
+    apdu4j.add_argument("--command-info", type=str, metavar="COMMAND", help="Show detailed information about a specific command")
+    apdu4j.add_argument("--execute", type=str, metavar="COMMAND", help="Execute an APDU4J command")
+    apdu4j.add_argument("--raw-apdu", type=str, metavar="HEX", help="Send raw APDU as hex string")
+    apdu4j.add_argument("--reader", type=str, help="Specific card reader to use")
+    apdu4j.add_argument("--aid", type=str, help="Application ID for SELECT commands")
+    apdu4j.add_argument("--pin", type=str, help="PIN for verification commands")
+    apdu4j.add_argument("--pin-id", type=int, default=0x80, help="PIN identifier (default: 0x80)")
+    apdu4j.add_argument("--tag", type=str, help="Data object tag for GET_DATA (hex)")
+    apdu4j.add_argument("--le", type=int, default=256, help="Expected response length (default: 256)")
+    apdu4j.add_argument("--gp-list-apps", action="store_true", help="List GlobalPlatform applications")
+    apdu4j.add_argument("--gp-card-info", action="store_true", help="Get GlobalPlatform card information")
+    apdu4j.add_argument("--verbose", action="store_true", help="Enable verbose APDU logging")
+
     # Legacy flags parser
     legacy = sub.add_parser("legacy", help="Legacy command-line flags (deprecated)")
 
@@ -7583,6 +7600,101 @@ def run_fido(args: argparse.Namespace) -> None:
         print("\n💡 Available operations: info, make-credential, get-assertion, list-credentials, reset")
 
 
+def run_apdu4j(args: argparse.Namespace) -> None:
+    """Run APDU4J operations with comprehensive ISO 7816-4 and GlobalPlatform support."""
+    try:
+        # Import the CLI module
+        import sys
+        import os
+        apdu4j_path = os.path.join(os.path.dirname(__file__), 'apdu4j_data')
+        sys.path.insert(0, apdu4j_path)
+        
+        from apdu4j_cli import APDU4JCLIHandler
+        
+        # Initialize handler
+        handler = APDU4JCLIHandler()
+        
+        # Process commands that don't require connection
+        if args.list_readers:
+            handler.list_readers()
+            return
+            
+        if args.list_commands:
+            handler.list_commands()
+            return
+            
+        if args.command_info:
+            handler.show_command_info(args.command_info)
+            return
+        
+        # Commands requiring connection
+        needs_connection = any([
+            args.execute,
+            args.raw_apdu,
+            args.gp_list_apps,
+            args.gp_card_info
+        ])
+        
+        if needs_connection:
+            print("🚀 GREENWIRE APDU4J Interface")
+            print("=" * 35)
+            
+            if not handler.setup_connection(args.reader, args.verbose):
+                print("❌ Failed to establish connection")
+                return
+                
+        # Execute operations
+        if args.execute:
+            kwargs = {}
+            if hasattr(args, 'aid') and args.aid:
+                kwargs['aid'] = args.aid
+            if hasattr(args, 'pin') and args.pin:
+                kwargs['pin'] = args.pin
+                if hasattr(args, 'pin_id'):
+                    kwargs['pin_id'] = args.pin_id
+            if hasattr(args, 'tag') and args.tag:
+                kwargs['tag'] = int(args.tag, 16)  # Convert hex to int
+                if hasattr(args, 'le'):
+                    kwargs['le'] = args.le
+                    
+            handler.execute_command(args.execute, **kwargs)
+            
+        elif args.raw_apdu:
+            handler.send_raw_apdu(args.raw_apdu)
+            
+        elif args.gp_list_apps:
+            handler.gp_list_applications()
+            
+        elif args.gp_card_info:
+            handler.gp_get_card_info()
+            
+        else:
+            # No specific operation, show general info
+            print("🚀 GREENWIRE APDU4J Interface")
+            print("=" * 35)
+            print("💡 Available operations:")
+            print("  --list-readers      : List PC/SC card readers")
+            print("  --list-commands     : Show all APDU4J commands")
+            print("  --command-info CMD  : Show command details")
+            print("  --execute CMD       : Execute APDU command")
+            print("  --raw-apdu HEX      : Send raw APDU")
+            print("  --gp-list-apps      : List GP applications")
+            print("  --gp-card-info      : Get GP card info")
+            print("\n📖 Examples:")
+            print("  greenwire apdu4j --list-commands")
+            print("  greenwire apdu4j --execute SELECT_MF --verbose")
+            print("  greenwire apdu4j --raw-apdu 00A40000023F00")
+            
+    except ImportError as e:
+        print(f"❌ APDU4J module import failed: {e}")
+        print("💡 Ensure apdu4j_data module is properly installed")
+    except Exception as e:
+        print(f"❌ APDU4J operation failed: {e}")
+        if args.verbose:
+            import traceback
+            traceback.print_exc()
+
+
 def run_hsm(args: argparse.Namespace) -> None:
     """Run HSM operations."""
     print("🔒 GREENWIRE Hardware Security Module")
@@ -8970,7 +9082,7 @@ def run_legacy(args: argparse.Namespace) -> None:
             elif choice == '4':
                 print("Legacy emulation - using basic profile...")
                 args.profile = 'basic'
-                run_emulator(args)
+                run_emulation(args)
             elif choice == '5':
                 print("Legacy configuration - showing global defaults...")
                 run_options(args)
@@ -9036,6 +9148,8 @@ def main(args: argparse.Namespace) -> None:
         run_apdu(args)
     elif args.subcommand == "fido":
         run_fido(args)
+    elif args.subcommand == "apdu4j":
+        run_apdu4j(args)
     elif args.subcommand == "hsm":
         run_hsm(args)
     elif args.subcommand == "emulate":
