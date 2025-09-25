@@ -1,4 +1,0 @@
-/* This file is intentionally left blank.
-   The original content of JCOPCardManagerHelper has been moved to its own file
-   to comply with the Java convention that a public class should reside in a file
-   with the same name as the class. */

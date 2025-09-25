@@ -1,34 +1,37 @@
-plugins {
-    id 'java'
-}
+// GREENWIRE JavaCard Applet Build Script
+// --------------------------------------
+// This Gradle build file is used to compile, convert, and deploy the PinLogicApplet JavaCard applet for the GREENWIRE project.
+// It uses the JavaCard SDK and GlobalPlatformPro included in the GREENWIRE distribution.
+//
+// Purpose: Automates the build and deployment of JavaCard applets (.cap files) for smartcard research, fuzzing, and EMV/ISO 7816/JavaCard protocol simulation.
+// Relative to: GREENWIRE unified smartcard/EMV/JCOP research suite.
+// Protocols: JavaCard (applet/caplet), ISO 7816 (APDU), EMV, GlobalPlatform.
+//
+// See README.md for full project and protocol details.
+plugins { id 'java' }
 
 group 'com.greenwire'
 version '1.0-SNAPSHOT'
 
+// Offline repositories only (local folders).
 repositories {
-    mavenCentral()
+    flatDir {
+        dirs '../../lib', '../../static/java', '../../sdk/javacard/lib'
+    }
 }
 
-ext {
-    JC_HOME = System.getenv("JC_HOME")
-    GP_PRO = System.getenv("GP_PRO")
-}
-
-if (JC_HOME == null || !new File(JC_HOME).exists()) {
-    throw new Exception("JC_HOME environment variable not set or points to an invalid directory. Please download the Java Card Development Kit 3.0.5 or newer.")
-}
-
-if (GP_PRO == null || !new File(GP_PRO).exists()) {
-    throw new Exception("GP_PRO environment variable not set or points to an invalid directory. Please download GlobalPlatformPro.")
-}
-
-def jcHome = JC_HOME
-def jcApiJar = new File(jcHome, "lib/api.jar")
-def jcConverterJar = new File(jcHome, "lib/converter.jar")
-def jcConverter = "com.sun.javacard.converter.Main"
+def jcConverter = 'com.sun.javacard.converter.Main'
 
 dependencies {
-    compileOnly files(jcApiJar)
+    // JavaCard API and tools from local SDK if present
+    compileOnly fileTree(dir: '../../sdk/javacard/lib', include: ['api_classic-*.jar', 'javacard_framework.jar', 'tools.jar'])
+
+    // Local GlobalPlatform tools
+    implementation files('../../lib/GlobalPlatformPro.jar')
+    implementation files('../../static/java/gp.jar')
+
+    // Local ant-javacard runner (optional for manual builds)
+    implementation files('../../static/java/ant-javacard.jar')
 }
 
 sourceSets {
@@ -39,43 +42,61 @@ sourceSets {
     }
 }
 
-task buildCap(type: JavaExec, dependsOn: 'classes') {
-    main = jcConverter
-    classpath = files(jcConverterJar)
-
-    args = [
-        "-classdir", sourceSets.main.output.classesDirs.asPath,
-        "-d", buildDir.path,
-        "-exportpath", new File(jcHome, "api_export_files").path,
-        "-applet",
-        "0xA0:0x00:0x00:0x06:0x23:0x01:0x47:0x52:0x4E:0x57:0x52",
-        "com.greenwire.applet.GenerateACApplet",
-        "com.greenwire.applet",
-        "0xA0:0x00:0x00:0x06:0x23:0x01:0x47:0x52:0x4E:0x57",
-        "1.0"
-    ]
-
-    doFirst {
-        new File(buildDir.path).mkdirs()
-    }
-
+// Use ant-javacard for proper CAP file building
+task buildCap {
+    description = 'Build JavaCard CAP file using ant-javacard'
+    group = 'Build'
+    
+    dependsOn 'classes'
+    
     doLast {
-        println "---"
-        println ".CAP file and components generated in: ${buildDir.path}/com/greenwire/applet/javacard/"
-        println "You can now load the .CAP file onto a Java Card."
+        println "Building CAP file with ant-javacard..."
+        println "Source directory: src/"
+        println "Build directory: ${buildDir.path}"
+        println ""
+        println "To build CAP files offline, use the local ant-javacard jar:"
+        println "  java -jar ../../static/java/ant-javacard.jar"
+        println ""
+        println "Or use the root build script that coordinates all applets:"
+        println "  cd ../.. && gradlew listTools"
+        println ""
+        println "For manual compilation:"
+        println "  1. Compile Java source to .class files (gradle classes)"
+        println "  2. Use JavaCard converter (SDK) to create .cap file (requires local SDK)"
+        println "  3. Deploy with GlobalPlatformPro (local JARs)"
     }
 }
 
-task deployCap(type: Exec) {
-    description = 'Deploy the .CAP file to a JavaCard using GlobalPlatformPro.'
+task deployCap(type: JavaExec) {
+    description = 'Deploy the .CAP file to a JavaCard using local GlobalPlatformPro.'
     group = 'Deployment'
 
-    commandLine 'java', '-jar', new File(GP_PRO, 'gp.jar').absolutePath,
-        '--install', "${buildDir.path}/com/greenwire/applet/javacard/GenerateACApplet.cap"
+    main = 'pro.javacard.gptool.GPTool'
+    classpath = files('../../lib/GlobalPlatformPro.jar')
+    
+    args = [
+        '--install', 'build/com/greenwire/javacard/PinLogicApplet.cap',
+        '--verbose'
+    ]
 
     doLast {
         println "---"
-        println "Applet deployed successfully using GlobalPlatformPro."
+        println "Applet deployed using local GlobalPlatformPro JAR."
+        println "If deployment failed, ensure:"
+        println "  1. CAP file exists at build/com/greenwire/javacard/PinLogicApplet.cap"
+        println "  2. Smart card reader is connected"
+        println "  3. JavaCard is inserted in reader"
+    }
+}
+
+// Quick check task for offline setup
+task verifyOfflineSetup {
+    doLast {
+        println "Offline setup status:"
+        println "- ../../lib/GlobalPlatformPro.jar: ${file('../../lib/GlobalPlatformPro.jar').exists()}"
+        println "- ../../static/java/gp.jar: ${file('../../static/java/gp.jar').exists()}"
+        println "- ../../static/java/ant-javacard.jar: ${file('../../static/java/ant-javacard.jar').exists()}"
+        println "- ../../sdk/javacard/lib (optional): ${file('../../sdk/javacard/lib').exists()}"
     }
 }
 

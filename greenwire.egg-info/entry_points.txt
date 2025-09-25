@@ -1,2 +1,0 @@
-[console_scripts]
-greenwire = greenwire.greenwire:main

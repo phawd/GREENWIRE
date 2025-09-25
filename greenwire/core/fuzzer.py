@@ -10,27 +10,18 @@ Dependencies
 """
 
 import sys
-import time
 import json
-import argparse
 import logging
-from smartcard.System import readers
-from smartcard.util import toHexString, toBytes
 from datetime import datetime
 import random
-import struct
 from math import log2
-import hashlib
 from collections import Counter
-import threading
-from concurrent.futures import ThreadPoolExecutor
-import csv
 import sqlite3
 import os
 import subprocess
 import re
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional, Union
+from typing import List, Optional, Union
 from dataclasses import dataclass
 
 from greenwire.core.nfc_emv import (
@@ -39,6 +30,8 @@ from greenwire.core.nfc_emv import (
     load_ca_keys,
     DEFAULT_CA_KEYS,
 )
+
+DEFAULT_CA_KEYS = {}
 
 # Analysis thresholds for security checks
 ANALYSIS_THRESHOLDS = {

@@ -6,9 +6,45 @@
     "exponent": "03"
   },
   {
+    "rid": "A000000003",
+    "index": "08",
+    "modulus": "A191599E6D7940C4F3B25AA0C4E2C8B4C6B7E5F2A1C8B4C6B7E5F2A1C8B4C6B7E5",
+    "exponent": "03"
+  },
+  {
     "rid": "A000000004",
     "index": "FF",
     "modulus": "D1E2F3A4B5C6D7E8F9C0D1E2F3A4B5C6D7E8F9C0D1E2F3A4B5C6D7E8F9C0D1E2",
+    "exponent": "03"
+  },
+  {
+    "rid": "A000000004",
+    "index": "05",
+    "modulus": "B204E44E6F6B6C8F2C6B6E8F2C6B6E8F2C6B6E8F2C6B6E8F2C6B6E8F2C6B6E8F2C",
+    "exponent": "03"
+  },
+  {
+    "rid": "A000000025",
+    "index": "01",
+    "modulus": "E1F2A3B4C5D6E7F8A9B0C1D2E3F4A5B6C7D8E9F0A1B2C3D4E5F6A7B8C9D0E1F2A3",
+    "exponent": "03"
+  },
+  {
+    "rid": "A000000065",
+    "index": "10",
+    "modulus": "F1E2D3C4B5A69788796A5B4C3D2E1F0A9B8C7D6E5F4A3B2C1D0E9F8A7B6C5D4E3F2",
+    "exponent": "03"
+  },
+  {
+    "rid": "A000000333",
+    "index": "01",
+    "modulus": "A1B2C3D4E5F67890A1B2C3D4E5F67890A1B2C3D4E5F67890A1B2C3D4E5F67890A1B2",
+    "exponent": "03"
+  },
+  {
+    "rid": "A000000152",
+    "index": "30",
+    "modulus": "C1D2E3F4A5B6C7D8E9F0A1B2C3D4E5F6A7B8C9D0E1F2A3B4C5D6E7F8A9B0C1D2E3",
     "exponent": "03"
   }
 ]

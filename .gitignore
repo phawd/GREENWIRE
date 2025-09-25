@@ -1,14 +1,147 @@
-### Example user template template
-### Example user template
+# GREENWIRE .gitignore - Professional GitHub upload preparation
 
-# IntelliJ project files
-.idea
+# Build artifacts
+*.class
+*.jar
+!static/java/ant-javacard.jar
+!GlobalPlatformPro.jar
+build/
+target/
+.gradle/
+gradle/wrapper/gradle-wrapper.jar
+
+# IDE and Editor files
+.vscode/settings.json
+.idea/
 *.iml
-out
-gen
+out/
+gen/
+*.swp
+*.swo
+*~
+.vs/
 
-.fake
-GREENWIRE-1
-# Python bytecode
+# Python cache and artifacts
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.Python
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Testing artifacts
+.tox/
+.nox/
+.coverage
+.pytest_cache/
+htmlcov/
+
+# Generated reports and logs
+*.log
+logs/
+dumps/
+*.json
+!ca_keys.json
+!enhanced_ca_keys.json
+!global_defaults.json
+!production_config.json
+
+# Generated test data and reports
+generated_cards_*.json
+*_report_*.json
+*_report_*.md
+ENHANCED_*_REPORT_*.json
+MEMORY_EXTRACTION_REPORT_*.json
+EXTRACTION_SUMMARY_*.txt
+card_analysis_*.txt
+crypto_fuzz_report_*.json
+enhanced_protocol_fuzz_report_*.json
+protocol_fuzz_report_*.json
+state_fuzz_report_*.json
+native_apdu_fuzz_report_*.md
+ai_vuln_test.json
+
+# Temporary files
+temp_fuzz_smoke/
+*.tmp
+*.temp
+.temp/
+temp/
+.fake
+
+# System files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Generated documentation (keep only core docs)
+*_COMPLETE.md
+*_SUMMARY.md
+*_REPORT.md
+GREENWIRE_REBUILT_DOCUMENTATION.md
+GREENWIRE_ANALYSIS_REPORT.md
+GREENWIRE_DOCUMENTATION.md
+README_Enhanced.md
+MANUAL_FIX.md
+
+# Build scripts (keep source, ignore output)
+build_all_*.bat
+fix_all_java.bat
+deploy_merchant_probes.bat
+
+# CAP files and applet builds
+caplets/
+applets/
+bin/
+*.cap
+
+# Development utilities that should not be in production
+demo_enhanced.py
+*_enhanced.py
+*_rebuilt.py
+*_patched.py
+*_modular.py
+greenwire_enhancer.py
+install_emulation_module.py
+
+# Test files
+test_*.py
+
+# GREENWIRE static distribution - exclude large files
+static/lib/packages/*.whl
+static/lib/packages/*.tar.gz
+dist/*.zip
+dist/*.tar.gz
+
+# SDK and external dependencies
+sdk/
+javacardSDK/

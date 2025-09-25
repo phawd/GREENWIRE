@@ -1,10 +1,13 @@
-"""
-Emulator and ISO/EMV simulation logic for Greenwire.
-"""
+#
+# GREENWIRE Emulator (emulator.py)
+# --------------------------------
+# Purpose: Unified emulator for NFC, smartcard, and terminal operations, including ISO 14443, ISO 15693, ISO 18092, and EMV simulation.
+# Relative to: Used by GREENWIRE CLI and test suites for protocol simulation, fuzzing, and hardware-in-the-loop testing.
+# Protocols: ISO 14443, ISO 15693, ISO 18092, EMV, ISO 7816, PCSC, NFC.
+#
 # Will move GreenwireEmulator and related functions here
 
 import logging
-import os
 import random
 import time
 from greenwire.core.nfc_iso import ISO14443ReaderWriter, ISO15693ReaderWriter, ISO18092ReaderWriter

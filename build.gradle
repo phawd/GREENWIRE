@@ -1,3 +1,7 @@
+// GREENWIRE Root Build Script
+// ---------------------------
+// Offline/static Gradle configuration relying solely on in-repo JARs.
+
 plugins {
     id 'java'
 }
@@ -5,82 +9,49 @@ plugins {
 group 'com.greenwire'
 version '1.0-SNAPSHOT'
 
+// Use only local folders. No remote repositories to guarantee reproducibility.
 repositories {
-    mavenCentral()
+    flatDir {
+        dirs 'lib', 'static/java', 'sdk/javacard/lib'
+    }
 }
-
-// --- Java Card Configuration ---
-// You must download the Java Card Development Kit (e.g., from Oracle)
-// and set the JC_HOME environment variable to point to it.
-def jcHome = System.getenv("JC_HOME")
-if (jcHome == null || !new File(jcHome).exists()) {
-    throw new GradleException("JC_HOME environment variable not set or points to an invalid directory. Please download the Java Card Development Kit 3.0.5 or newer.")
-}
-
-def jcApiJar = new File(jcHome, "lib/api.jar")
-def jcConverterJar = new File(jcHome, "lib/converter.jar")
-def jcConverter = "com.sun.javacard.converter.Main"
-def globalPlatformProJar = new File(jcHome, "lib/GlobalPlatformPro.jar")
 
 dependencies {
-    // The Java Card API is needed for compilation
-    compileOnly files(jcApiJar)
-    compileOnly files(globalPlatformProJar) // Adding GlobalPlatformPro dependency
+    // Local GlobalPlatform tools
+    implementation files('lib/GlobalPlatformPro.jar')
+    implementation files('static/java/gp.jar')
+
+    // Local ant-javacard helper (runnable JAR)
+    implementation files('static/java/ant-javacard.jar')
+
+    // JavaCard API stubs if SDK is present locally (safe if directory is missing)
+    compileOnly fileTree(dir: 'sdk/javacard/lib', include: ['api_classic-*.jar', 'javacard_framework.jar', 'tools.jar'])
 }
 
 sourceSets {
     main {
-        java {
-            srcDir 'src'
-        }
+        java { srcDir 'src' }
     }
 }
 
-// Custom task to convert .class files to a .CAP file
-task buildCap(type: JavaExec, dependsOn: 'classes') {
-    // The converter runs as a Java application
-    main = jcConverter
-    classpath = files(jcConverterJar)
-
-    // Arguments for the converter tool
-    args = [
-        "-classdir", sourceSets.main.output.classesDirs.asPath,
-        "-d", buildDir.path, // Output directory
-        "-exportpath", new File(jcHome, "api_export_files").path,
-        "-applet",
-        "0xA0:0x00:0x00:0x06:0x23:0x01:0x47:0x52:0x4E:0x57:0x52", // Applet AID
-        "com.greenwire.applet.GreenwireApplet",
-        "com.greenwire.applet", // Package name
-        "0xA0:0x00:0x00:0x06:0x23:0x01:0x47:0x52:0x4E:0x57", // Package AID
-        "1.0" // Package version
-    ]
-
-    doFirst {
-        // Create output directory if it doesn't exist
-        new File(buildDir.path).mkdirs()
-    }
-
+// Helper task to print current offline tool availability
+task listTools {
     doLast {
-        println "---"
-        println ".CAP file and components generated in: ${buildDir.path}/com/greenwire/applet/javacard/"
-        println "You can now load the .CAP file onto a Java Card."
+        println "Available offline tools (local JARs only):"
+        println "- lib/GlobalPlatformPro.jar: ${file('lib/GlobalPlatformPro.jar').exists()}"
+        println "- static/java/gp.jar:        ${file('static/java/gp.jar').exists()}"
+        println "- static/java/ant-javacard.jar: ${file('static/java/ant-javacard.jar').exists()}"
+        println "- sdk/javacard/lib (optional SDK): ${file('sdk/javacard/lib').exists()}"
+        println ""
+        println "Tip: For JavaCard CAP builds, see javacard/applet/build.gradle."
     }
 }
 
-// Custom task to manage GlobalPlatformPro operations
+// Example GlobalPlatformPro invocation using the local fat JAR
 task manageGlobalPlatformPro(type: JavaExec) {
-    main = "pro.javacard.gp.GPTool"
-    classpath = files(globalPlatformProJar)
-
-    args = [
-        "--list", // Example argument to list applets
-        "--verbose"
-    ]
-
-    doLast {
-        println "---"
-        println "GlobalPlatformPro operations completed."
-    }
+    main = 'pro.javacard.gptool.GPTool'
+    classpath = files('lib/GlobalPlatformPro.jar')
+    args = ['--version']
 }
 
-defaultTasks 'buildCap'
+defaultTasks 'listTools'

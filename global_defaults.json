@@ -1,0 +1,6 @@
+{
+  "verbose_default": true,
+  "max_payload_default": 220,
+  "stateful_default": false,
+  "artifact_dir_default": "."
+}

@@ -5,31 +5,15 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, cast
 
 import nfc
 
 
-DEFAULT_CA_KEYS: Dict[str, Dict[str, str]] = {
-    "A000000003_92": {
-        "rid": "A000000003",
-        "index": "92",
-        "modulus": (
-            "C1D2E3F4A5B6C7D8E9F0C1D2E3F4A5B6"
-            "C7D8E9F0C1D2E3F4A5B6C7D8E9F0C1D2"
-        ),
-        "exponent": "03",
-    },
-    "A000000004_FF": {
-        "rid": "A000000004",
-        "index": "FF",
-        "modulus": (
-            "D1E2F3A4B5C6D7E8F9C0D1E2F3A4B5C6"
-            "D7E8F9C0D1E2F3A4B5C6D7E8F9C0D1E2"
-        ),
-        "exponent": "03",
-    },
-}
+
+
+
+DEFAULT_CA_KEYS = {}
 
 
 @dataclass
@@ -47,9 +31,10 @@ def load_ca_keys(path: str) -> Dict[str, Dict[str, str]]:
     try:
         with open(path, "r", encoding="utf-8") as fh:
             data = json.load(fh)
-        result = {
-            f"{entry['rid']}_{entry['index']}": entry for entry in data
-        }
+        result = {}
+        for scheme_keys in data.values():
+            for entry in scheme_keys:
+                result[f"{entry['rid']}_{entry['index']}"] = entry
         return result
     except Exception as exc:  # noqa: BLE001
         logging.warning("Failed to load CA keys from %s: %s", path, exc)
@@ -163,7 +148,7 @@ class NFCEMVProcessor:
                             0x00, 0xB2, rec, (sfi << 3) | 4, b""
                         )
                         rec_bytes = bytes(data)
-                        result["records"].append(
+                        cast(list, result["records"]).append(
                             {"sfi": sfi, "record": rec, "data": rec_bytes}
                         )
                         r_tlv = self._parse_tlv(rec_bytes)
