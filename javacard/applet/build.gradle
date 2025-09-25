@@ -117,3 +117,70 @@ task checkConverterPrereqs {
 }
 
 defaultTasks 'buildCap'
+
+// Convert compiled classes into a .cap using the JavaCard converter (tools.jar)
+task convertCap(type: JavaExec) {
+    description = 'Convert compiled classes to a JavaCard .cap using tools.jar'
+    group = 'Build'
+
+    dependsOn 'classes'
+
+    // Configurable applet metadata (sample values)
+    def appletClass = 'com.greenwire.applet.GreenwireApplet'
+    def packageName = 'com.greenwire.applet'
+    def packageVersion = '1.0'
+    // AIDs (hex, colon-separated)
+    def appletAID = 'A0:00:00:06:23:01:47:52:4E:57:52' // "A00000062301474E5752"
+    def packageAID = 'A0:00:00:06:23:01:47:52:4E:57:50' // ...'P'
+
+    // Detect export path candidates
+    def exportCandidates = [
+        '../../sdk/javacard/api_export_files',
+        '../../sdk/javacard/export',
+        '../../sdk/javacard/exp',
+        '../../sdk/javacard/lib/api_export_files'
+    ]
+    def exportPath = exportCandidates.find { file(it).exists() }
+
+    def toolsJar = file('../../sdk/javacard/lib/tools.jar')
+    def classesDir = "$buildDir/classes/java/main"
+    def outDir = file("$buildDir/cap")
+
+    doFirst {
+        println 'Preparing JavaCard conversion...'
+        println " - tools.jar:     ${toolsJar.exists()} (${toolsJar})"
+        println " - classes dir:   ${file(classesDir).exists()} (${classesDir})"
+        println " - export path:   ${exportPath ?: 'NOT FOUND'}"
+        if (!toolsJar.exists()) {
+            throw new GradleException('Missing tools.jar. Place it at sdk/javacard/lib/tools.jar')
+        }
+        if (!file(classesDir).exists()) {
+            throw new GradleException('Classes not found. Run gradle classes first (should be automatic).')
+        }
+        if (!exportPath) {
+            throw new GradleException('JavaCard API export files not found. Expected at sdk/javacard/api_export_files (or export/exp).')
+        }
+        outDir.mkdirs()
+    }
+
+    main = jcConverter
+    classpath = files(toolsJar)
+    args = [
+            '-classdir', classesDir,
+            '-d', outDir.absolutePath,
+            '-exportpath', file(exportPath).absolutePath,
+            '-out', 'CAP',
+            '-applet', appletAID, appletClass,
+            packageName, packageAID, packageVersion
+    ]
+
+    doLast {
+        // Try to locate the produced CAP file and give a friendly pointer
+        def caps = fileTree(outDir).matching { include '**/*.cap' }.files
+        if (!caps.isEmpty()) {
+            println "CAP generated: ${caps.iterator().next()}"
+        } else {
+            println 'Conversion ran but no .cap found in build/cap. Check converter output above.'
+        }
+    }
+}
