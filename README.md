@@ -549,15 +549,51 @@ Notes:
 
 ---
 
+## JavaCard: Offline .cap Build and Deploy (Gradle)
+
+GREENWIRE includes a fully offline JavaCard toolchain. Place the JavaCard SDK jars under `sdk/javacard/lib` (we already include `tools.jar` and `api_classic.jar`), and place JavaCard API export files under `sdk/javacard/api_export_files` (or `export`/`exp`).
+
+From `javacard/applet`:
+
+```powershell
+# Convert to .cap with defaults
+./gradlew convertCap
+
+# Deploy the last built .cap
+./gradlew deployCap
+
+# Override applet metadata and paths via -P properties
+./gradlew convertCap `
+  -PappletClass=com.greenwire.applet.PinLogicApplet `
+  -PpackageName=com.greenwire.applet `
+  -PpackageVersion=1.0 `
+  -PappletAID=A0:00:00:06:23:01:47:52:4E:57:52 `
+  -PpackageAID=A0:00:00:06:23:01:47:52:4E:57:50 `
+  -PexportPath=../../sdk/javacard/api_export_files `
+  -PclassesDir=build/classes/java/main
+
+# Deploy a specific .cap
+./gradlew deployCap -PcapFile=build/cap/com/greenwire/applet/javacard/applet.cap
+```
+
+Notes:
+
+- Export files are part of the JavaCard SDK; place them in one of the discovered folders above or pass `-PexportPath`.
+- `deployCap` uses the local `GlobalPlatformPro.jar` under `lib/`.
+- You can also use the convenience wrappers from the project root or lib folder:
+  - `gp.ps1` (PowerShell) or `gp.cmd` (CMD)
+
+
 ## Centralized Menu Action Registry (MENU_ACTIONS)
 
 Interactive menu actions are now resolved exclusively via a single authoritative registry in `menu_handlers.py`:
 
-```
+```text
 from menu_handlers import MENU_ACTIONS
 ```
 
 Benefits:
+
 - Eliminates fragile dynamic attribute introspection
 - Guarantees every visible menu entry maps to an implementation
 - Simplifies auditing & testing (iterate `MENU_ACTIONS.keys()`)

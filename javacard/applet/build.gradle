@@ -125,13 +125,13 @@ task convertCap(type: JavaExec) {
 
     dependsOn 'classes'
 
-    // Configurable applet metadata (sample values)
-    def appletClass = 'com.greenwire.applet.GreenwireApplet'
-    def packageName = 'com.greenwire.applet'
-    def packageVersion = '1.0'
-    // AIDs (hex, colon-separated)
-    def appletAID = 'A0:00:00:06:23:01:47:52:4E:57:52' // "A00000062301474E5752"
-    def packageAID = 'A0:00:00:06:23:01:47:52:4E:57:50' // ...'P'
+    // Configurable applet metadata via -P properties (with sensible defaults)
+    def appletClass = project.findProperty('appletClass') ?: 'com.greenwire.applet.GreenwireApplet'
+    def packageName = project.findProperty('packageName') ?: 'com.greenwire.applet'
+    def packageVersion = project.findProperty('packageVersion') ?: '1.0'
+    // AIDs (hex, colon-separated). Example: A0:00:00:06:23:01:47:52:4E:57:52
+    def appletAID = project.findProperty('appletAID') ?: 'A0:00:00:06:23:01:47:52:4E:57:52'
+    def packageAID = project.findProperty('packageAID') ?: 'A0:00:00:06:23:01:47:52:4E:57:50'
 
     // Detect export path candidates
     def exportCandidates = [
@@ -140,10 +140,10 @@ task convertCap(type: JavaExec) {
         '../../sdk/javacard/exp',
         '../../sdk/javacard/lib/api_export_files'
     ]
-    def exportPath = exportCandidates.find { file(it).exists() }
+    def exportPath = project.findProperty('exportPath') ?: exportCandidates.find { file(it).exists() }
 
     def toolsJar = file('../../sdk/javacard/lib/tools.jar')
-    def classesDir = "$buildDir/classes/java/main"
+    def classesDir = project.findProperty('classesDir') ?: "$buildDir/classes/java/main"
     def outDir = file("$buildDir/cap")
 
     doFirst {
@@ -151,6 +151,10 @@ task convertCap(type: JavaExec) {
         println " - tools.jar:     ${toolsJar.exists()} (${toolsJar})"
         println " - classes dir:   ${file(classesDir).exists()} (${classesDir})"
         println " - export path:   ${exportPath ?: 'NOT FOUND'}"
+        println " - applet class:  ${appletClass}"
+        println " - package name:  ${packageName} (${packageAID})"
+        println " - applet AID:    ${appletAID}"
+        println " - version:       ${packageVersion}"
         if (!toolsJar.exists()) {
             throw new GradleException('Missing tools.jar. Place it at sdk/javacard/lib/tools.jar')
         }
@@ -182,5 +186,51 @@ task convertCap(type: JavaExec) {
         } else {
             println 'Conversion ran but no .cap found in build/cap. Check converter output above.'
         }
+    }
+}
+
+// Deploy the most recently generated CAP with GlobalPlatformPro, or override with -PcapFile
+task deployCap(type: JavaExec) {
+    description = 'Deploy the .CAP file to a JavaCard using local GlobalPlatformPro.'
+    group = 'Deployment'
+
+    // Allow overriding the CAP path
+    def capOverride = project.findProperty('capFile')
+    def capDir = file("$buildDir/cap")
+
+    // Default: ensure we have a CAP to install
+    dependsOn(capOverride ? [] : [convertCap])
+
+    doFirst {
+        if (capOverride) {
+            if (!file(capOverride).exists()) {
+                throw new GradleException("Specified capFile not found: ${capOverride}")
+            }
+        } else {
+            if (!capDir.exists()) {
+                throw new GradleException('No build/cap directory found; run convertCap first or set -PcapFile=...')
+            }
+        }
+    }
+
+    // Resolve CAP path
+    def capToInstall = capOverride ?: {
+        def caps = fileTree(capDir).matching { include '**/*.cap' }.files.toList().sort { -it.lastModified() }
+        if (caps.isEmpty()) {
+            throw new GradleException('No .cap file found in build/cap; run convertCap or set -PcapFile=...')
+        }
+        return caps[0].absolutePath
+    }.call()
+
+    // Use GlobalPlatformPro
+    main = 'pro.javacard.gptool.GPTool'
+    classpath = files('../../lib/GlobalPlatformPro.jar')
+    args = ['--install', capToInstall, '--verbose']
+
+    doLast {
+        println "---"
+        println "Applet deployed using local GlobalPlatformPro JAR."
+        println "Installed CAP: ${capToInstall}"
+        println "If deployment failed, ensure a reader and a JavaCard are present, and keys/AIDs are correct."
     }
 }
