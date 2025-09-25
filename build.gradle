@@ -25,7 +25,8 @@ dependencies {
     implementation files('static/java/ant-javacard.jar')
 
     // JavaCard API stubs if SDK is present locally (safe if directory is missing)
-    compileOnly fileTree(dir: 'sdk/javacard/lib', include: ['api_classic-*.jar', 'javacard_framework.jar', 'tools.jar'])
+    // Accept both versioned and unversioned API jar names
+    compileOnly fileTree(dir: 'sdk/javacard/lib', include: ['api_classic-*.jar', 'api_classic.jar', 'javacard_framework.jar', 'tools.jar'])
 }
 
 sourceSets {

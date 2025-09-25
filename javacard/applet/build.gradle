@@ -24,7 +24,8 @@ def jcConverter = 'com.sun.javacard.converter.Main'
 
 dependencies {
     // JavaCard API and tools from local SDK if present
-    compileOnly fileTree(dir: '../../sdk/javacard/lib', include: ['api_classic-*.jar', 'javacard_framework.jar', 'tools.jar'])
+    // Accept both versioned and unversioned API jar names
+    compileOnly fileTree(dir: '../../sdk/javacard/lib', include: ['api_classic-*.jar', 'api_classic.jar', 'javacard_framework.jar', 'tools.jar'])
 
     // Local GlobalPlatform tools
     implementation files('../../lib/GlobalPlatformPro.jar')

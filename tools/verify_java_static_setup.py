@@ -17,9 +17,15 @@ REQUIRED_ITEMS = [
     ("static/java/ant-javacard.jar", "ant-javacard build helper"),
 ]
 
+# Optional groups: at least one of the patterns in each group should exist
+OPTIONAL_API_CANDIDATES = [
+    "sdk/javacard/lib/api_classic-3.0.5.jar",
+    "sdk/javacard/lib/api_classic.jar",
+    "sdk/javacard/lib/javacard_framework.jar",
+]
 OPTIONAL_ITEMS = [
-    ("sdk/javacard/lib/api_classic-3.0.5.jar", "JavaCard API 3.0.5 (Oracle/Thales SDK)"),
-    ("sdk/javacard/lib/tools.jar", "JavaCard converter tools.jar (SDK)"),
+    (OPTIONAL_API_CANDIDATES, "JavaCard API (e.g., api_classic.jar or versioned variant)"),
+    (["sdk/javacard/lib/tools.jar"], "JavaCard converter tools.jar (SDK)"),
 ]
 
 
@@ -42,10 +48,18 @@ def main() -> int:
             print(f"     → missing: {hint}")
 
     print("\nOptional (recommended for full offline cap conversion):")
-    for rel, hint in OPTIONAL_ITEMS:
-        p = root / rel
-        print(f"  {status(p)} {rel}")
-        if not p.exists():
+    for rels, hint in OPTIONAL_ITEMS:
+        # rels can be a list of candidates (any satisfies)
+        candidates = [root / r for r in rels]
+        exists_any = any(p.exists() for p in candidates)
+        if exists_any:
+            # show the first that exists
+            present = next(p for p in candidates if p.exists())
+            print(f"  ✅ {present.relative_to(root)}")
+        else:
+            # show primary suggestion
+            primary = candidates[0]
+            print(f"  ❌ {primary.relative_to(root)}")
             print(f"     → suggestion: {hint}")
 
     print()
