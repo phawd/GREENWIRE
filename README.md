@@ -453,8 +453,6 @@ See: `APDU_FUZZING.md` (section "Configuration Center & Global Defaults") for de
 - nfc4pc (NFC operations, external tooling)
 - YAFU (FIDO/WebAuthn operations)
 - JavaCard toolchain (ant-javacard + SDK under `ant-javacard/`)
-- Ghidra (reverse-engineering modules under `ghidra/`)
-- binwalk (firmware analysis, Rust/JS hybrid in repo subdir)
 
 ### Internal Core Modules (Selected)
 
@@ -482,8 +480,7 @@ See: `APDU_FUZZING.md` (section "Configuration Center & Global Defaults") for de
 
 - Java (for apdu4j, GlobalPlatformPro, JavaCard builds)
 - Ant / ant-javacard plugin
-- Gradle (Java subprojects under `bc-java/`, `ghidra/`)
-- Rust toolchain (binwalk variant crates)
+- Gradle (Java subprojects if present)
 
 ### Optional / Conditional
 
@@ -504,8 +501,6 @@ See: `APDU_FUZZING.md` (section "Configuration Center & Global Defaults") for de
 
 - APDU fuzzing details & config integration: `APDU_FUZZING.md`
 - JavaCard build pipeline: `ant-javacard/README.md`
-- Ghidra module usage: `ghidra/` docs
-- Firmware analysis: `binwalk/README.md`
 
 ---
 

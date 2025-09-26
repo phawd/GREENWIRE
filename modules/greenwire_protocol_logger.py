@@ -4,12 +4,8 @@ GREENWIRE Protocol Logger - Comprehensive logging for NFC and ATR operations
 Provides operator-readable verbose logging with protocol-level details
 """
 
-import os
-import time
-import datetime
-import json
-import logging
-from typing import Dict, List, Any, Optional, Union
+import datetime, json, logging, os, time  # noqa: F401
+from typing import Any, Dict, List, Optional, Union  # noqa: F401
 from pathlib import Path
 
 class ProtocolLogger:

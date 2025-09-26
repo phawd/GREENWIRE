@@ -5,12 +5,11 @@ Purpose: Provides cryptographic primitives (RSA, ECC, AES, hashing, signing, ver
 Relative to: Used by GREENWIRE CLI, emulators, and test suites for smartcard/EMV/JCOP protocol simulation and security testing.
 Protocols: EMV, ISO 7816, JavaCard, PKCS#1, PKCS#7, FIPS 186-4, and related cryptographic standards.
 """
-import hashlib
-import logging
+import hashlib, logging
 from typing import Tuple
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import rsa, ec, padding, ed25519
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes, aead
+from cryptography.hazmat.primitives.asymmetric import ec, ed25519, padding, rsa
+from cryptography.hazmat.primitives.ciphers import Cipher, aead, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 
 logger = logging.getLogger("crypto_engine")

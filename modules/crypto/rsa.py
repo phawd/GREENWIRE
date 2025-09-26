@@ -5,11 +5,10 @@ RSA key generation, signing, verification, encryption, and decryption.
 Uses built-in Python libraries where possible.
 """
 
-import random
-import math
-from typing import Tuple, Optional
-from .primitives import secure_random, GreenwireCryptoError, InvalidSignatureError
-from .hashes import hash_sha256, hash_sha1
+import math, random
+from typing import Optional, Tuple
+from .primitives import GreenwireCryptoError, InvalidSignatureError, secure_random  # noqa: F401
+from .hashes import hash_sha1, hash_sha256
 
 
 class RSAKey:

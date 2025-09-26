@@ -1,8 +1,8 @@
-from __future__ import annotations
+from __future__ import annotations  # noqa: F401
 
 """Simple NFC/RFID vulnerability scanning helpers."""
 
-from typing import List, Dict
+from typing import Dict, List
 
 from greenwire.core.nfc_iso import _BaseReaderWriter
 

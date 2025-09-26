@@ -4,9 +4,8 @@ GREENWIRE Encoding Utilities
 Encoding and decoding functions.
 """
 
-import base64
-import binascii
-from typing import Union, List, Tuple
+import base64, binascii  # noqa: F401
+from typing import List, Tuple, Union  # noqa: F401
 
 
 def hex_encode(data: bytes, separator: str = '') -> str:

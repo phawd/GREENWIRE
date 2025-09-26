@@ -4,11 +4,9 @@ GREENWIRE Logging Utilities
 Logging setup and utilities for GREENWIRE.
 """
 
-import logging
-import sys
-import os
+import logging, os, sys  # noqa: F401
 from typing import Optional
-from datetime import datetime
+from datetime import datetime  # noqa: F401
 
 
 class GreenwireFormatter(logging.Formatter):

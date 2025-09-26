@@ -5,27 +5,15 @@ standard/card type and then chooses an action specific to that
 selection.  It reuses helpers from ``menu_cli`` and ``crypto_engine``.
 """
 
-from __future__ import annotations
+from __future__ import annotations  # noqa: F401
 
 import argparse
 from typing import Callable, Dict
 
-from greenwire.core.crypto_engine import generate_rsa_key, generate_ec_key
+from greenwire.core.crypto_engine import generate_ec_key, generate_rsa_key
 from greenwire.core.nfc_emv import ContactlessEMVTerminal
 from greenwire.core.standards import Standard
-from greenwire.menu_cli import (
-    dump_atr,
-    dump_memory,
-    brute_force_pin,
-    fuzz_apdu,
-    fuzz_transaction,
-    scan_for_cards,
-    dump_filesystem,
-    export_data,
-    import_data,
-    reset_card,
-    detect_card_os,
-)
+from greenwire.menu_cli import brute_force_pin, detect_card_os, dump_atr, dump_filesystem, dump_memory, export_data, fuzz_apdu, fuzz_transaction, import_data, reset_card, scan_for_cards
 from greenwire.core.backend import init_backend
 
 # ---------------------------------------------------------------------------

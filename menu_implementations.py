@@ -4,15 +4,10 @@ GREENWIRE Simplified Menu Handlers
 Working implementations using standard Python libraries and existing tools
 """
 
-import os
-import sys
-import subprocess
-import json
-import time
-import binascii
+import binascii, json, logging, os, subprocess, sys, time  # noqa: F401
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any, Dict, List, Optional, Tuple  # noqa: F401
 
 # Import adb_cmd helper from greenwire
 try:
@@ -34,7 +29,6 @@ except ImportError:
     print("⚠️ pyscard not available. Install with: pip install pyscard")
 
 # Basic logging setup
-import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -1106,9 +1100,7 @@ def apdu_fuzzing_working():
     user opts in, real short APDUs will be sent; otherwise a fast simulation
     provides vulnerability categorization.
     """
-    from core.apdu_fuzzer import run_native_apdu_fuzz, NativeAPDUFuzzer
-    from datetime import datetime
-    import json
+    from core.apdu_fuzzer import run_native_apdu_fuzz
     print("🧬 Native APDU Fuzzing")
     print("=" * 40)
 
@@ -1134,7 +1126,7 @@ def apdu_fuzzing_working():
     send_callable = None
     try:
         from smartcard.System import readers
-        from smartcard.util import toHexString, toBytes
+        from smartcard.util import toBytes
         hw_readers = readers()
         if hw_readers:
             print(f"\n📡 Detected {len(hw_readers)} reader(s). Optional hardware fuzz? This only sends safe short APDUs.")

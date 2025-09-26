@@ -4,11 +4,9 @@ GREENWIRE Log Viewer - Human-readable analysis of protocol logs
 Provides operator-friendly viewing of NFC, ATR, and APDU logs
 """
 
-import json
-import argparse
-import datetime
+import argparse, datetime, json
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional  # noqa: F401
 
 class LogViewer:
     """Human-readable log analysis and reporting tool."""

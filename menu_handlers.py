@@ -56,11 +56,7 @@ GREENWIRE Menu Handlers - Clean Implementation
 All menu handlers with proper error handling and fallbacks
 """
 
-import os
-import sys
-import time
-import json
-import random
+import json, os, random, sys, time
 from datetime import datetime
 from pathlib import Path
 

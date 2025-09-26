@@ -5,8 +5,8 @@ EMV card emulation and testing utilities.
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple
-from .core import NFCTarget, NFCProtocol
+from typing import Dict, List, Optional, Tuple  # noqa: F401
+from .core import NFCProtocol, NFCTarget
 from .protocols import APDU, EMVProtocol
 
 

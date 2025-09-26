@@ -9,27 +9,15 @@ Dependencies
 - Java 17/Gradle build providing ``JCOPCardManager`` in ``GREENWIRE.jar``
 """
 
-import sys
-import json
-import logging
+import json, logging, os, random, re, sqlite3, subprocess, sys
 from datetime import datetime
-import random
 from math import log2
 from collections import Counter
-import sqlite3
-import os
-import subprocess
-import re
 from pathlib import Path
 from typing import List, Optional, Union
 from dataclasses import dataclass
 
-from greenwire.core.nfc_emv import (
-    ContactlessEMVTerminal,
-    CAPublicKey,
-    load_ca_keys,
-    DEFAULT_CA_KEYS,
-)
+from greenwire.core.nfc_emv import CAPublicKey, ContactlessEMVTerminal, DEFAULT_CA_KEYS, load_ca_keys
 
 DEFAULT_CA_KEYS = {}
 

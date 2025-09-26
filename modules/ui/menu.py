@@ -4,8 +4,8 @@ GREENWIRE Menu System
 Interactive menu system for GREENWIRE CLI.
 """
 
-import sys
-from typing import List, Callable, Optional, Dict, Any
+import sys  # noqa: F401
+from typing import Any, Callable, Dict, List, Optional
 from dataclasses import dataclass
 from enum import Enum
 

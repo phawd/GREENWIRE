@@ -1,4 +1,4 @@
-from __future__ import annotations
+from __future__ import annotations  # noqa: F401
 
 """Simple fuzzing helpers for file-based parsers.
 
@@ -8,9 +8,8 @@ modules so they can be reused across tools.
 """
 
 from pathlib import Path
-from typing import Callable, List, Dict
-import random
-import io
+from typing import Callable, Dict, List
+import io, random
 
 from PIL import Image
 

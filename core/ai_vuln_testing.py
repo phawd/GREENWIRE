@@ -7,10 +7,10 @@ latency / response metrics plus anomaly heuristics.
 
 Safe to run in dry-run mode; avoid use against production cards.
 """
-from __future__ import annotations
-import time, json, random, statistics, os
+from __future__ import annotations  # noqa: F401
+import json, os, random, statistics, time  # noqa: F401
 from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
 DEFAULT_SEED_CORPUS = [
     "00A4040007A0000002471001",  # PPSE / AID select
@@ -120,7 +120,6 @@ class AIVulnTester:
         start = time.time()
         try:
             if self.pcsc_channel:
-                from smartcard.util import toBytes  # type: ignore
                 data = list(apdu_bytes)
                 self.pcsc_channel.transmit(data)  # response list
                 # NOTE: For brevity we do not parse response details here

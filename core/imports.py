@@ -4,9 +4,8 @@ GREENWIRE Import Management System
 Centralized, simplified import handling with clear fallbacks
 """
 
-import importlib
-import sys
-from typing import Dict, List, Optional, Any
+import importlib, sys  # noqa: F401
+from typing import Any, Dict, List, Optional
 from core.logging_system import get_logger, handle_errors
 
 class ModuleManager:
@@ -79,7 +78,25 @@ class ModuleManager:
             return False
     
     def import_module(self, module_name: str, static: bool = False):
-        """Import a module dynamically."""
+        """Import a module dynamically with static mode support."""
+        import os
+        
+        # Check if we're in static mode
+        static_mode = static or os.getenv("GREENWIRE_STATIC") == "1"
+        
+        if static_mode:
+            # Try static/lib first for bundled modules
+            try:
+                # For static modules, try the static.lib namespace
+                if not module_name.startswith('static.lib.'):
+                    static_module_name = f'static.lib.{module_name}'
+                    return importlib.import_module(static_module_name)
+                else:
+                    return importlib.import_module(module_name)
+            except ImportError:
+                # Fallback to normal import
+                pass
+        
         try:
             return importlib.import_module(module_name)
         except ImportError:

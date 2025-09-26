@@ -11,15 +11,9 @@ This module has been extracted from the main GREENWIRE application for
 better modularity and can be run as a separate process when needed.
 """
 
-import os
-import sys
-import time
-import threading
-import subprocess
-import logging
-from typing import Optional, Dict, List, Union
+import argparse, logging, os, subprocess, sys, threading, time  # noqa: F401
+from typing import Dict, List, Optional, Union  # noqa: F401
 from pathlib import Path
-import argparse
 
 
 class EmulationBase:
@@ -280,10 +274,8 @@ class CardEmulator(EmulationBase):
     def _pcsc_emulation(self) -> bool:
         """PC/SC reader-based card emulation."""
         try:
-            from smartcard.System import readers
             from smartcard.CardType import AnyCardType
             from smartcard.CardRequest import CardRequest
-            from smartcard.util import toHexString
             
             # Check if there's a terminal trying to connect
             cardtype = AnyCardType()

@@ -13,13 +13,11 @@ Key design goals:
  - Safe hardware mode (skips oversize payloads, catches all transmit errors)
 """
 
-from __future__ import annotations
+from __future__ import annotations  # noqa: F401
 
-import os
-import random
-import time
+import os, random, time
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 
 class NativeAPDUFuzzer:

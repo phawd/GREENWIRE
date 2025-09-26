@@ -10,13 +10,9 @@ License: MIT
 """
 
 import logging
-from typing import Dict, List, Optional, Union, Any
-from .apdu_commands import (
-    APDU4JCommand, APDU4JInterface, APDU_COMMANDS, PCSC_COMMANDS,
-    create_select_aid_command, create_pin_verify_command, create_get_data_command,
-    parse_apdu_response
-)
-from .gp_commands import GPCommand, GPManager, GPCapFileLoader, GP_COMMANDS
+from typing import Any, Dict, List, Optional, Union
+from .apdu_commands import APDU4JCommand, APDU4JInterface, APDU_COMMANDS, PCSC_COMMANDS, create_get_data_command, create_pin_verify_command, create_select_aid_command, parse_apdu_response
+from .gp_commands import GPCapFileLoader, GPCommand, GPManager, GP_COMMANDS  # noqa: F401
 
 logger = logging.getLogger(__name__)
 

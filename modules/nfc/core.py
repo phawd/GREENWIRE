@@ -4,9 +4,8 @@ GREENWIRE NFC Core
 Core NFC device and communication functionality.
 """
 
-import logging
-import time
-from typing import Optional, List, Dict, Any
+import logging, time
+from typing import Any, Dict, List, Optional  # noqa: F401
 from enum import Enum
 
 

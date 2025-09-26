@@ -21,30 +21,22 @@ Features:
 Based on security research from PyEMV and GlobalPlatform specifications.
 """
 
-import os
-import json
-import hashlib
-import sqlite3
-import secrets
-import threading
-import time
-import logging
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any, Set
-from dataclasses import dataclass, asdict
+import concurrent.futures, hashlib, json, logging, os, secrets, sqlite3, threading, time  # noqa: F401
+from datetime import datetime, timedelta  # noqa: F401
+from pathlib import Path  # noqa: F401
+from typing import Any, Dict, List, Optional, Set, Tuple  # noqa: F401
+from dataclasses import asdict, dataclass  # noqa: F401
 from enum import Enum
-import concurrent.futures
 from collections import defaultdict
 
 # Cryptographic imports
-from cryptography.hazmat.primitives import hashes, hmac
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, hmac  # noqa: F401
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes  # noqa: F401
+from cryptography.hazmat.backends import default_backend  # noqa: F401
 
 # GREENWIRE imports
-from .emv_crypto import create_emv_crypto_manager, EMVKeyDerivation
-from .primitives import encrypt_tdes_ecb, decrypt_tdes_ecb, adjust_key_parity
+from .emv_crypto import EMVKeyDerivation, create_emv_crypto_manager
+from .primitives import adjust_key_parity, decrypt_tdes_ecb, encrypt_tdes_ecb  # noqa: F401
 
 
 class KeySource(Enum):

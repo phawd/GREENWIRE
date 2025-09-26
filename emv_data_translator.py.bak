@@ -1,0 +1,228 @@
+#!/usr/bin/env python3
+"""
+EMV Data Translation Script
+===========================
+Translates Chinese content to English in the converted EMV files
+"""
+
+import os
+import re
+from pathlib import Path
+
+class EMVDataTranslator:
+    def __init__(self, base_path):
+        self.base_path = Path(base_path)
+        
+        # Translation dictionary for common Chinese terms
+        self.translations = {
+            # File names and titles
+            "终端交易类型": "Terminal Transaction Type",
+            "控件": "Control/Widget", 
+            "原生": "Native",
+            "与": "and",
+            "互转": "Mutual Conversion",
+            "使用": "Using",
+            "实现": "Implementation",
+            
+            # EMV specific terms
+            "交易类型": "Transaction Type",
+            "终端": "Terminal", 
+            "商品": "Goods",
+            "服务": "Service",
+            "现金": "Cash",
+            "退款": "Refund", 
+            "余额查询": "Balance Inquiry",
+            "返现": "CashBack",
+            
+            # Android/Technical terms
+            "控件": "Widget",
+            "组件": "Component",
+            "布局": "Layout",
+            "活动": "Activity",
+            "页面": "Page",
+            "界面": "Interface",
+            "数据": "Data",
+            "转换": "Conversion",
+            "方法": "Method",
+            "函数": "Function",
+            "类": "Class",
+            "对象": "Object",
+            "属性": "Property",
+            "配置": "Configuration",
+            "设置": "Settings",
+            "应用": "Application",
+            "程序": "Program",
+            "代码": "Code",
+            "示例": "Example",
+            "演示": "Demo",
+            
+            # Cloud service terms (from ads)
+            "腾讯云": "Tencent Cloud",
+            "云产品": "Cloud Products", 
+            "限时秒杀": "Limited Time Flash Sale",
+            "爆款": "Popular",
+            "云服务器": "Cloud Server",
+            "首年": "First Year",
+            "元": "Yuan/RMB"
+        }
+    
+    def translate_text(self, text):
+        """Translate Chinese text to English using the translation dictionary"""
+        translated = text
+        
+        for chinese, english in self.translations.items():
+            translated = translated.replace(chinese, english)
+        
+        return translated
+    
+    def translate_filename(self, filename):
+        """Translate Chinese characters in filenames"""
+        # Common filename translations
+        filename_translations = {
+            "终端交易类型": "Terminal-Transaction-Type",
+            "GridView控件": "GridView-Widget",
+            "原生JSONObject与Map互转": "Native-JSONObject-Map-Conversion"
+        }
+        
+        translated_name = filename
+        for chinese, english in filename_translations.items():
+            if chinese in filename:
+                translated_name = filename.replace(chinese, english)
+                break
+        
+        return translated_name
+    
+    def translate_file_content(self, file_path):
+        """Translate the content of a markdown file"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Translate the content
+            translated_content = self.translate_text(content)
+            
+            # Write back the translated content
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(translated_content)
+            
+            print(f"✅ Translated content: {file_path.name}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Error translating {file_path}: {e}")
+            return False
+    
+    def rename_directories_and_files(self):
+        """Rename directories and files with Chinese characters"""
+        renamed_count = 0
+        
+        # Find all directories with Chinese characters
+        for item in self.base_path.rglob("*"):
+            if re.search(r'[\u4e00-\u9fff]', item.name):
+                new_name = self.translate_filename(item.name)
+                new_path = item.parent / new_name
+                
+                try:
+                    item.rename(new_path)
+                    print(f"✅ Renamed: {item.name} → {new_name}")
+                    renamed_count += 1
+                except Exception as e:
+                    print(f"❌ Error renaming {item.name}: {e}")
+        
+        return renamed_count
+    
+    def translate_all_files(self):
+        """Translate all markdown files in the directory"""
+        translated_count = 0
+        
+        # Find all markdown files
+        md_files = list(self.base_path.rglob("*.md"))
+        print(f"Found {len(md_files)} markdown files to check for translation")
+        
+        for md_file in md_files:
+            # Check if file contains Chinese characters
+            try:
+                with open(md_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                if re.search(r'[\u4e00-\u9fff]', content):
+                    if self.translate_file_content(md_file):
+                        translated_count += 1
+                        
+            except Exception as e:
+                print(f"❌ Error checking {md_file}: {e}")
+        
+        return translated_count
+    
+    def update_operational_report(self):
+        """Update the operational report with translated references"""
+        report_file = self.base_path / "EMV_Operational_Report.md"
+        
+        if report_file.exists():
+            try:
+                with open(report_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # Update Chinese references in the report
+                updated_content = self.translate_text(content)
+                
+                # Update file path references
+                updated_content = updated_content.replace(
+                    "EMV-TAG-9C-终端交易类型", 
+                    "EMV-TAG-9C-Terminal-Transaction-Type"
+                )
+                updated_content = updated_content.replace(
+                    "Android-GridView控件",
+                    "Android-GridView-Widget"  
+                )
+                updated_content = updated_content.replace(
+                    "Android原生JSONObject与Map互转",
+                    "Android-Native-JSONObject-Map-Conversion"
+                )
+                
+                with open(report_file, 'w', encoding='utf-8') as f:
+                    f.write(updated_content)
+                
+                print("✅ Updated operational report with translated references")
+                return True
+                
+            except Exception as e:
+                print(f"❌ Error updating operational report: {e}")
+                return False
+        
+        return False
+
+def main():
+    """Main execution function"""
+    base_path = Path("d:/repo/scrapes/converted_markdown")
+    
+    if not base_path.exists():
+        print(f"Error: Directory {base_path} does not exist")
+        return
+    
+    print("EMV Data Translation Tool")
+    print("=" * 50)
+    print(f"Processing directory: {base_path}")
+    
+    translator = EMVDataTranslator(base_path)
+    
+    # Step 1: Translate file and directory names
+    print("\n1. Translating directory and file names...")
+    renamed_count = translator.rename_directories_and_files()
+    print(f"Renamed {renamed_count} items")
+    
+    # Step 2: Translate file contents
+    print("\n2. Translating file contents...")
+    translated_count = translator.translate_all_files()
+    print(f"Translated {translated_count} files")
+    
+    # Step 3: Update operational report
+    print("\n3. Updating operational report...")
+    translator.update_operational_report()
+    
+    print(f"\n✅ Translation completed successfully!")
+    print(f"- Renamed items: {renamed_count}")
+    print(f"- Translated files: {translated_count}")
+
+if __name__ == "__main__":
+    main()

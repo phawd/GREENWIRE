@@ -3,8 +3,8 @@ GREENWIRE Command Router
 Routes parsed CLI arguments to appropriate handlers.
 """
 
-import sys
-from typing import Any, Dict, Optional
+import sys  # noqa: F401
+from typing import Any, Dict, Optional  # noqa: F401
 from core.logging_system import get_logger, handle_errors
 from core.config import get_config
 from core.greenwire_bridge import get_bridge

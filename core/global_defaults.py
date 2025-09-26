@@ -2,8 +2,8 @@
 """Global defaults configuration for GREENWIRE.
 Centralizes cross-feature runtime defaults accessible by menu and CLI.
 """
-from __future__ import annotations
-import json, os, threading
+from __future__ import annotations  # noqa: F401
+import json, os, threading  # noqa: F401
 from pathlib import Path
 
 _DEFAULTS = {

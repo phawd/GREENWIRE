@@ -26,19 +26,14 @@ and an interactive menu, with defaults optimized for offline/signature and very 
 settings for maximum acceptance.
 """
 
-import os
-import json
-import random
-import hashlib
-import secrets
-import logging
+import hashlib, json, logging, os, random, secrets  # noqa: F401
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Union
+from typing import Any, Dict, List, Optional, Union  # noqa: F401
 
 # Import cryptography modules for DDA key generation
 from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives import serialization, hashes
+from cryptography.hazmat.primitives import hashes, serialization  # noqa: F401
 from cryptography.hazmat.backends import default_backend
 
 class RealWorldCardIssuer:

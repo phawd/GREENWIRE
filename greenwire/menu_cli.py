@@ -7,11 +7,7 @@ from greenwire.core.nfc_emv import ContactlessEMVTerminal, NFCEMVProcessor
 from greenwire.core.nfc_iso import ISO14443ReaderWriter
 from greenwire.nfc_vuln import scan_nfc_vulnerabilities
 from greenwire.core.fuzzer import SmartcardFuzzer
-from greenwire.core.file_fuzzer import (
-    fuzz_image_file,
-    fuzz_binary_file,
-    fuzz_unusual_input,
-)
+from greenwire.core.file_fuzzer import fuzz_binary_file, fuzz_image_file, fuzz_unusual_input
 
 
 MENU = """\

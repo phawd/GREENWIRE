@@ -3,7 +3,7 @@
 This file ensures the project root is available on sys.path so that tests can
 import modules using the canonical package names (e.g. ``GREENWIRE.core``).
 """
-from __future__ import annotations
+from __future__ import annotations  # noqa: F401
 
 import sys
 from pathlib import Path

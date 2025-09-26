@@ -7,9 +7,9 @@ Common utilities and helper functions for GREENWIRE static distribution.
 __version__ = "1.0.0-greenwire"
 __author__ = "GREENWIRE Project"
 
-from .encoding import *
-from .logging import *
-from .data import *
+from .encoding import *  # noqa: F401
+from .logging import *  # noqa: F401
+from .data import *  # noqa: F401
 
 __all__ = [
     'hex_encode',

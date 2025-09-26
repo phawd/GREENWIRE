@@ -4,11 +4,8 @@ GREENWIRE Unified NFC Device Manager
 Combines NFCDaemon and AndroidNFCVerifier functionality into a single, coherent system
 """
 
-import subprocess
-import threading
-import time
-import json
-from typing import Dict, List, Optional, Any
+import json, subprocess, threading, time  # noqa: F401
+from typing import Any, Dict, List, Optional
 from dataclasses import dataclass
 from core.logging_system import get_logger, handle_errors, log_operation, track_operation
 from core.config import get_config
@@ -191,8 +188,6 @@ class UnifiedNFCManager:
         
         try:
             from smartcard.System import readers
-            from smartcard.CardType import AnyCardType
-            from smartcard.CardRequest import CardRequest
             
             available_readers = readers()
             devices = []

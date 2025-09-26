@@ -2,11 +2,10 @@
 """Smartcard standards profile definitions for GREENWIRE.
 Provides lightweight data-only profiles for generating test cards across common platforms.
 """
-from __future__ import annotations
+from __future__ import annotations  # noqa: F401
 from dataclasses import dataclass, field
-from typing import List, Dict, Any
-import random
-import secrets
+from typing import Any, Dict, List
+import random, secrets
 
 @dataclass
 class CardProfile:

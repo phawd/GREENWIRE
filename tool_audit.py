@@ -3,10 +3,9 @@
 Provides aggregate(), human(), check_readiness(), and main() used by greenwire.py.
 Checks: java, adb, gp.jar presence and version where applicable.
 """
-from __future__ import annotations
+from __future__ import annotations  # noqa: F401
 
-import json
-import shutil
+import json, shutil
 from pathlib import Path
 
 
@@ -23,7 +22,6 @@ def _pcsc_ready() -> bool:
     except Exception:
         pass
     try:
-        import smartcard  # type: ignore
         return True
     except Exception:
         return False

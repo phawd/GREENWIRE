@@ -3,13 +3,9 @@ GREENWIRE Android/ADB Integration Manager
 Handles Android device management, ADB command execution, and NFC enablement.
 """
 
-import subprocess
-import threading
-import time
-import json
-import os
+import json, os, subprocess, threading, time  # noqa: F401
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any, Dict, List, Optional, Tuple  # noqa: F401
 
 from .logging_system import get_logger, handle_errors
 from .config import get_config

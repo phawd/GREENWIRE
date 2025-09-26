@@ -1,13 +1,11 @@
 """Utilities for NFC-based EMV processing using nfcpy."""
 
-from __future__ import annotations
+from __future__ import annotations  # noqa: F401
 
-import json
-import logging
+import json, logging, nfc
 from dataclasses import dataclass
-from typing import Optional, Dict, List, cast
+from typing import Dict, List, Optional, cast
 
-import nfc
 
 
 

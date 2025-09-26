@@ -40,18 +40,10 @@ Note: This "Help" section is informational only. Consult docstrings on the indiv
 classes and functions for more details.
 """
 
-import os
-import sys
-import time
-import random
-import struct
-import hashlib
-import logging
-import threading
-import statistics
-from typing import Dict, List, Optional, Union, Tuple, Any
-from datetime import datetime, timedelta
-from pathlib import Path
+import hashlib, logging, os, random, statistics, struct, sys, threading, time  # noqa: F401
+from typing import Any, Dict, List, Optional, Tuple, Union  # noqa: F401
+from datetime import datetime, timedelta  # noqa: F401
+from pathlib import Path  # noqa: F401
 from collections import defaultdict
 
 try:

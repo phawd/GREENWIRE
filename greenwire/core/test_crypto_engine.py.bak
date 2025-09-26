@@ -1,0 +1,68 @@
+
+
+import sys
+import os
+import hashlib
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
+from cryptography.hazmat.primitives.asymmetric.ec import (
+    EllipticCurvePrivateKey
+)
+from greenwire.core import crypto_engine
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..', '..', '..')
+))
+
+
+def test_generate_rsa_key():
+    key = crypto_engine.generate_rsa_key()
+    assert isinstance(key, RSAPrivateKey)
+
+
+def test_rsa_sign_and_verify():
+    priv = crypto_engine.generate_rsa_key()
+    pub = priv.public_key()
+    data = b"test data"
+    sig = crypto_engine.rsa_sign(priv, data)
+    assert crypto_engine.rsa_verify(pub, sig, data)
+    assert not crypto_engine.rsa_verify(pub, sig, b"wrong")
+
+
+def test_rsa_encrypt_decrypt():
+    priv = crypto_engine.generate_rsa_key()
+    pub = priv.public_key()
+    data = b"secret"
+    ct = crypto_engine.rsa_encrypt(pub, data)
+    pt = crypto_engine.rsa_decrypt(priv, ct)
+    assert pt == data
+
+
+def test_generate_ec_key():
+    key = crypto_engine.generate_ec_key()
+    assert isinstance(key, EllipticCurvePrivateKey)
+
+
+def test_ec_sign_and_verify():
+    priv = crypto_engine.generate_ec_key()
+    pub = priv.public_key()
+    data = b"msg"
+    sig = crypto_engine.ec_sign(priv, data)
+    assert crypto_engine.ec_verify(pub, sig, data)
+    assert not crypto_engine.ec_verify(pub, sig, b"bad")
+
+
+def test_aes_encrypt_decrypt():
+    key = os.urandom(16)
+    iv = os.urandom(16)
+    pt = b"hello world!" * 2
+    ct = crypto_engine.aes_encrypt(key, pt, iv)
+    out = crypto_engine.aes_decrypt(key, ct, iv)
+    assert out == pt
+
+
+def test_sha256():
+    data = b"abc"
+    h = hashlib.sha256(data).hexdigest()
+    assert h == (
+        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+    )

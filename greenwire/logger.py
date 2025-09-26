@@ -12,10 +12,7 @@ Layman summary:
 - All logs are saved as JSON files next to your .cap file.
 """
 
-import os
-import json
-import time
-import hashlib
+import hashlib, json, os, time
 
 
 class CapFileLogger:

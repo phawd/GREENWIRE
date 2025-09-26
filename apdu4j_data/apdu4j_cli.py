@@ -5,11 +5,8 @@ Extends GREENWIRE's command-line interface with APDU4J functionality,
 providing access to hardcoded APDU command libraries and GlobalPlatform operations.
 """
 
-import sys
-import os
-import argparse
-import logging
-from typing import Dict, List, Optional, Any
+import argparse, logging, os, sys
+from typing import Any, Dict, List, Optional  # noqa: F401
 
 # Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))

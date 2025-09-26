@@ -4,8 +4,7 @@ GREENWIRE Cryptographic Primitives
 Core cryptographic functions and utilities.
 """
 
-import os
-import secrets
+import os, secrets  # noqa: F401
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
 

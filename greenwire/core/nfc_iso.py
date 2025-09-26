@@ -6,7 +6,7 @@ goal is to offer simple read/write operations in environments without NFC
 hardware and a more advanced interface when a contactless reader is present.
 """
 
-from __future__ import annotations
+from __future__ import annotations  # noqa: F401
 
 from contextlib import contextmanager
 from typing import Dict, Optional, Sequence

@@ -4,8 +4,8 @@ GREENWIRE Data Utilities
 Data processing and TLV parsing utilities.
 """
 
-from typing import List, Tuple, Dict, Any, Union
-import struct
+from typing import Any, Dict, List, Tuple, Union  # noqa: F401
+import struct  # noqa: F401
 
 
 class TLVError(Exception):

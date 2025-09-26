@@ -4,7 +4,7 @@ Handles all CLI argument parsing and subcommand definitions.
 """
 
 import argparse
-from typing import Any
+from typing import Any  # noqa: F401
 from core.logging_system import get_logger
 
 def create_argument_parser() -> argparse.ArgumentParser:

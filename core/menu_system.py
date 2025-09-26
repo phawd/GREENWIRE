@@ -5,7 +5,7 @@ Configuration-driven menu system that consolidates and streamlines all menu oper
 """
 
 import os
-from typing import Dict, List, Callable, Any, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union  # noqa: F401
 from dataclasses import dataclass, field
 from enum import Enum
 from core.config import get_config

@@ -5,9 +5,9 @@ AES encryption/decryption using Python's built-in Crypto libraries where availab
 otherwise falls back to minimal implementation.
 """
 
-import os
+import os  # noqa: F401
 from typing import Tuple
-from .primitives import pad_pkcs7, unpad_pkcs7, secure_random, EncryptionError
+from .primitives import EncryptionError, pad_pkcs7, secure_random, unpad_pkcs7
 
 # Try to use pycryptodome/pycrypto if available, otherwise minimal implementation
 try:

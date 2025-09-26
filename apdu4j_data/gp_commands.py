@@ -9,7 +9,7 @@ Related: https://github.com/martinpaljak/GlobalPlatformPro
 License: MIT
 """
 
-from typing import Dict, List, Optional, Union, Tuple
+from typing import Dict, List, Optional, Tuple, Union  # noqa: F401
 import logging
 from .apdu_commands import APDU4JCommand, CLA_ISO
 

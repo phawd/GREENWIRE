@@ -5,7 +5,7 @@ Color output and formatting utilities.
 """
 
 import sys
-from typing import Optional
+from typing import Optional  # noqa: F401
 
 
 class Colors:

@@ -3,10 +3,9 @@ GREENWIRE Bridge Module
 Connects modular architecture to original greenwire.py implementations.
 """
 
-import sys
-import os
+import os, sys  # noqa: F401
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional  # noqa: F401
 
 # Add greenwire root to path for imports
 greenwire_root = Path(__file__).parent.parent

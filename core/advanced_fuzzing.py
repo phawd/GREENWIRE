@@ -4,17 +4,10 @@ Advanced Fuzzing Module for GREENWIRE
 Focuses on memory extraction, hidden data discovery, and key recovery
 """
 
-import os
-import sys
-import time
-import random
-import hashlib
-import struct
-import math
-import logging
-from typing import List, Dict, Tuple, Optional, Any
+import hashlib, logging, math, os, random, struct, sys, time  # noqa: F401
+from typing import Any, Dict, List, Optional, Tuple  # noqa: F401
 from datetime import datetime
-from collections import defaultdict, Counter
+from collections import Counter, defaultdict
 
 try:
     from smartcard.System import readers

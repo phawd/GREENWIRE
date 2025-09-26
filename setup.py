@@ -6,10 +6,8 @@ This script creates a static distribution of GREENWIRE with all dependencies
 bundled for easy deployment and distribution.
 """
 
-from setuptools import setup, find_packages
-import sys
-import os
-import shutil
+from setuptools import find_packages, setup
+import os, shutil, sys
 from pathlib import Path
 
 # Version information

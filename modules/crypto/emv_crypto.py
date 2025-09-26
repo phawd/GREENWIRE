@@ -38,16 +38,12 @@ Usage:
     arpc = visa_cvn10.generate_arpc(arqc, response_code)
 """
 
-import hashlib
-import binascii
-import struct
-import secrets
-from typing import Optional, Union, Tuple, Dict, Any
+import binascii, hashlib, logging, secrets, struct  # noqa: F401
+from typing import Any, Dict, Optional, Tuple, Union
 from enum import Enum
-import logging
 
 # Import GREENWIRE crypto primitives
-from .primitives import xor_bytes, encrypt_tdes_ecb, adjust_key_parity
+from .primitives import adjust_key_parity, encrypt_tdes_ecb, xor_bytes
 
 logger = logging.getLogger(__name__)
 

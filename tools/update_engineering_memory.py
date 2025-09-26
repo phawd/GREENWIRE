@@ -1,0 +1,118 @@
+#!/usr/bin/env python3
+"""
+Generate or update docs/ENGINEERING_MEMORY-{YYYY-MM-DD}.md with a concise
+snapshot of the current repo state: latest commits, open TODOs from code, and
+key config diffs. Designed to be lightweight and runnable offline.
+
+Usage:
+  python tools/update_engineering_memory.py [--note "short summary"]
+
+It will append a new top section for today's date or update it if already
+present. It never rewrites older sections.
+"""
+from __future__ import annotations  # noqa: F401
+
+import argparse, datetime as dt, os, re, subprocess  # noqa: F401
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+DOCS_DIR = REPO_ROOT / "docs"
+DOCS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def run(cmd: list[str]) -> str:
+    try:
+        out = subprocess.run(cmd, cwd=str(REPO_ROOT), capture_output=True, text=True, check=False)
+        return out.stdout.strip()
+    except Exception as e:
+        return f"<error: {e}>"
+
+
+def get_git_summary() -> str:
+    head = run(["git", "--no-pager", "log", "-n", "5", "--pretty=format:%h %ad %s", "--date=short"]) or "<no git log>"
+    status = run(["git", "status", "--porcelain"]) or ""
+    dirty = "clean" if not status else f"dirty (changes: {len(status.splitlines())})"
+    branch = run(["git", "rev-parse", "--abbrev-ref", "HEAD"]) or "<no branch>"
+    return f"Branch: {branch}\nState: {dirty}\nRecent commits:\n{head}"
+
+
+def grep_todos() -> str:
+    try:
+        out = run(["git", "--no-pager", "grep", "-n", "TODO|FIXME|HACK", "--", "."])
+        if not out:
+            return "None found"
+        # limit to 30 lines to keep snapshot short
+        lines = out.splitlines()[:30]
+        return "\n".join(lines)
+    except Exception:
+        return "<grep not available>"
+
+
+def get_config_diff() -> str:
+    # Capture a tiny diff of config-related files if staged/modified
+    candidates = [
+        "GREENWIRE/core/config.py",
+        "GREENWIRE/core/logging_system.py",
+        "GREENWIRE/greenwire.py",
+        "GREENWIRE/build.gradle",
+        "GREENWIRE/applets/**/build.gradle",
+    ]
+    # Use git diff -- to avoid accidental pathspec issues
+    diff = run(["git", "--no-pager", "diff", "--", *candidates])
+    if not diff:
+        return "No config diffs"
+    # Compress long diffs
+    clipped = "\n".join(diff.splitlines()[:200])
+    if len(diff.splitlines()) > 200:
+        clipped += "\n... (diff truncated)"
+    return clipped
+
+
+def upsert_today_section(path: Path, note: str | None) -> None:
+    today = dt.date.today().isoformat()
+    header = f"## {today}"
+
+    content = path.read_text(encoding="utf-8") if path.exists() else "# Engineering Memory\n\n"
+
+    if header in content:
+        # Replace existing section content up to next header
+        pattern = re.compile(rf"(^## {re.escape(today)}\n)(.*?)(?=\n## |\Z)", re.S | re.M)
+        def repl(match: re.Match[str]) -> str:
+            return match.group(1) + build_section_body(note)
+        new_content = pattern.sub(repl, content)
+    else:
+        # Prepend today's section after the title line
+        parts = content.splitlines()
+        if parts and parts[0].startswith("# "):
+            new_content = parts[0] + "\n\n" + header + "\n" + build_section_body(note) + "\n" + "\n".join(parts[1:]) + "\n"
+        else:
+            new_content = header + "\n" + build_section_body(note) + "\n" + content
+
+    # Ensure trailing newline
+    if not new_content.endswith("\n"):
+        new_content += "\n"
+    path.write_text(new_content, encoding="utf-8")
+
+
+def build_section_body(note: str | None) -> str:
+    pieces = []
+    if note:
+        pieces.append(f"Note: {note}\n")
+    pieces.append("### Repo\n" + get_git_summary() + "\n")
+    pieces.append("### TODO scan\n" + grep_todos() + "\n")
+    pieces.append("### Config diffs\n" + get_config_diff() + "\n")
+    return "\n".join(pieces)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Update Engineering Memory snapshot for today")
+    parser.add_argument("--note", help="Short freeform summary to record", default=None)
+    args = parser.parse_args()
+
+    out_path = DOCS_DIR / f"ENGINEERING_MEMORY-{dt.date.today().isoformat()}.md"
+    upsert_today_section(out_path, args.note)
+    print(f"Updated {out_path}")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,6 +1,4 @@
-import sqlite3
-import hashlib
-import logging
+import hashlib, logging, sqlite3
 from pathlib import Path
 from typing import Optional
 

@@ -3,7 +3,7 @@ GREENWIRE EMV Processor
 Handles EMV TLV parsing, tag interpretation, and transaction data processing.
 """
 
-from typing import Dict, List, Optional, Tuple, Any, Union
+from typing import Any, Dict, List, Optional, Tuple, Union  # noqa: F401
 import os
 from .logging_system import get_logger, handle_errors
 

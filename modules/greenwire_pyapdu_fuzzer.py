@@ -6,15 +6,9 @@ Integrates pyAPDUFuzzer (github.com/petrs/pyAPDUFuzzer) with GREENWIRE's
 fuzzing capabilities for enhanced APDU testing targeting JCOP, NXP, and EMV cards.
 """
 
-import sys
-import os
-import json
-import random
-import time
-import subprocess
-import threading
-from pathlib import Path
-from typing import List, Dict, Optional, Tuple, Any
+import json, os, random, subprocess, sys, threading, time  # noqa: F401
+from pathlib import Path  # noqa: F401
+from typing import Any, Dict, List, Optional, Tuple  # noqa: F401
 
 # Try to import pyAPDUFuzzer components
 try:

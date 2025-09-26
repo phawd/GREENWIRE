@@ -1,5 +1,5 @@
 import math
-from typing import List, Dict
+from typing import Dict, List
 
 
 def key_entropy(data: bytes) -> float:

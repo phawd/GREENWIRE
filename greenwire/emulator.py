@@ -7,9 +7,7 @@
 #
 # Will move GreenwireEmulator and related functions here
 
-import logging
-import random
-import time
+import logging, random, time
 from greenwire.core.nfc_iso import ISO14443ReaderWriter, ISO15693ReaderWriter, ISO18092ReaderWriter
 
 class UnifiedEmulator:

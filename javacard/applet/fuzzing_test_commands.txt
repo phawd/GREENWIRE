@@ -1,0 +1,64 @@
+# GREENWIRE Fuzzing Applet Test Suite
+# 
+# This file contains APDU commands to test the FuzzingApplet functionality
+# Each command tests different aspects of the applet's behavior
+#
+# AID: A0000006230146555A5A
+
+# Test 1: SELECT the fuzzing applet
+00A4040007A0000006230146555A5A
+
+# Test 2: GET DATA - Counter (should return current counter value)
+00000001
+
+# Test 3: GET DATA - Current State (should return 0x00 = STATE_INIT)
+00010001
+
+# Test 4: PUT DATA - Store some test data
+010005DEADBEEF01
+
+# Test 5: GET DATA - Retrieve stored session data
+00020005
+
+# Test 6: GET DATA - Get AID (should echo back the applet AID)
+00030000
+
+# Test 7: AUTHENTICATE with correct PIN "1234" 
+8800000431323334
+
+# Test 8: GET DATA - State after auth (should be 0x01 = STATE_AUTHENTICATED)
+00010001
+
+# Test 9: STATE TEST - Privileged operation (P1=0x02 when authenticated)
+F20200
+
+# Test 10: TIMING TEST - Variable delay based on P1 (P1=0x05 = 500 cycle delay)
+F00500
+
+# Test 11: BUFFER TEST - Echo data back
+F1000548656C6C6F  # "Hello"
+
+# Test 12: BUFFER TEST - Test buffer limits (should fail with 129+ bytes)
+# This command should return SW_WRONG_LENGTH
+F100FF + 129 bytes of data...
+
+# Test 13: RESET STATE - Return to initial state
+FF0000
+
+# Test 14: Verify reset worked - should be back to STATE_INIT
+00010001
+
+# Test 15: Fuzzing test - Invalid instruction (should return SW_INS_NOT_SUPPORTED)
+DEADBEEF
+
+# Test 16: Edge case - Zero length data
+0100000
+
+# Test 17: State test in INIT state
+F20100
+
+# Test 18: Authenticate with wrong PIN (should lock the applet)
+8800000477726F6E67  # "wrong"
+
+# Test 19: Try privileged operation while locked (should fail)
+F20200

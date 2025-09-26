@@ -30,18 +30,11 @@ Sources:
 - Open-source EMV projects
 """
 
-import os
-import sys
-import json
-import time
-import logging
-import secrets
-import hashlib
-import binascii
+import binascii, hashlib, json, logging, os, secrets, sys, time  # noqa: F401
 from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, List, Optional, Union, Tuple, Any
-from dataclasses import dataclass, asdict
+from pathlib import Path  # noqa: F401
+from typing import Any, Dict, List, Optional, Tuple, Union  # noqa: F401
+from dataclasses import asdict, dataclass
 from enum import Enum
 
 # Cryptographic imports
@@ -268,6 +261,29 @@ class ProductionCryptoEngine:
             
         self.logger.info(f"📋 Loaded {len(self.ca_keys)} enhanced CA test keys")
         
+        # Add a couple of example issuer public keys so the system has multiple issuers
+        self.issuer_keys["ISSUER_BANK_ABC"] = CryptographicKey(
+            key_id="ISSUER_BANK_ABC",
+            key_type=KeyType.ISSUER_PUBLIC,
+            scheme=KeyScheme.VISA,
+            modulus="B1C2D3E4F5A6B7C8D9E0F1A2B3C4D5E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B1C2",
+            exponent="03",
+            source="Regional Issuer Test Key",
+            valid_from=datetime.now().isoformat(),
+            valid_until=(datetime.now() + timedelta(days=3650)).isoformat()
+        )
+
+        self.issuer_keys["ISSUER_BANK_XYZ"] = CryptographicKey(
+            key_id="ISSUER_BANK_XYZ",
+            key_type=KeyType.ISSUER_PUBLIC,
+            scheme=KeyScheme.MASTERCARD,
+            modulus="C2D3E4F5A6B7C8D9E0F1A2B3C4D5E6F7A8B9C0D1E2F3A4B5C6D7E8F9A0B1C2D3",
+            exponent="03",
+            source="Issuer XYZ Test Key",
+            valid_from=datetime.now().isoformat(),
+            valid_until=(datetime.now() + timedelta(days=3650)).isoformat()
+        )
+        
     def _initialize_production_merchant_database(self):
         """Initialize comprehensive merchant database with realistic synthetic data."""
         
@@ -363,6 +379,38 @@ class ProductionCryptoEngine:
                 "certificate_data": {
                     "terminal_certificate": "308201EF30820197A003020102020900B1C2D3E4F5A67890",
                     "transport_certificate": "308201FF308201A7A003020102020900C1D2E3F4A5B67890"
+                }
+            },
+            # Additional merchant added to ensure at least two ATMs exist
+            {
+                "merchant_id": "TESTMERCH004",
+                "merchant_name": "Regional ATM Services",
+                "merchant_category": "Financial Services",
+                "mcc": "6011",
+                "country_code": "US",
+                "currency_code": "USD",
+                "terminal_id": "ATM003US",
+                "terminal_type": "ATM_UNATTENDED",
+                "terminal_capabilities": {
+                    "contact": True,
+                    "contactless": False,
+                    "chip_and_pin": True,
+                    "magnetic_stripe": True,
+                    "mobile_payments": False
+                },
+                "acquirer_id": "ACQ654321",
+                "acquirer_name": "Regional Bank Processor",
+                "processing_network": "VISA",
+                "risk_profile": "MEDIUM_RISK",
+                "transaction_limits": {
+                    "single_transaction": 100000,  # $1,000.00
+                    "daily_limit": 500000,        # $5,000.00
+                    "contactless_limit": 0
+                },
+                "supported_schemes": ["VISA", "MASTERCARD"],
+                "certificate_data": {
+                    "terminal_certificate": "308201FF308201A7A003020102020900C1D2E3F4A5B67890",
+                    "atm_certificate": "308201DE30820186A003020102020900A1B2C3D4E5F67890"
                 }
             }
         ]

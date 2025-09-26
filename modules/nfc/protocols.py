@@ -4,7 +4,7 @@ GREENWIRE NFC Protocols
 Implementation of NFC protocols (ISO14443, etc.).
 """
 
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union  # noqa: F401
 from dataclasses import dataclass
 from enum import Enum
 

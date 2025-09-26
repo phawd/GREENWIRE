@@ -4,11 +4,10 @@
 Ensures we can build CAP files without downloading external artifacts at build
 time by verifying that mandatory jars are present inside the repository.
 """
-from __future__ import annotations
+from __future__ import annotations  # noqa: F401
 
-import shutil
+import shutil, sys
 from pathlib import Path
-import sys
 
 
 REQUIRED_ITEMS = [

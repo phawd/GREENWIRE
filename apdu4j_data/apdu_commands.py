@@ -8,7 +8,7 @@ Source: https://github.com/martinpaljak/apdu4j
 License: MIT (following original project)
 """
 
-from typing import Dict, List, Optional, Union, Tuple
+from typing import Dict, List, Optional, Tuple, Union  # noqa: F401
 import logging
 
 logger = logging.getLogger(__name__)

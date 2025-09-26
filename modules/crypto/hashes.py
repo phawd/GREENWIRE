@@ -4,8 +4,7 @@ GREENWIRE Hash Functions
 Cryptographic hash functions using Python's built-in hashlib.
 """
 
-import hashlib
-import hmac
+import hashlib, hmac
 from typing import Union
 
 

@@ -3,10 +3,8 @@ GREENWIRE CAP File Manager
 Handles JavaCard CAP file operations, validation, and installation.
 """
 
-import os
-import subprocess
-import json
-from typing import Dict, List, Optional, Any, Union
+import json, os, subprocess
+from typing import Any, Dict, List, Optional, Union  # noqa: F401
 from .logging_system import get_logger, handle_errors
 from .config import get_config
 

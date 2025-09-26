@@ -1,8 +1,7 @@
 """Utility functions for generating sample EMV card data."""
 
-import random
-import secrets
-from datetime import datetime, timedelta, UTC
+import random, secrets
+from datetime import UTC, datetime, timedelta
 
 
 def _luhn_checksum(number: str) -> int:

@@ -8,35 +8,51 @@ EMV terminal/card emulation.
 optional Dynamic Data Authentication (--dda).
 """
 
+# Standard library imports (consolidated to reduce inline imports)
+import argparse
+import base64
+import codecs
+import glob
+import json
+import logging
 import os
-import sys
+import platform
+import random
 import shutil
+import socket
 import subprocess
+import sys
+import threading
+import time
+import traceback
+from collections import defaultdict
+from datetime import datetime
+from pathlib import Path
+from typing import Optional, Any, Dict, List
+
+# Early static-mode shim: if user requested static mode via env or argv,
+# prefer static shims directory before other imports so optional deps
+# don't fail at import-time in static bundles.
+_static_requested = bool(os.getenv("GREENWIRE_STATIC") or "--static" in " ".join(sys.argv))
+if _static_requested:
+    _static_lib = os.path.join(os.path.dirname(__file__), 'static', 'lib')
+    if os.path.isdir(_static_lib) and _static_lib not in sys.path:
+        sys.path.insert(0, _static_lib)
+
+from greenwire.core.data_manager import list_datasets, choose_dataset_interactive, load_dataset
 
 # Add core modules to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'core'))
 
 # Core system imports - must be first
 from core.config import get_config
-from core.logging_system import get_logger, setup_logging, handle_errors, log_operation
+from core.logging_system import get_logger, handle_errors, log_operation, setup_logging  # noqa: F401
 from core.imports import ModuleManager
 from core.menu_system import get_menu_system
 from core.nfc_manager import get_nfc_manager
-from core.global_defaults import load_defaults, update_defaults
+from core.global_defaults import load_defaults
 
 # Menu action handlers
-import menu_handlers
-
-# Standard library imports
-import argparse
-import subprocess
-import json
-import random
-import time
-import threading
-import base64
-from datetime import datetime
-from pathlib import Path
 
 # ADB command timing cache
 _ADB_TIMING_LOG = []
@@ -754,7 +770,6 @@ class AndroidNFCVerifier:
         try:
             # Use default APK path if not provided
             if apk_path is None:
-                import os
                 from pathlib import Path
                 apk_path = Path(__file__).parent / "nfc_enabler_app" / "app" / "build" / "outputs" / "apk" / "debug" / "app-debug.apk"
                 if not apk_path.exists():
@@ -1196,7 +1211,6 @@ class NativeAPDUFuzzer:
     def run_fuzzing_session(self, target_card, iterations=1000, mutation_level=5):
         """Run a complete fuzzing session."""
         import time
-        from collections import defaultdict
         
         self.session_data["start_time"] = time.time()
         
@@ -1314,6 +1328,28 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--menu", action="store_true", help="Show interactive menu instead of requiring command line arguments")
     parser.add_argument("--static", action="store_true", help="Use static distribution mode with bundled dependencies")
     sub = parser.add_subparsers(dest="subcommand", required=False)
+
+    # production data dataset selector
+    try:
+        # Defensive: only insert parser when function exists in this scope
+        def _insert_prod_data_parser(parser_obj):
+            prod = parser_obj.add_parser('prod-data', help='Manage production-scraped datasets')
+            prod.add_argument('--list', action='store_true', help='List available datasets')
+            prod.add_argument('--show', type=str, metavar='NAME', help='Show dataset summary (by name)')
+            prod.add_argument('--generate-cards', type=str, metavar='NAME', help='Prepare generation args for dataset')
+            prod.add_argument('--json-out', type=str, help='Write selected dataset to JSON file for downstream pipelines')
+            return prod
+
+        # Attach into existing parse_args by locating `sub` name in this scope
+        # If 'sub' is available, insert the parser. Otherwise, fallback to no-op.
+        try:
+            sub  # type: ignore
+            _insert_prod_data_parser(sub)
+        except NameError:
+            # parse_args will recreate sub when called; append creation in wrapper below
+            pass
+    except Exception:
+        pass
 
     filefuzz = sub.add_parser(
         "filefuzz",
@@ -1692,6 +1728,20 @@ def parse_args() -> argparse.Namespace:
     apdu4j.add_argument("--gp-card-info", action="store_true", help="Get GlobalPlatform card information")
     apdu4j.add_argument("--verbose", action="store_true", help="Enable verbose APDU logging")
 
+    # Merchant emulator (minimal EMV purchase flow)
+    merchant = sub.add_parser("merchant", help="Run a minimal merchant EMV purchase flow")
+    merchant.add_argument("amount", type=float, help="Purchase amount (e.g., 9.99)")
+    merchant.add_argument("--reader", help="PC/SC reader name")
+    merchant.add_argument("--pin", help="PIN to verify (plaintext demo)")
+    merchant.add_argument("-v", "--verbose", action="store_true")
+
+    # ATM emulator (minimal cash withdrawal flow)
+    atm = sub.add_parser("atm", help="Run a minimal ATM cash withdrawal flow")
+    atm.add_argument("amount", type=float, help="Withdrawal amount (e.g., 20.00)")
+    atm.add_argument("--reader", help="PC/SC reader name")
+    atm.add_argument("--pin", help="PIN to verify (plaintext demo)")
+    atm.add_argument("-v", "--verbose", action="store_true")
+
     # Legacy flags parser
     legacy = sub.add_parser("legacy", help="Legacy command-line flags (deprecated)")
 
@@ -1895,6 +1945,7 @@ def show_easycard_menu():
     print("5. 🎯 Custom EasyCard (Advanced Configuration)")
     print("6. ⚡ DirectTestCard (Merchant Exploitation)")
     print("7. 🧠 AI-Generated Attack Card (Dynamic Threats)")
+    print("8. 📦 Production Scraped Data (static datasets)")
     print("0. Back to main menu")
     print()
 
@@ -1910,7 +1961,8 @@ def show_easycard_menu():
         "4": "data_collection",
         "5": "custom",
         "6": "directtest",
-        "7": "ai_generated"
+        "7": "ai_generated",
+        "8": "production_data"
     }
     
     card_type = card_types.get(choice, "standard")
@@ -1927,6 +1979,11 @@ def show_easycard_menu():
         return create_directtest_card()
     elif card_type == "ai_generated":
         return create_ai_generated_attack_card()
+    elif card_type == "production_data":
+        args = show_production_data_menu()
+        if args:
+            run_realworld_card_generation(args)
+        return None
     else:
         return create_standard_easycard()
 
@@ -2892,6 +2949,137 @@ def save_attack_patterns(attacks, method):
         print(f"  💾 Attack patterns saved: {filename}")
     except Exception as e:
         print(f"  ⚠️ Could not save patterns: {e}")
+
+
+def show_production_data_menu():
+    """Interactive menu to select production-scraped EMV and merchant datasets."""
+    print("\n" + "-"*60)
+    print("    📦 Production-Scraped Data Selection")
+    print("-"*60)
+    
+    datasets = list_datasets()
+    if not datasets:
+        print("❌ No production datasets found in data/production_scrapes or data/")
+        print("   Create sample datasets or place JSON/YAML files in those directories")
+        return None
+    
+    print("Available production datasets:")
+    for i, dataset in enumerate(datasets, 1):
+        try:
+            from greenwire.core.data_manager import dataset_summary
+            summary = dataset_summary(dataset)
+            merchant_info = f" ({summary.get('merchant_count', 0)} merchants)" if 'merchant_count' in summary else ""
+            print(f"  {i}. {dataset}{merchant_info}")
+        except Exception:
+            print(f"  {i}. {dataset}")
+    
+    print("  0. ← Back to main menu")
+    
+    try:
+        choice = input("Select dataset (number or name): ").strip()
+        if not choice or choice == "0":
+            return None
+            
+        if choice.isdigit():
+            idx = int(choice) - 1
+            if 0 <= idx < len(datasets):
+                selected = datasets[idx]
+            else:
+                print("❌ Invalid selection")
+                return None
+        elif choice in datasets:
+            selected = choice
+        else:
+            print("❌ Dataset not found")
+            return None
+            
+        # Load the selected dataset
+        dataset = load_dataset(selected)
+        if not dataset:
+            print(f"❌ Failed to load dataset: {selected}")
+            return None
+            
+        print(f"\n✅ Selected dataset: {selected}")
+        
+        # Convert dataset to args format for card generation
+        args = argparse.Namespace()
+        args.method = "standard"
+        args.count = dataset.get("count", 1)
+        args.ca_file = dataset.get("ca_file")
+        args.generate_cap = dataset.get("generate_cap", False)
+        args.cap_output_dir = dataset.get("cap_output_dir", "generated_caps")
+        args.card_type = dataset.get("scheme", "visa")
+        args.issuer = dataset.get("issuer")
+        args.production_data = dataset  # Pass the full dataset
+        
+        return args
+        
+    except (ValueError, KeyboardInterrupt):
+        print("❌ Invalid input or cancelled")
+        return None
+
+
+def _handle_prod_data_args(args):
+    """Handle production data subcommand arguments."""
+    if args.list:
+        datasets = list_datasets()
+        if not datasets:
+            print("No production datasets found.")
+            return 1
+        print("Available production datasets:")
+        for dataset in datasets:
+            print(f"  - {dataset}")
+        return 0
+        
+    elif args.show:
+        from greenwire.core.data_manager import dataset_summary
+        summary = dataset_summary(args.show)
+        if "error" in summary:
+            print(f"Error: {summary['error']}")
+            return 1
+        print(f"Dataset: {args.show}")
+        print(f"  Size: {summary['size_bytes']} bytes")
+        print(f"  Keys: {', '.join(summary['top_keys'])}")
+        if 'merchant_count' in summary:
+            print(f"  Merchants: {summary['merchant_count']}")
+        return 0
+        
+    elif args.generate_cards:
+        dataset = load_dataset(args.generate_cards)
+        if not dataset:
+            print(f"Failed to load dataset: {args.generate_cards}")
+            return 1
+        print(f"Generating cards from dataset: {args.generate_cards}")
+        # Convert to args and call card generation
+        gen_args = argparse.Namespace()
+        gen_args.method = "standard"
+        gen_args.count = dataset.get("count", 1)
+        gen_args.ca_file = dataset.get("ca_file")
+        gen_args.generate_cap = dataset.get("generate_cap", False)
+        gen_args.cap_output_dir = dataset.get("cap_output_dir", "generated_caps")
+        gen_args.card_type = dataset.get("scheme", "visa")
+        gen_args.production_data = dataset
+        run_realworld_card_generation(gen_args)
+        return 0
+        
+    elif args.json_out:
+        # Interactive selection and JSON export
+        selected = choose_dataset_interactive()
+        if not selected:
+            print("No dataset selected.")
+            return 1
+        dataset = load_dataset(selected)
+        if not dataset:
+            print(f"Failed to load dataset: {selected}")
+            return 1
+        with open(args.json_out, 'w', encoding='utf-8') as f:
+            json.dump(dataset, f, indent=2)
+        print(f"Dataset exported to: {args.json_out}")
+        return 0
+        
+    else:
+        print("No action specified. Use --list, --show NAME, --generate-cards NAME, or --json-out FILE")
+        return 1
 
 
 def show_crypto_menu():
@@ -7321,7 +7509,7 @@ def run_gp(args: argparse.Namespace) -> None:
 
 def run_jcop(args: argparse.Namespace) -> None:
     """Run a JCOP-specific command."""
-    from core.logging_system import get_logger, handle_errors
+    from core.logging_system import get_logger
     logger = get_logger()
     
     try:
@@ -8603,7 +8791,7 @@ def run_easycard(args: argparse.Namespace) -> None:
     elif args.easycard_command == "generate":
         # Handle standard card number generation using our working implementation
         from menu_implementations import CardGenerator
-        from core.card_standards import list_profiles, get_profile, CardProfile
+        from core.card_standards import list_profiles, get_profile
         
         print(f"🌟 Generating {args.count} card numbers using {args.method} method")
         
@@ -9049,7 +9237,7 @@ def run_easycard(args: argparse.Namespace) -> None:
 
 def run_legacy(args: argparse.Namespace) -> None:
     """Run legacy operations for older GREENWIRE versions."""
-    from core.logging_system import get_logger, handle_errors
+    from core.logging_system import get_logger
     logger = get_logger()
     
     try:
@@ -9173,6 +9361,25 @@ def main(args: argparse.Namespace) -> None:
     elif args.subcommand == "legacy":
         run_legacy(args)
         run_legacy(args)
+    elif args.subcommand == "merchant":
+        # Lazy import to keep startup fast
+        try:
+            from modules.merchant_emulator import MerchantEmulator
+            emulator = MerchantEmulator(reader=getattr(args, 'reader', None), verbose=getattr(args, 'verbose', False))
+            amount_cents = int(round(getattr(args, 'amount', 0.0) * 100))
+            summary = emulator.purchase(amount_cents=amount_cents, pin=getattr(args, 'pin', None))
+            print(summary)
+        except Exception as e:
+            print(f"❌ Merchant emulator failed: {e}")
+    elif args.subcommand == "atm":
+        try:
+            from modules.atm_emulator import ATMEmulator
+            emulator = ATMEmulator(reader=getattr(args, 'reader', None), verbose=getattr(args, 'verbose', False))
+            amount_cents = int(round(getattr(args, 'amount', 0.0) * 100))
+            summary = emulator.withdraw(amount_cents=amount_cents, pin=getattr(args, 'pin', None))
+            print(summary)
+        except Exception as e:
+            print(f"❌ ATM emulator failed: {e}")
     elif args.subcommand == "apdu-fuzz":
         run_apdu_fuzz_cli(args)
     elif args.subcommand == "config-defaults":

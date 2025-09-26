@@ -10,14 +10,9 @@ phone as an NFC reader/writer through the Android Debug Bridge.
 Real-world NFC operations using actual Android hardware.
 """
 
-import os
-import sys
-import time
-import json
-import subprocess
-import logging
-from typing import Optional, Dict, List, Union, Tuple
-from pathlib import Path
+import json, logging, os, subprocess, sys, time  # noqa: F401
+from typing import Dict, List, Optional, Tuple, Union  # noqa: F401
+from pathlib import Path  # noqa: F401
 
 try:
     from .greenwire_protocol_logger import ProtocolLogger
