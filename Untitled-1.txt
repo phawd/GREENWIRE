@@ -1,0 +1,24 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "Launch Java Program",
+      "mainClass": "${input:mainClass}",
+      "projectName": "${input:projectName}"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "mainClass",
+      "type": "promptString",
+      "description": "Enter the fully qualified main class to launch (e.g. com.greenwire.Main)"
+    },
+    {
+      "id": "projectName",
+      "type": "promptString",
+      "description": "Enter the Java project name that contains the main class"
+    }
+  ]
+}

@@ -1,0 +1,665 @@
+Proposed changes in 7 files:
+
+Changes for .\apdu4j_data\apdu4j_integration.py:
+--- original excerpt ---
+#!/usr/bin/env python3
+"""APDU4J Integration Module for GREENWIRE.
+
+Main integration interface that combines APDU4J command structures with GREENWIRE's
+existing EMV and smartcard infrastructure. Provides unified access to hardcoded
+APDU commands from the martinpaljak/apdu4j library.
+
+Source: https://github.com/martinpaljak/apdu4j
+License: MIT
+"""
+
+import logging
+from typing import Any, Dict, List, Optional, Union
+from .apdu_commands import (
+    APDU4JCommand, APDU4JInterface, APDU_COMMANDS, PCSC_COMMANDS,
+    create_select_aid_command, create_pin_verify_command, create_get_data_command,
+    parse_apdu_response
+)
+from .gp_commands import GPCapFileLoader, GPCommand, GPManager, GP_COMMANDS  # noqa: F401
+
+logger = logging.getLogger(__name__)
+
+class GREENWIREAPDU4JInterface:
+    """Main APDU4J integration interface for GREENWIRE."""
+    
+    def __init__(self, apdu_communicator=None):
+        """Initialize APDU4J interface.
+        
+        Args:
+            apdu_communicator: GREENWIRE APDUCommunicator instance
+        """
+        self.communicator = apdu_communicator
+        self.apdu_interface = APDU4JInterface(apdu_communicator)
+        self.gp_manager = GPManager(apdu_communicator)
+        self.logger = logging.getLogger(__name__)
+        
+        # Load all available commands
+        self.commands = {}
+        self.commands.update(APDU_COMMANDS)
+        self.commands.update(PCSC_COMMANDS)
+        self.commands.update(GP_COMMANDS)
+        
+    def get_available_commands(self) -> List[str]:
+        """Get list of all available APDU4J commands.
+        
+        Returns:
+            List of command names
+        """
+        return list(self.commands.keys())
+        
+--- proposed excerpt ---
+#!/usr/bin/env python3
+"""APDU4J Integration Module for GREENWIRE.
+
+Main integration interface that combines APDU4J command structures with GREENWIRE's
+existing EMV and smartcard infrastructure. Provides unified access to hardcoded
+APDU commands from the martinpaljak/apdu4j library.
+
+Source: https://github.com/martinpaljak/apdu4j
+License: MIT
+"""
+
+import logging
+from typing import Any, Dict, List, Optional, Union
+from .apdu_commands import APDU4JCommand, APDU4JInterface, APDU_COMMANDS, PCSC_COMMANDS, create_get_data_command, create_pin_verify_command, create_select_aid_command, parse_apdu_response
+from .gp_commands import GPCapFileLoader, GPCommand, GPManager, GP_COMMANDS  # noqa: F401
+
+logger = logging.getLogger(__name__)
+
+class GREENWIREAPDU4JInterface:
+    """Main APDU4J integration interface for GREENWIRE."""
+    
+    def __init__(self, apdu_communicator=None):
+        """Initialize APDU4J interface.
+        
+        Args:
+            apdu_communicator: GREENWIRE APDUCommunicator instance
+        """
+        self.communicator = apdu_communicator
+        self.apdu_interface = APDU4JInterface(apdu_communicator)
+        self.gp_manager = GPManager(apdu_communicator)
+        self.logger = logging.getLogger(__name__)
+        
+        # Load all available commands
+        self.commands = {}
+        self.commands.update(APDU_COMMANDS)
+        self.commands.update(PCSC_COMMANDS)
+        self.commands.update(GP_COMMANDS)
+        
+    def get_available_commands(self) -> List[str]:
+        """Get list of all available APDU4J commands.
+        
+        Returns:
+            List of command names
+        """
+        return list(self.commands.keys())
+        
+    def get_command_info(self, command_name: str) -> Optional[Dict[str, Any]]:
+        """Get information about a specific command.
+        
+        Args:
+(dry-run)
+
+Changes for .\apdu4j_data\test_apdu4j.py:
+--- original excerpt ---
+#!/usr/bin/env python3
+"""APDU4J integration test suite for GREENWIRE.
+
+This module contains unit and integration tests for the APDU4J-related
+components used by the GREENWIRE framework. It verifies APDU construction,
+response parsing, GlobalPlatform command generation, and the APDU4J
+interface adapter used to integrate APDU4J command templates into
+GREENWIRE's testing and tooling.
+
+Key contents and responsibilities:
+- TestAPDU4JCommand: unit tests validating APDU4JCommand encoding and
+  APDU case detection (Case 1, Case 2S, Case 4S) and helper command
+  creators (SELECT AID, VERIFY PIN, GET DATA).
+- TestAPDUResponseParsing: unit tests validating parse_apdu_response
+  behaviour for success, error, and "more data" status words.
+- TestGlobalPlatformCommands: tests for GlobalPlatform (GP) command
+  generators (select card manager, get status, delete/install).
+- TestAPDU4JInterface & TestGREENWIREIntegration: tests for the
+  APDU4JInterface and GREENWIREAPDU4JInterface adapters that wrap a
+  communicator and expose high-level execution methods (send_command,
+  select_application, execute_command, send_raw_apdu).
+- TestCommandTemplates: sanity checks for APDU_COMMANDS, PCSC_COMMANDS,
+  and GP_COMMANDS dictionaries and their expected structure.
+
+Utility functions:
+- run_integration_tests(): lightweight runner that demonstrates and
+  prints example commands and parsed responses; useful for manual
+  integration checks.
+- main(): entrypoint for running the unit test suite and the integration
+  demo when executed as a script.
+
+Usage:
+- Run the full unit test suite:
+    python -m unittest d.repo.GREENWIRE.apdu4j_data.test_apdu4j
+  or
+    python d:\repo\GREENWIRE\apdu4j_data\test_apdu4j.py
+
+Notes:
+- The tests expect the APDU helper modules (apdu_commands, gp_commands,
+  apdu4j_integration) to be importable from the parent directory.
+- Tests use mocks for communicators to avoid hardware dependency; the
+  integration demo prints sample outputs and does not require a real
+  card/reader.
+
+"""
+
+import logging, os, sys, unittest
+from unittest.mock import Mock, patch  # noqa: F401
+
+# Add parent directory to path for imports
+--- proposed excerpt ---
+#!/usr/bin/env python3
+"""APDU4J integration test suite for GREENWIRE.
+
+This module contains unit and integration tests for the APDU4J-related
+components used by the GREENWIRE framework. It verifies APDU construction,
+response parsing, GlobalPlatform command generation, and the APDU4J
+interface adapter used to integrate APDU4J command templates into
+GREENWIRE's testing and tooling.
+
+Key contents and responsibilities:
+- TestAPDU4JCommand: unit tests validating APDU4JCommand encoding and
+  APDU case detection (Case 1, Case 2S, Case 4S) and helper command
+  creators (SELECT AID, VERIFY PIN, GET DATA).
+- TestAPDUResponseParsing: unit tests validating parse_apdu_response
+  behaviour for success, error, and "more data" status words.
+- TestGlobalPlatformCommands: tests for GlobalPlatform (GP) command
+  generators (select card manager, get status, delete/install).
+- TestAPDU4JInterface & TestGREENWIREIntegration: tests for the
+  APDU4JInterface and GREENWIREAPDU4JInterface adapters that wrap a
+  communicator and expose high-level execution methods (send_command,
+  select_application, execute_command, send_raw_apdu).
+- TestCommandTemplates: sanity checks for APDU_COMMANDS, PCSC_COMMANDS,
+  and GP_COMMANDS dictionaries and their expected structure.
+
+Utility functions:
+- run_integration_tests(): lightweight runner that demonstrates and
+  prints example commands and parsed responses; useful for manual
+  integration checks.
+- main(): entrypoint for running the unit test suite and the integration
+  demo when executed as a script.
+
+Usage:
+- Run the full unit test suite:
+    python -m unittest d.repo.GREENWIRE.apdu4j_data.test_apdu4j
+  or
+    python d:\repo\GREENWIRE\apdu4j_data\test_apdu4j.py
+
+Notes:
+- The tests expect the APDU helper modules (apdu_commands, gp_commands,
+  apdu4j_integration) to be importable from the parent directory.
+- Tests use mocks for communicators to avoid hardware dependency; the
+  integration demo prints sample outputs and does not require a real
+  card/reader.
+
+"""
+
+import logging, os, sys, unittest
+from unittest.mock import Mock, patch  # noqa: F401
+
+# Add parent directory to path for imports
+(dry-run)
+
+Changes for .\greenwire\__init__.py:
+--- original excerpt ---
+"""Greenwire package providing EMV and smartcard testing utilities."""
+
+from .core.nfc_iso import (
+    ISO14443ReaderWriter,
+    ISO15693ReaderWriter,
+    ISO18092ReaderWriter,
+    AndroidReaderWriter,
+)
+from .nfc_vuln import scan_nfc_vulnerabilities  # noqa: F401
+
+__all__ = [
+    "ISO14443ReaderWriter",
+    "ISO15693ReaderWriter",
+    "ISO18092ReaderWriter",
+    "AndroidReaderWriter",
+    "scan_nfc_vulnerabilities",
+]
+--- proposed excerpt ---
+"""Greenwire package providing EMV and smartcard testing utilities."""
+
+from .core.nfc_iso import AndroidReaderWriter, ISO14443ReaderWriter, ISO15693ReaderWriter, ISO18092ReaderWriter  # noqa: F401
+from .nfc_vuln import scan_nfc_vulnerabilities  # noqa: F401
+
+__all__ = [
+    "ISO14443ReaderWriter",
+    "ISO15693ReaderWriter",
+    "ISO18092ReaderWriter",
+    "AndroidReaderWriter",
+    "scan_nfc_vulnerabilities",
+]
+(dry-run)
+
+Changes for .\greenwire\core\fuzzer.py:
+--- original excerpt ---
+#!/usr/bin/env python3
+"""SmartcardFuzzer: full-featured fuzzing and EMV analysis suite.
+
+Dependencies
+------------
+- ``pyscard`` for PC/SC communication
+- ``nfcpy`` for contactless terminal emulation
+- ``cryptography`` and ``pillow`` for crypto and file helpers
+- Java 17/Gradle build providing ``JCOPCardManager`` in ``GREENWIRE.jar``
+"""
+
+import json, logging, os, random, re, sqlite3, subprocess, sys
+from datetime import datetime
+from math import log2
+from collections import Counter
+from pathlib import Path
+from typing import List, Optional, Union
+from dataclasses import dataclass
+
+from greenwire.core.nfc_emv import (
+    ContactlessEMVTerminal,
+    CAPublicKey,
+    load_ca_keys,
+    DEFAULT_CA_KEYS,
+)
+
+DEFAULT_CA_KEYS = {}
+
+# Analysis thresholds for security checks
+ANALYSIS_THRESHOLDS = {
+    'MIN_ENTROPY': 6.5,            # Minimum entropy for random values
+    'MAX_PATTERN_RATIO': 0.1,      # Maximum ratio of repeating patterns
+    'MIN_TIMING_DIFF': 0.001,      # Minimum significant timing difference (seconds)
+    'MAX_ERROR_RATE': 0.05,        # Maximum acceptable error rate
+    'MIN_KEY_STRENGTH': 128,       # Minimum acceptable key strength (bits)
+}
+
+# EMV standard definitions
+EMV_STANDARDS = {
+    'EMV_BOOK2': {
+        'version': '4.3',
+        'title': 'EMV Book 2 - Security and Key Management',
+        'sections': {
+            '6.3': 'Card Authentication Methods',
+            '6.5': 'Offline PIN Processing',
+            '7.2': 'Cryptogram Generation'
+        }
+    },
+    'EMV_BOOK3': {
+        'version': '4.3',
+--- proposed excerpt ---
+#!/usr/bin/env python3
+"""SmartcardFuzzer: full-featured fuzzing and EMV analysis suite.
+
+Dependencies
+------------
+- ``pyscard`` for PC/SC communication
+- ``nfcpy`` for contactless terminal emulation
+- ``cryptography`` and ``pillow`` for crypto and file helpers
+- Java 17/Gradle build providing ``JCOPCardManager`` in ``GREENWIRE.jar``
+"""
+
+import json, logging, os, random, re, sqlite3, subprocess, sys
+from datetime import datetime
+from math import log2
+from collections import Counter
+from pathlib import Path
+from typing import List, Optional, Union
+from dataclasses import dataclass
+
+from greenwire.core.nfc_emv import CAPublicKey, ContactlessEMVTerminal, DEFAULT_CA_KEYS, load_ca_keys
+
+DEFAULT_CA_KEYS = {}
+
+# Analysis thresholds for security checks
+ANALYSIS_THRESHOLDS = {
+    'MIN_ENTROPY': 6.5,            # Minimum entropy for random values
+    'MAX_PATTERN_RATIO': 0.1,      # Maximum ratio of repeating patterns
+    'MIN_TIMING_DIFF': 0.001,      # Minimum significant timing difference (seconds)
+    'MAX_ERROR_RATE': 0.05,        # Maximum acceptable error rate
+    'MIN_KEY_STRENGTH': 128,       # Minimum acceptable key strength (bits)
+}
+
+# EMV standard definitions
+EMV_STANDARDS = {
+    'EMV_BOOK2': {
+        'version': '4.3',
+        'title': 'EMV Book 2 - Security and Key Management',
+        'sections': {
+            '6.3': 'Card Authentication Methods',
+            '6.5': 'Offline PIN Processing',
+            '7.2': 'Cryptogram Generation'
+        }
+    },
+    'EMV_BOOK3': {
+        'version': '4.3',
+        'title': 'EMV Book 3 - Application Specification',
+        'sections': {
+            '10.5': 'CVM Processing',
+            '6.5.5': 'Processing Restrictions'
+        }
+(dry-run)
+
+Changes for .\greenwire\core\test_crypto_engine.py:
+--- original excerpt ---
+
+
+import hashlib, os, sys
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
+from cryptography.hazmat.primitives.asymmetric.ec import (
+    EllipticCurvePrivateKey
+)
+from greenwire.core import crypto_engine
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..', '..', '..')
+))
+
+
+def test_generate_rsa_key():
+    key = crypto_engine.generate_rsa_key()
+    assert isinstance(key, RSAPrivateKey)
+
+
+def test_rsa_sign_and_verify():
+    priv = crypto_engine.generate_rsa_key()
+    pub = priv.public_key()
+    data = b"test data"
+    sig = crypto_engine.rsa_sign(priv, data)
+    assert crypto_engine.rsa_verify(pub, sig, data)
+    assert not crypto_engine.rsa_verify(pub, sig, b"wrong")
+
+
+def test_rsa_encrypt_decrypt():
+    priv = crypto_engine.generate_rsa_key()
+    pub = priv.public_key()
+    data = b"secret"
+    ct = crypto_engine.rsa_encrypt(pub, data)
+    pt = crypto_engine.rsa_decrypt(priv, ct)
+    assert pt == data
+
+
+def test_generate_ec_key():
+    key = crypto_engine.generate_ec_key()
+    assert isinstance(key, EllipticCurvePrivateKey)
+
+
+def test_ec_sign_and_verify():
+    priv = crypto_engine.generate_ec_key()
+    pub = priv.public_key()
+    data = b"msg"
+    sig = crypto_engine.ec_sign(priv, data)
+    assert crypto_engine.ec_verify(pub, sig, data)
+    assert not crypto_engine.ec_verify(pub, sig, b"bad")
+
+--- proposed excerpt ---
+
+
+import hashlib, os, sys
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey
+from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePrivateKey
+from greenwire.core import crypto_engine
+
+sys.path.insert(0, os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '..', '..', '..')
+))
+
+
+def test_generate_rsa_key():
+    key = crypto_engine.generate_rsa_key()
+    assert isinstance(key, RSAPrivateKey)
+
+
+def test_rsa_sign_and_verify():
+    priv = crypto_engine.generate_rsa_key()
+    pub = priv.public_key()
+    data = b"test data"
+    sig = crypto_engine.rsa_sign(priv, data)
+    assert crypto_engine.rsa_verify(pub, sig, data)
+    assert not crypto_engine.rsa_verify(pub, sig, b"wrong")
+
+
+def test_rsa_encrypt_decrypt():
+    priv = crypto_engine.generate_rsa_key()
+    pub = priv.public_key()
+    data = b"secret"
+    ct = crypto_engine.rsa_encrypt(pub, data)
+    pt = crypto_engine.rsa_decrypt(priv, ct)
+    assert pt == data
+
+
+def test_generate_ec_key():
+    key = crypto_engine.generate_ec_key()
+    assert isinstance(key, EllipticCurvePrivateKey)
+
+
+def test_ec_sign_and_verify():
+    priv = crypto_engine.generate_ec_key()
+    pub = priv.public_key()
+    data = b"msg"
+    sig = crypto_engine.ec_sign(priv, data)
+    assert crypto_engine.ec_verify(pub, sig, data)
+    assert not crypto_engine.ec_verify(pub, sig, b"bad")
+
+
+def test_aes_encrypt_decrypt():
+(dry-run)
+
+Changes for .\greenwire\menu_cli.py:
+--- original excerpt ---
+import argparse
+from pathlib import Path
+"""Simple interactive CLI exposing most GREENWIRE features."""
+
+from greenwire.core.backend import init_backend, issue_card
+from greenwire.core.nfc_emv import ContactlessEMVTerminal, NFCEMVProcessor
+from greenwire.core.nfc_iso import ISO14443ReaderWriter
+from greenwire.nfc_vuln import scan_nfc_vulnerabilities
+from greenwire.core.fuzzer import SmartcardFuzzer
+from greenwire.core.file_fuzzer import (
+    fuzz_image_file,
+    fuzz_binary_file,
+    fuzz_unusual_input,
+)
+
+
+MENU = """\
+GREENWIRE Menu (22 options)
+ 1. Issue new card
+ 2. Card count
+ 3. List issued cards
+ 4. Contactless EMV transaction
+ 5. Scan NFC vulnerabilities
+ 6. Fuzz contactless card
+ 7. Read NFC block
+ 8. Write NFC block
+ 9. Show NFC tag UID
+10. Dump ATR
+11. Dump full card memory
+12. Brute force PIN (simulated)
+13. Fuzz APDU sequence
+14. Fuzz contactless transaction
+15. Scan for contactless cards
+16. Dump card filesystem (simulated)
+17. Export card data to JSON
+18. Import card data from JSON
+19. Reset card (simulated)
+20. Detect card OS
+21. Fuzz file parser
+22. Quit
+"""
+
+
+# ---------------------------------------------------------------------------
+# Helper functions for each menu option
+# ---------------------------------------------------------------------------
+
+def dump_atr() -> None:
+    """Attempt to print the card ATR/ATS if available."""
+    reader = ISO14443ReaderWriter()
+--- proposed excerpt ---
+import argparse
+from pathlib import Path
+"""Simple interactive CLI exposing most GREENWIRE features."""
+
+from greenwire.core.backend import init_backend, issue_card
+from greenwire.core.nfc_emv import ContactlessEMVTerminal, NFCEMVProcessor
+from greenwire.core.nfc_iso import ISO14443ReaderWriter
+from greenwire.nfc_vuln import scan_nfc_vulnerabilities
+from greenwire.core.fuzzer import SmartcardFuzzer
+from greenwire.core.file_fuzzer import fuzz_binary_file, fuzz_image_file, fuzz_unusual_input
+
+
+MENU = """\
+GREENWIRE Menu (22 options)
+ 1. Issue new card
+ 2. Card count
+ 3. List issued cards
+ 4. Contactless EMV transaction
+ 5. Scan NFC vulnerabilities
+ 6. Fuzz contactless card
+ 7. Read NFC block
+ 8. Write NFC block
+ 9. Show NFC tag UID
+10. Dump ATR
+11. Dump full card memory
+12. Brute force PIN (simulated)
+13. Fuzz APDU sequence
+14. Fuzz contactless transaction
+15. Scan for contactless cards
+16. Dump card filesystem (simulated)
+17. Export card data to JSON
+18. Import card data from JSON
+19. Reset card (simulated)
+20. Detect card OS
+21. Fuzz file parser
+22. Quit
+"""
+
+
+# ---------------------------------------------------------------------------
+# Helper functions for each menu option
+# ---------------------------------------------------------------------------
+
+def dump_atr() -> None:
+    """Attempt to print the card ATR/ATS if available."""
+    reader = ISO14443ReaderWriter()
+    if reader.connect():
+        atr = (
+            getattr(reader.tag, "ats", None)
+            or getattr(reader.tag, "atr", None)
+(dry-run)
+
+Changes for .\greenwire\tree_menu_cli.py:
+--- original excerpt ---
+"""Tree-based interactive CLI for GREENWIRE operations.
+
+This script presents a hierarchical menu where the user first selects a
+standard/card type and then chooses an action specific to that
+selection.  It reuses helpers from ``menu_cli`` and ``crypto_engine``.
+"""
+
+from __future__ import annotations  # noqa: F401
+
+import argparse
+from typing import Callable, Dict
+
+from greenwire.core.crypto_engine import generate_ec_key, generate_rsa_key
+from greenwire.core.nfc_emv import ContactlessEMVTerminal
+from greenwire.core.standards import Standard
+from greenwire.menu_cli import (
+    dump_atr,
+    dump_memory,
+    brute_force_pin,
+    fuzz_apdu,
+    fuzz_transaction,
+    scan_for_cards,
+    dump_filesystem,
+    export_data,
+    import_data,
+    reset_card,
+    detect_card_os,
+)
+from greenwire.core.backend import init_backend
+
+# ---------------------------------------------------------------------------
+# Action implementations
+# ---------------------------------------------------------------------------
+
+
+def _terminal_test() -> None:
+    """Perform a minimal EMV transaction as a terminal."""
+    terminal = ContactlessEMVTerminal(["A0000000031010"])
+    results = terminal.run()
+    for res in results:
+        print(res)
+
+
+def _atm_hsm_test() -> None:
+    """Placeholder for ATM/HSM specific tests."""
+    print("[SIMULATION] Running ATM/HSM test sequence")
+    _terminal_test()
+
+
+def _generate_cert() -> None:
+--- proposed excerpt ---
+"""Tree-based interactive CLI for GREENWIRE operations.
+
+This script presents a hierarchical menu where the user first selects a
+standard/card type and then chooses an action specific to that
+selection.  It reuses helpers from ``menu_cli`` and ``crypto_engine``.
+"""
+
+from __future__ import annotations  # noqa: F401
+
+import argparse
+from typing import Callable, Dict
+
+from greenwire.core.crypto_engine import generate_ec_key, generate_rsa_key
+from greenwire.core.nfc_emv import ContactlessEMVTerminal
+from greenwire.core.standards import Standard
+from greenwire.menu_cli import brute_force_pin, detect_card_os, dump_atr, dump_filesystem, dump_memory, export_data, fuzz_apdu, fuzz_transaction, import_data, reset_card, scan_for_cards
+from greenwire.core.backend import init_backend
+
+# ---------------------------------------------------------------------------
+# Action implementations
+# ---------------------------------------------------------------------------
+
+
+def _terminal_test() -> None:
+    """Perform a minimal EMV transaction as a terminal."""
+    terminal = ContactlessEMVTerminal(["A0000000031010"])
+    results = terminal.run()
+    for res in results:
+        print(res)
+
+
+def _atm_hsm_test() -> None:
+    """Placeholder for ATM/HSM specific tests."""
+    print("[SIMULATION] Running ATM/HSM test sequence")
+    _terminal_test()
+
+
+def _generate_cert() -> None:
+    """Generate a simple RSA and ECC test certificate pair."""
+    rsa_key = generate_rsa_key()
+    ecc_key = generate_ec_key()
+    print(f"Generated RSA modulus bits: {rsa_key.key_size}")
+    print(f"Generated ECC curve: {ecc_key.curve.name}")
+
+
+# Mapping of menu actions
+Action = Callable[[], None]
+
+MENU_TREE: Dict[str, Dict[str, tuple[str, Action]]] = {
+    Standard.EMV.value: {
+(dry-run)

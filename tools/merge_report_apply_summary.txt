@@ -1,0 +1,16 @@
+Import consolidation apply summary
+
+Files changed: 7
+- apdu4j_data/apdu4j_integration.py
+- apdu4j_data/test_apdu4j.py
+- greenwire/__init__.py
+- greenwire/core/fuzzer.py
+- greenwire/core/test_crypto_engine.py
+- greenwire/menu_cli.py
+- greenwire/tree_menu_cli.py
+
+Notes:
+- All changes were conservative top-level import merges.
+- Star imports and blocks with inline comments were left unchanged.
+- Backups created with .bak suffix for each modified file.
+- Please review merge_report2.txt for excerpts.

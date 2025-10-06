@@ -1,0 +1,19 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'com.greenwire'
+version = '0.1.0'
+
+application {
+    mainClass = 'com.greenwire.Main'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Placeholder dependencies
+}

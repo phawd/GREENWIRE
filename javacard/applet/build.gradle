@@ -1,0 +1,323 @@
+// GREENWIRE JavaCard Applet Build Script
+// --------------------------------------
+// This Gradle build file is used to compile, convert, and deploy the PinLogicApplet JavaCard applet for the GREENWIRE project.
+// It uses the JavaCard SDK and GlobalPlatformPro included in the GREENWIRE distribution.
+//
+// Purpose: Automates the build and deployment of JavaCard applets (.cap files) for smartcard research, fuzzing, and EMV/ISO 7816/JavaCard protocol simulation.
+// Relative to: GREENWIRE unified smartcard/EMV/JCOP research suite.
+// Protocols: JavaCard (applet/caplet), ISO 7816 (APDU), EMV, GlobalPlatform.
+//
+// See README.md for full project and protocol details.
+import org.gradle.api.GradleException
+
+plugins { id 'java' }
+
+group 'com.greenwire'
+version '1.0-SNAPSHOT'
+
+// Offline repositories only (local folders).
+repositories {
+    flatDir {
+        dirs '../../lib', '../../static/java', '../../sdk/javacard/lib'
+    }
+}
+
+def jcConverter = 'com.sun.javacard.converter.Main'
+
+dependencies {
+    // JavaCard API and tools from local SDK if present
+    // Accept both versioned and unversioned API jar names
+    compileOnly fileTree(dir: '../../sdk/javacard/lib', include: ['api_classic-*.jar', 'api_classic.jar', 'javacard_framework.jar', 'tools.jar'])
+
+    // Local GlobalPlatform tools
+    implementation files('../../lib/GlobalPlatformPro.jar')
+    implementation files('../../static/java/gp.jar')
+
+    // Local ant-javacard runner (optional for manual builds)
+    implementation files('../../static/java/ant-javacard.jar')
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src'
+        }
+    }
+}
+
+// Use ant-javacard for proper CAP file building
+task buildCap {
+    description = 'Build JavaCard CAP file using ant-javacard'
+    group = 'Build'
+    
+    dependsOn 'classes'
+    
+    doLast {
+        println "Building CAP file with ant-javacard..."
+        println "Source directory: src/"
+        println "Build directory: ${buildDir.path}"
+        println ""
+        println "To build CAP files offline, use the local ant-javacard jar:"
+        println "  java -jar ../../static/java/ant-javacard.jar"
+        println ""
+        println "Or use the root build script that coordinates all applets:"
+        println "  cd ../.. && gradlew listTools"
+        println ""
+        println "For manual compilation:"
+        println "  1. Compile Java source to .class files (gradle classes)"
+        println "  2. Use JavaCard converter (SDK) to create .cap file (requires local SDK)"
+        println "  3. Deploy with GlobalPlatformPro (local JARs)"
+    }
+}
+
+task deployCap(type: JavaExec) {
+    description = 'Deploy the .CAP file to a JavaCard using local GlobalPlatformPro.'
+    group = 'Deployment'
+
+    main = 'pro.javacard.gptool.GPTool'
+    classpath = files('../../lib/GlobalPlatformPro.jar')
+    
+    args = [
+        '--install', 'build/com/greenwire/javacard/PinLogicApplet.cap',
+        '--verbose'
+    ]
+
+    doLast {
+        println "---"
+        println "Applet deployed using local GlobalPlatformPro JAR."
+        println "If deployment failed, ensure:"
+        println "  1. CAP file exists at build/com/greenwire/javacard/PinLogicApplet.cap"
+        println "  2. Smart card reader is connected"
+        println "  3. JavaCard is inserted in reader"
+    }
+}
+
+// Quick check task for offline setup
+task verifyOfflineSetup {
+    doLast {
+        println "Offline setup status:"
+        println "- ../../lib/GlobalPlatformPro.jar: ${file('../../lib/GlobalPlatformPro.jar').exists()}"
+        println "- ../../static/java/gp.jar: ${file('../../static/java/gp.jar').exists()}"
+        println "- ../../static/java/ant-javacard.jar: ${file('../../static/java/ant-javacard.jar').exists()}"
+        println "- ../../sdk/javacard/lib (optional): ${file('../../sdk/javacard/lib').exists()}"
+    }
+}
+
+// Check converter prerequisites explicitly
+task checkConverterPrereqs {
+    doLast {
+        def haveApi = file('../../sdk/javacard/lib/api_classic.jar').exists() ||
+                      !fileTree(dir: '../../sdk/javacard/lib', include: ['api_classic-*.jar']).isEmpty()
+        def haveTools = file('../../sdk/javacard/lib/tools.jar').exists()
+        println "JavaCard converter prerequisites:"
+        println "- API present:   ${haveApi}"
+        println "- tools.jar:     ${haveTools}"
+        if (!haveApi || !haveTools) {
+            println "Hint: Ensure sdk/javacard/lib contains api_classic.jar (or versioned) and tools.jar"
+        }
+    }
+}
+
+defaultTasks 'buildCap'
+
+// Convert compiled classes into a .cap using the JavaCard converter (tools.jar)
+task convertCap(type: JavaExec) {
+    description = 'Convert compiled classes to a JavaCard .cap using tools.jar'
+    group = 'Build'
+
+    dependsOn 'classes'
+
+    // Configurable applet metadata via -P properties (with sensible defaults)
+    def appletClass = project.findProperty('appletClass') ?: 'com.greenwire.applet.GreenwireApplet'
+    def packageName = project.findProperty('packageName') ?: 'com.greenwire.applet'
+    def packageVersion = project.findProperty('packageVersion') ?: '1.0'
+    // AIDs (hex, colon-separated). Example: A0:00:00:06:23:01:47:52:4E:57:52
+    def appletAID = project.findProperty('appletAID') ?: 'A0:00:00:06:23:01:47:52:4E:57:52'
+    def packageAID = project.findProperty('packageAID') ?: 'A0:00:00:06:23:01:47:52:4E:57:50'
+
+    // Detect export path candidates
+    def exportCandidates = [
+        '../../sdk/javacard/api_export_files',
+        '../../sdk/javacard/export',
+        '../../sdk/javacard/exp',
+        '../../sdk/javacard/lib/api_export_files'
+    ]
+    def exportPath = project.findProperty('exportPath') ?: exportCandidates.find { file(it).exists() }
+
+    def toolsJar = file('../../sdk/javacard/lib/tools.jar')
+    def classesDir = project.findProperty('classesDir') ?: "$buildDir/classes/java/main"
+    def outDir = file("$buildDir/cap")
+
+    doFirst {
+        println 'Preparing JavaCard conversion...'
+        println " - tools.jar:     ${toolsJar.exists()} (${toolsJar})"
+        println " - classes dir:   ${file(classesDir).exists()} (${classesDir})"
+        println " - export path:   ${exportPath ?: 'NOT FOUND'}"
+        println " - applet class:  ${appletClass}"
+        println " - package name:  ${packageName} (${packageAID})"
+        println " - applet AID:    ${appletAID}"
+        println " - version:       ${packageVersion}"
+        if (!toolsJar.exists()) {
+            throw new GradleException('Missing tools.jar. Place it at sdk/javacard/lib/tools.jar')
+        }
+        if (!file(classesDir).exists()) {
+            throw new GradleException('Classes not found. Run gradle classes first (should be automatic).')
+        }
+        if (!exportPath) {
+            throw new GradleException('JavaCard API export files not found. Expected at sdk/javacard/api_export_files (or export/exp).')
+        }
+        outDir.mkdirs()
+    }
+
+    main = jcConverter
+    classpath = files(toolsJar)
+    args = [
+            '-classdir', classesDir,
+            '-d', outDir.absolutePath,
+            '-exportpath', file(exportPath).absolutePath,
+            '-out', 'CAP',
+            '-applet', appletAID, appletClass,
+            packageName, packageAID, packageVersion
+    ]
+
+    doLast {
+        // Try to locate the produced CAP file and give a friendly pointer
+        def caps = fileTree(outDir).matching { include '**/*.cap' }.files
+        if (!caps.isEmpty()) {
+            println "CAP generated: ${caps.iterator().next()}"
+        } else {
+            println 'Conversion ran but no .cap found in build/cap. Check converter output above.'
+        }
+    }
+}
+
+// Build EMV RFID Logging Applet CAP file
+task buildEMVRFIDLoggingCap(type: JavaExec) {
+    description = 'Build EMV RFID Logging Applet CAP file using ant-javacard'
+    group = 'Build'
+    
+    dependsOn 'classes'
+    
+    doLast {
+        println "Building EMV RFID Logging Applet CAP file..."
+        println "Using ant-javacard for EMV RFID logging functionality"
+        println ""
+        println "Command to run manually:"
+        println "java -jar ../../static/java/ant-javacard.jar \\"
+        println "  -src src/main/java \\"
+        println "  -out build/cap \\"
+        println "  -pkg com.greenwire.emv \\"
+        println "  -aid A0:00:00:06:23:01:45:4D:56:52 \\"
+        println "  -applet A0:00:00:06:23:01:45:4D:56:52 com.greenwire.emv.EMVRFIDLoggingApplet"
+    }
+}
+
+// Convert EMV RFID Logging Applet classes to CAP using JavaCard converter
+task convertEMVRFIDLoggingCap(type: JavaExec) {
+    description = 'Convert EMV RFID Logging Applet classes to CAP using tools.jar'
+    group = 'Build'
+    
+    dependsOn 'classes'
+    
+    def appletClass = 'com.greenwire.emv.EMVRFIDLoggingApplet'
+    def packageName = 'com.greenwire.emv'
+    def packageVersion = '1.0'
+    def appletAID = 'A0:00:00:06:23:01:45:4D:56:52'
+    def packageAID = 'A0:00:00:06:23:01:45:4D:56:50'
+    
+    def exportCandidates = [
+        '../../sdk/javacard/api_export_files',
+        '../../sdk/javacard/export',
+        '../../sdk/javacard/exp',
+        '../../sdk/javacard/lib/api_export_files'
+    ]
+    def exportPath = project.findProperty('exportPath') ?: exportCandidates.find { file(it).exists() }
+    
+    def toolsJar = file('../../sdk/javacard/lib/tools.jar')
+    def classesDir = "$buildDir/classes/java/main"
+    def outDir = file("$buildDir/cap")
+    
+    doFirst {
+        println 'Preparing EMV RFID Logging Applet conversion...'
+        println " - tools.jar:     ${toolsJar.exists()} (${toolsJar})"
+        println " - classes dir:   ${file(classesDir).exists()} (${classesDir})"
+        println " - export path:   ${exportPath ?: 'NOT FOUND'}"
+        println " - applet class:  ${appletClass}"
+        println " - package name:  ${packageName} (${packageAID})"
+        println " - applet AID:    ${appletAID}"
+        if (!toolsJar.exists()) {
+            throw new GradleException('Missing tools.jar. Place it at sdk/javacard/lib/tools.jar')
+        }
+        if (!file(classesDir).exists()) {
+            throw new GradleException('Classes not found. Run gradle classes first.')
+        }
+        if (!exportPath) {
+            throw new GradleException('JavaCard API export files not found. Expected at sdk/javacard/api_export_files.')
+        }
+        outDir.mkdirs()
+    }
+    
+    main = jcConverter
+    classpath = files(toolsJar)
+    args = [
+        '-classdir', classesDir,
+        '-d', outDir.absolutePath,
+        '-exportpath', file(exportPath).absolutePath,
+        '-out', 'CAP',
+        '-applet', appletAID, appletClass,
+        packageName, packageAID, packageVersion
+    ]
+    
+    doLast {
+        def caps = fileTree(outDir).matching { include '**/*.cap' }.files
+        if (!caps.isEmpty()) {
+            println "EMV RFID Logging CAP generated: ${caps.iterator().next()}"
+        } else {
+            println 'Conversion ran but no .cap found in build/cap. Check converter output above.'
+        }
+    }
+}
+
+// Deploy EMV RFID Logging Applet
+task deployEMVRFIDLoggingCap(type: JavaExec) {
+    description = 'Deploy EMV RFID Logging Applet CAP to JavaCard'
+    group = 'Deployment'
+    
+    def capOverride = project.findProperty('capFile')
+    def capDir = file("$buildDir/cap")
+    
+    dependsOn(capOverride ? [] : [convertEMVRFIDLoggingCap])
+    
+    doFirst {
+        if (capOverride) {
+            if (!file(capOverride).exists()) {
+                throw new GradleException("Specified capFile not found: ${capOverride}")
+            }
+        } else {
+            if (!capDir.exists()) {
+                throw new GradleException('No build/cap directory found; run convertEMVRFIDLoggingCap first')
+            }
+        }
+    }
+    
+    def capToInstall = capOverride ?: {
+        def caps = fileTree(capDir).matching { include '**/*.cap' }.files.toList().sort { -it.lastModified() }
+        if (caps.isEmpty()) {
+            throw new GradleException('No .cap file found in build/cap; run convertEMVRFIDLoggingCap')
+        }
+        return caps[0].absolutePath
+    }.call()
+    
+    main = 'pro.javacard.gptool.GPTool'
+    classpath = files('../../lib/GlobalPlatformPro.jar')
+    args = ['--install', capToInstall, '--verbose']
+    
+    doLast {
+        println "---"
+        println "EMV RFID Logging Applet deployed using GlobalPlatformPro"
+        println "Installed CAP: ${capToInstall}"
+        println "AID: A0:00:00:06:23:01:45:4D:56:52"
+        println ""
+        println "Test with: python greenwire.py apdu --command 00A4040007A0000000031010"
+    }
+}

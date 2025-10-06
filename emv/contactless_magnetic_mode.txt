@@ -1,0 +1,20 @@
+AMEX：
+
+获取Tag DF8174，如果DF8174不为空，则为AMEX的Magnetic Mode，获取Tag5F30为等效二磁信息。
+Track2 Equivalent Data：
+Field 	Name
+Account Numer (PAN) 	15
+Field Separator (“D”) 	1
+Application Expiratin Date (YYMM) 	4
+Service Code 	3
+Application Effective Date (YYMM) 	4
+Card Security Code 	5
+Reserved Field 	3
+Language Code 	2
+Padding (‘F’) 	1
+JCB：
+
+获取Tag 82, 获取Tag 82的第二个字节第8位是0，则为Magnetic Mode。
+MasterCard
+
+获取Tag DF8178，如果为01，则为Magnetic Mode，Tag 9F6B位等效二磁信息，Tag 56位一磁信息。

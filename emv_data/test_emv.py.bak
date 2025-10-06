@@ -1,0 +1,49 @@
+#!/usr/bin/env python3
+"""
+GREENWIRE EMV Test Module
+========================
+Simple test of EMV integration functionality
+"""
+
+import sys
+import os
+
+# Add the parent directory to path for imports
+sys.path.append(os.path.dirname(__file__))
+
+# Test EMV Commands
+try:
+    from commands.emv_commands import EMV_COMMANDS, get_emv_command, list_emv_commands
+    print("✅ EMV Commands module loaded successfully")
+    print(f"📊 Available commands: {len(EMV_COMMANDS)}")
+    for cmd in list(EMV_COMMANDS.keys())[:3]:
+        print(f"  - {cmd}")
+except Exception as e:
+    print(f"❌ EMV Commands error: {e}")
+
+# Test APDU Responses
+try:
+    from commands.apdu_responses import APDU_RESPONSES, get_apdu_response, is_success
+    print("\n✅ APDU Responses module loaded successfully") 
+    print(f"📊 Available response codes: {len(APDU_RESPONSES)}")
+    test_codes = ["9000", "6A82", "6985"]
+    for code in test_codes:
+        resp = get_apdu_response(code)
+        if resp:
+            print(f"  - {code}: {resp.description}")
+except Exception as e:
+    print(f"\n❌ APDU Responses error: {e}")
+
+# Test HSM Commands
+try:
+    from commands.hsm_commands import HSM_COMMANDS, get_vendor_commands, list_vendors
+    print("\n✅ HSM Commands module loaded successfully")
+    print(f"📊 Available HSM commands: {len(HSM_COMMANDS)}")
+    vendors = list_vendors()
+    for vendor in vendors[:2]:
+        cmds = get_vendor_commands(vendor)
+        print(f"  - {vendor}: {len(cmds)} commands")
+except Exception as e:
+    print(f"\n❌ HSM Commands error: {e}")
+
+print("\n🎯 GREENWIRE EMV Integration Test Complete!")

@@ -1,0 +1,263 @@
+#!/usr/bin/env python3
+"""
+Enhanced EMV Data Translation Script
+===================================
+More comprehensive translation of Chinese content to English
+"""
+
+import os, re  # noqa: F401
+from pathlib import Path
+
+class EnhancedEMVTranslator:
+    def __init__(self, base_path):
+        self.base_path = Path(base_path)
+        
+        # Comprehensive translation dictionary
+        self.translations = {
+            # Website/UI elements
+            "首页": "Home",
+            "归档": "Archives", 
+            "标签": "Tags",
+            "友链": "Friends",
+            "关于": "About",
+            "上一篇": "Previous",
+            "下一篇": "Next",
+            "目录": "Contents",
+            "版权所有": "Copyright",
+            "主题": "Theme",
+            "技术支持": "Powered by",
+            
+            # EMV/Technical terms
+            "终端交易类型": "Terminal Transaction Type",
+            "终端": "Terminal",
+            "交易类型": "Transaction Type",
+            "交易": "Transaction",
+            "类型": "Type",
+            "商品": "Goods",
+            "服务": "Service", 
+            "现金": "Cash",
+            "退款": "Refund",
+            "余额查询": "Balance Inquiry",
+            "返现": "CashBack",
+            "查询": "Inquiry",
+            "余额": "Balance",
+            
+            # Android/Programming terms
+            "控件": "Widget",
+            "组件": "Component",
+            "原生": "Native", 
+            "使用": "Using",
+            "实现": "Implementation",
+            "与": "and",
+            "互转": "Mutual Conversion",
+            "转换": "Conversion",
+            "方法": "Method",
+            "函数": "Function",
+            "类": "Class",
+            "对象": "Object",
+            "属性": "Property",
+            "配置": "Configuration",
+            "设置": "Settings",
+            "应用": "Application",
+            "程序": "Program",
+            "代码": "Code",
+            "示例": "Example",
+            "演示": "Demo",
+            "布局": "Layout",
+            "活动": "Activity",
+            "页面": "Page",
+            "界面": "Interface",
+            "数据": "Data",
+            
+            # Cloud/Business terms
+            "腾讯云": "Tencent Cloud",
+            "云产品": "Cloud Products",
+            "限时秒杀": "Limited Time Flash Sale", 
+            "爆款": "Popular",
+            "云服务器": "Cloud Server",
+            "首年": "First Year",
+            "元": "Yuan",
+            "优惠": "Discount",
+            "特价": "Special Price",
+            
+            # Common characters and phrases
+            "年": "Year",
+            "月": "Month", 
+            "日": "Day",
+            "时": "Hour",
+            "分": "Minute",
+            "秒": "Second",
+            "的": "of/the",
+            "和": "and",
+            "或": "or",
+            "但": "but",
+            "是": "is",
+            "有": "have",
+            "在": "in/at",
+            "为": "for/as",
+            "到": "to",
+            "从": "from",
+            "由": "by",
+            "与": "with",
+            "及": "and",
+            "等": "etc",
+            "所": "place/what",
+            "可": "can",
+            "将": "will",
+            "已": "already",
+            "被": "by/passive",
+            "把": "take/handle",
+            "让": "let/make",
+            "给": "give/to",
+            "对": "for/to",
+            "向": "toward",
+            "通过": "through",
+            "根据": "according to",
+            "基于": "based on",
+            "关于": "about",
+            "如果": "if",
+            "如何": "how",
+            "什么": "what",
+            "哪里": "where",
+            "什么时候": "when",
+            "为什么": "why",
+            "怎么": "how",
+            "多少": "how much",
+            
+            # Numbers (Chinese)
+            "一": "1/one",
+            "二": "2/two", 
+            "三": "3/three",
+            "四": "4/four",
+            "五": "5/five",
+            "六": "6/six",
+            "七": "7/seven",
+            "八": "8/eight",
+            "九": "9/nine",
+            "十": "10/ten",
+            "百": "hundred",
+            "千": "thousand",
+            "万": "ten thousand",
+            
+            # File/Document terms
+            "文件": "File",
+            "文档": "Document",
+            "资料": "Data/Material",
+            "信息": "Information",
+            "内容": "Content",
+            "格式": "Format",
+            "大小": "Size",
+            "长度": "Length",
+            "宽度": "Width",
+            "高度": "Height",
+            "颜色": "Color",
+            "背景": "Background",
+            "前景": "Foreground",
+            "字体": "Font",
+            "样式": "Style",
+            "模板": "Template",
+            "主题": "Theme"
+        }
+    
+    def comprehensive_translate(self, text):
+        """Comprehensive translation using multiple strategies"""
+        translated = text
+        
+        # Strategy 1: Direct word/phrase replacement
+        for chinese, english in self.translations.items():
+            translated = translated.replace(chinese, english)
+        
+        # Strategy 2: Handle remaining single Chinese characters
+        # Replace any remaining Chinese characters with placeholder
+        chinese_chars = re.findall(r'[\u4e00-\u9fff]', translated)
+        for char in set(chinese_chars):
+            if char not in self.translations:
+                # Use a placeholder for untranslated characters
+                translated = translated.replace(char, f"[CN:{char}]")
+        
+        return translated
+    
+    def deep_translate_file(self, file_path):
+        """Perform deep translation of a single file"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Check if translation is needed
+            if not re.search(r'[\u4e00-\u9fff]', content):
+                return False  # No Chinese characters
+            
+            # Perform comprehensive translation
+            translated_content = self.comprehensive_translate(content)
+            
+            # Write back
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(translated_content)
+            
+            # Check if any Chinese remains
+            remaining_chinese = re.findall(r'[\u4e00-\u9fff]', translated_content)
+            if remaining_chinese:
+                print(f"⚠️  Partial translation: {file_path.name} - {len(remaining_chinese)} characters remain")
+                return "partial"
+            else:
+                print(f"✅ Complete translation: {file_path.name}")
+                return True
+                
+        except Exception as e:
+            print(f"❌ Error translating {file_path}: {e}")
+            return False
+    
+    def translate_all_remaining(self):
+        """Translate all files with remaining Chinese content"""
+        md_files = list(self.base_path.rglob("*.md"))
+        
+        total_files = len(md_files)
+        translated_files = 0
+        partial_files = 0
+        clean_files = 0
+        
+        print(f"Processing {total_files} markdown files...")
+        
+        for md_file in md_files:
+            result = self.deep_translate_file(md_file)
+            if result is True:
+                translated_files += 1
+            elif result == "partial":
+                partial_files += 1
+            elif result is False:
+                clean_files += 1
+        
+        return {
+            'total': total_files,
+            'translated': translated_files, 
+            'partial': partial_files,
+            'clean': clean_files
+        }
+
+def main():
+    """Main execution function"""
+    base_path = Path("d:/repo/scrapes/converted_markdown")
+    
+    print("Enhanced EMV Data Translation")
+    print("=" * 50)
+    
+    translator = EnhancedEMVTranslator(base_path)
+    results = translator.translate_all_remaining()
+    
+    print(f"\n📊 Translation Results:")
+    print(f"Total files: {results['total']}")
+    print(f"✅ Fully translated: {results['translated']}")
+    print(f"⚠️  Partially translated: {results['partial']}")
+    print(f"✨ Already clean: {results['clean']}")
+    
+    if results['partial'] > 0:
+        print(f"\n⚠️  {results['partial']} files have remaining Chinese characters")
+        print("These may be complex phrases or technical terms requiring manual review")
+    
+    if results['translated'] > 0 or results['partial'] > 0:
+        print(f"\n✅ Enhanced translation completed!")
+    else:
+        print(f"\n✨ All files were already fully translated!")
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"name": "[pallets/flask source archive]",
+			"uri": "codeql-zip-archive://1-155/c:\\Users\\cross\\AppData\\Roaming\\Code - Insiders\\User\\workspaceStorage\\231557551047114371012187c77adbfb\\GitHub.vscode-codeql\\pallets-flask\\codeql_db\\src.zip"
+		},
+		{
+			"name": "[phawd/GREENWIRE source archive]",
+			"uri": "codeql-zip-archive://1-155/c:\\Users\\cross\\AppData\\Roaming\\Code - Insiders\\User\\workspaceStorage\\72625caf1dc2cbe5ff1dc0f579714543\\GitHub.vscode-codeql\\phawd-greenwire\\actions\\src.zip"
+		}
+	],
+	"settings": {
+		"java.configuration.updateBuildConfiguration": "automatic",
+		"codeQL.createQuery.qlPackLocation": "d:\\repo\\GREENWIRE"
+	}
+}

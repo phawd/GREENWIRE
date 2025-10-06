@@ -1,0 +1,92 @@
+#!/usr/bin/env python3
+"""
+Quick EMV Data Verification Script
+==================================
+Verifies and extracts key operational data from converted EMV files
+"""
+
+import json, re  # noqa: F401
+from pathlib import Path
+
+def extract_apdu_codes():
+    """Extract APDU response codes from converted file"""
+    apdu_file = Path("d:/repo/scrapes/converted_markdown/emv.cool/2020/12/23/Complete-list-of-APDU-responses/index.md")
+    if apdu_file.exists():
+        with open(apdu_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Extract table rows with APDU codes
+        apdu_patterns = re.findall(r'(\w+)\s*\|\s*(\w*)\s*\|\s*([EWI])\s*\|\s*([^|]+)', content)
+        print(f"Found {len(apdu_patterns)} APDU response codes")
+        
+        # Show first 10 codes
+        print("\nFirst 10 APDU Response Codes:")
+        for sw1, sw2, type_code, description in apdu_patterns[:10]:
+            print(f"  {sw1}{sw2}: [{type_code}] {description.strip()}")
+    else:
+        print("APDU file not found")
+
+def extract_aids():
+    """Extract Application Identifiers from converted file"""
+    aid_file = Path("d:/repo/scrapes/converted_markdown/emv.cool/2020/12/23/Complete-list-of-application-identifiers-AID/index.md")
+    if aid_file.exists():
+        with open(aid_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Extract AID patterns (hex strings 10+ characters)
+        aid_patterns = re.findall(r'([0-9A-Fa-f]{10,})\s*\|\s*([^|]+)\s*\|\s*([^|]+)\s*\|\s*([^|]+)', content)
+        print(f"\nFound {len(aid_patterns)} Application Identifiers")
+        
+        # Show Visa/MC/AMEX AIDs
+        print("\nMajor Payment Brand AIDs:")
+        for aid, vendor, country, name in aid_patterns[:15]:
+            if 'visa' in vendor.lower() or 'mastercard' in vendor.lower() or 'american express' in vendor.lower():
+                print(f"  {aid}: {vendor} - {name.strip()}")
+    else:
+        print("AID file not found")
+
+def extract_emv_tags():
+    """Extract EMV tag definitions from converted file"""
+    tag_file = Path("d:/repo/scrapes/converted_markdown/emv.cool/2020/12/23/Complete-list-of-EMV-NFC-tags/index.md")
+    if tag_file.exists():
+        with open(tag_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # Extract tag definitions
+        tag_patterns = re.findall(r'([0-9A-Fa-f]{2,4})\s*\|\s*([^|]+)\s*\|\s*([^|]+)', content)
+        print(f"\nFound {len(tag_patterns)} EMV Tag definitions")
+        
+        # Show critical transaction tags
+        critical_tags = ['9F02', '9F03', '9F1A', '5F2A', '9A', '9C', '9F33', '9F40', '9F66', '4F', '50', '57', '5A']
+        print("\nCritical EMV Tags:")
+        for tag, name, description in tag_patterns:
+            if tag.upper() in critical_tags:
+                print(f"  {tag}: {name.strip()} - {description.strip()[:60]}...")
+    else:
+        print("EMV tags file not found")
+
+def check_file_sizes():
+    """Check sizes of converted files"""
+    base_dir = Path("d:/repo/scrapes/converted_markdown/emv.cool/2020/12/23/")
+    if base_dir.exists():
+        print(f"\nConverted File Sizes:")
+        for md_file in base_dir.glob("*/index.md"):
+            size = md_file.stat().st_size
+            print(f"  {md_file.parent.name}: {size:,} bytes")
+    else:
+        print("Converted markdown directory not found")
+
+def main():
+    print("EMV Data Verification")
+    print("=" * 50)
+    
+    extract_apdu_codes()
+    extract_aids() 
+    extract_emv_tags()
+    check_file_sizes()
+    
+    print(f"\nVerification completed!")
+    print(f"All converted files are available in: d:/repo/scrapes/converted_markdown/")
+
+if __name__ == "__main__":
+    main()

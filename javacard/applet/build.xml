@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="greenwire-javacard" default="cap" basedir=".">
+
+  <!-- Paths -->
+  <property name="sdk.dir" location="../../sdk/javacard"/>
+  <property name="src.dir1" location="src/main/java"/>
+  <property name="src.dir2" location="src"/>
+  <property name="out.dir" location="build/cap"/>
+
+  <!-- Make sure output exists -->
+  <target name="prepare">
+    <mkdir dir="${out.dir}"/>
+  </target>
+
+  <!-- ant-javacard task definition -->
+  <taskdef uri="antlib:pro.javacard"
+           resource="pro/javacard/ant/antlib.xml"
+           classpath="../../static/java/ant-javacard.jar;../../sdk/javacard/lib/*"/>
+
+  <!-- Build CAP for EMVDDACDAApplet -->
+  <target name="cap" depends="prepare">
+    <jc:cap xmlns:jc="antlib:pro.javacard"
+            sdk="${sdk.dir}"
+            out="${out.dir}"
+            packagename="com.greenwire"
+            aid="A0:00:00:06:23:01:45:4D:56:40"
+            version="1.0">
+
+      <jc:applet class="com.greenwire.EMVDDACDAApplet"
+                 aid="A0:00:00:06:23:01:45:4D:56:44"/>
+
+      <!-- Include both source layouts -->
+      <jc:classes dir="${src.dir1}"/>
+      <jc:classes dir="${src.dir2}"/>
+    </jc:cap>
+
+    <echo>CAP build attempted. Check ${out.dir} for .cap output.</echo>
+  </target>
+
+</project>

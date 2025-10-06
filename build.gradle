@@ -1,0 +1,58 @@
+// GREENWIRE Root Build Script
+// ---------------------------
+// Offline/static Gradle configuration relying solely on in-repo JARs.
+
+plugins {
+    id 'java'
+}
+
+group 'com.greenwire'
+version '1.0-SNAPSHOT'
+
+// Use only local folders. No remote repositories to guarantee reproducibility.
+repositories {
+    flatDir {
+        dirs 'lib', 'static/java', 'sdk/javacard/lib'
+    }
+}
+
+dependencies {
+    // Local GlobalPlatform tools
+    implementation files('lib/GlobalPlatformPro.jar')
+    implementation files('static/java/gp.jar')
+
+    // Local ant-javacard helper (runnable JAR)
+    implementation files('static/java/ant-javacard.jar')
+
+    // JavaCard API stubs if SDK is present locally (safe if directory is missing)
+    // Accept both versioned and unversioned API jar names
+    compileOnly fileTree(dir: 'sdk/javacard/lib', include: ['api_classic-*.jar', 'api_classic.jar', 'javacard_framework.jar', 'tools.jar'])
+}
+
+sourceSets {
+    main {
+        java { srcDir 'src' }
+    }
+}
+
+// Helper task to print current offline tool availability
+task listTools {
+    doLast {
+        println "Available offline tools (local JARs only):"
+        println "- lib/GlobalPlatformPro.jar: ${file('lib/GlobalPlatformPro.jar').exists()}"
+        println "- static/java/gp.jar:        ${file('static/java/gp.jar').exists()}"
+        println "- static/java/ant-javacard.jar: ${file('static/java/ant-javacard.jar').exists()}"
+        println "- sdk/javacard/lib (optional SDK): ${file('sdk/javacard/lib').exists()}"
+        println ""
+        println "Tip: For JavaCard CAP builds, see javacard/applet/build.gradle."
+    }
+}
+
+// Example GlobalPlatformPro invocation using the local fat JAR
+task manageGlobalPlatformPro(type: JavaExec) {
+    main = 'pro.javacard.gptool.GPTool'
+    classpath = files('lib/GlobalPlatformPro.jar')
+    args = ['--version']
+}
+
+defaultTasks 'listTools'
