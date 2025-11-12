@@ -1,8 +1,10 @@
-"""
-Action handlers for the main GREENWIRE UI.
-"""
+"""Action handlers for the main GREENWIRE UI."""
+import json
 import os
 import subprocess
+from pathlib import Path
+
+from core.hsm_service import HSMService
 from .menu_builder import MenuBuilder
 from tool_audit import aggregate, human
 
@@ -975,16 +977,38 @@ def atm_get_balance():
 def hsm_generate_keys():
     """Action for HSM key generation."""
     print("\nHSM Key Generation...")
-    import __main__ as greenwire_main
+    service = HSMService()
 
-    class Args:
-        pass
-    args = Args()
-    args.subcommand = 'hsm'
-    args.generate_keys = True
-    args.output = input("Enter output file for keys (optional): ").strip() or None
-    args.background = False
-    greenwire_main.run_hsm(args)
+    existing = service.list_keys()
+    if existing:
+        print(f"⚠️  Existing keys detected in {service.store_path}")
+        choice = input("Regenerate default keyset? [y/N]: ").strip().lower()
+        if choice not in {"y", "yes"}:
+            print("\nCurrent keys:")
+            for record in existing:
+                usage = record.usage or "-"
+                print(f"  • {record.label}: {usage}, KCV {record.kcv}, created {record.created}")
+            return
+
+    output_file = input("Enter output file for keys (optional): ").strip() or None
+
+    records = service.generate_default_keyset(overwrite=True)
+    print("\n✅ Generated default HSM keyset:")
+    for record in records:
+        usage = record.usage or "-"
+        print(f"  {record.label} ({usage}) — {record.length} bytes, KCV {record.kcv}")
+
+    if output_file:
+        payload = [
+            {"label": rec.label, "key": rec.key, "kcv": rec.kcv, "usage": rec.usage}
+            for rec in records
+        ]
+        path = Path(output_file)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        print(f"\n💾 Key material exported to {path}")
+    else:
+        print(f"\n💾 Keys stored in {service.store_path}")
 
 def hsm_pin_translate():
     """Action for HSM PIN translation."""
@@ -998,54 +1022,48 @@ def hsm_pin_translate():
     print("without exposing the plaintext PIN.")
 
     try:
-        # Get input parameters
+        service = HSMService()
+
         print("\nInput Configuration:")
+        card_id = input("Enter card ID [CARD-TEST]: ").strip() or "CARD-TEST"
         source_pin_block = input("Enter source PIN block (hex): ").strip()
         if not source_pin_block:
             print("❌ Source PIN block required.")
             return
+        if len(source_pin_block) % 2:
+            print("❌ PIN block must contain an even number of hex characters.")
+            return
 
-        source_key = input("Enter source encryption key ID [KEY001]: ").strip() or "KEY001"
-        dest_key = input("Enter destination encryption key ID [KEY002]: ").strip() or "KEY002"
-
-        pin_format = input("Enter PIN block format (ISO-0, ISO-1, ISO-3) [ISO-0]: ").strip().upper() or "ISO-0"
+        source_key = input("Enter source encryption key ID [ZPK]: ").strip() or "ZPK"
+        dest_key = input("Enter destination encryption key ID [ZPK]: ").strip() or "ZPK"
 
         print("\n" + "-" * 60)
         print("Processing PIN Translation...")
+        print(f"  Card ID: {card_id}")
         print(f"  Source PIN Block: {source_pin_block}")
         print(f"  Source Key: {source_key}")
         print(f"  Destination Key: {dest_key}")
-        print(f"  PIN Format: {pin_format}")
         print("-" * 60)
 
-        # Simulate HSM PIN translation
-        # In real implementation, this would communicate with actual HSM via PKCS#11 or proprietary API
-        import hashlib
-        import secrets
+        result = service.translate_pin(card_id, source_pin_block, source_key, dest_key)
+        if result["success"] and result["translated_pin_block"]:
+            translated_pin_block = result["translated_pin_block"]
+            print("\n✅ PIN Translation Complete")
+            print(f"Translated PIN Block: {translated_pin_block}")
+            dest_record = next((rec for rec in service.list_keys() if rec.label == dest_key), None)
+            if dest_record:
+                print(f"Destination Key KCV: {dest_record.kcv}")
+        else:
+            print(f"\n❌ PIN translation failed: {result['message']}")
+            return
 
-        # Simulate translation (this is NOT secure - for demonstration only)
-        intermediate = hashlib.sha256(source_pin_block.encode()).hexdigest()[:16]
-        translated_pin_block = hashlib.sha256((intermediate + dest_key).encode()).hexdigest()[:16].upper()
+        print("\n⚠️  NOTE: This uses the GREENWIRE HSM emulator for testing.")
+        print("    Production systems must rely on certified hardware and secure channels.")
 
-        print("\n✅ PIN Translation Complete")
-        print(f"\nTranslated PIN Block: {translated_pin_block}")
-        print(f"Destination Key ID: {dest_key}")
-        print(f"PIN Format: {pin_format}")
-
-        # Generate response in HSM format
-        print("\n" + "-" * 60)
-        print("HSM Response:")
-        print(f"  Response Code: 00 (Success)")
-        print(f"  Translated PIN Block: {translated_pin_block}")
-        print(f"  Key Check Value: {secrets.token_hex(3).upper()}")
-        print("-" * 60)
-
-        print("\n⚠️  NOTE: This is a simulation for development/testing.")
-        print("    Production systems must use certified HSM hardware.")
-        print("    Common HSMs: Thales payShield, Utimaco CryptoServer, etc.")
-
-    except Exception as e:
-        print(f"\n❌ Error during PIN translation: {e}")
+    except ValueError as exc:
+        print(f"\n❌ Error during PIN translation: {exc}")
+    except Exception as exc:  # noqa: BLE001
+        print(f"\n❌ Unexpected error: {exc}")
 
     print("\n" + "=" * 60)
 
@@ -1061,6 +1079,8 @@ def hsm_cvv_generate():
     print("per EMV and payment network specifications.")
 
     try:
+        service = HSMService()
+
         # Get input parameters
         print("\nCard Data:")
         pan = input("Enter Primary Account Number (PAN): ").strip()
@@ -1077,42 +1097,21 @@ def hsm_cvv_generate():
 
         cvv_type = input("Enter CVV type (CVV, CVV2, iCVV, dCVV) [CVV2]: ").strip().upper() or "CVV2"
 
-        key_id = input("Enter CVV key ID [CVVKEY001]: ").strip() or "CVVKEY001"
-
         print("\n" + "-" * 60)
         print("Generating CVV...")
         print(f"  PAN: {pan[:6]}******{pan[-4:]}")
         print(f"  Expiry: {expiry}")
         print(f"  Service Code: {service_code}")
         print(f"  CVV Type: {cvv_type}")
-        print(f"  Key ID: {key_id}")
         print("-" * 60)
 
-        # Simulate CVV generation using simplified algorithm
-        # Real implementation uses DES/3DES encryption per EMV specs
-        import hashlib
-
-        # Build CVV input data per EMV spec
-        cvv_input = pan + expiry + service_code + key_id
-
-        # Simulate encryption (this is NOT the real CVV algorithm)
-        hash_result = hashlib.sha256(cvv_input.encode()).hexdigest()
-
-        # Extract CVV (3 digits) or CVV2/CVC (3 digits)
-        cvv_value = ""
-        for char in hash_result:
-            if char.isdigit():
-                cvv_value += char
-                if len(cvv_value) == 3:
-                    break
-
-        # Ensure we have exactly 3 digits
-        if len(cvv_value) < 3:
-            cvv_value = cvv_value + "000"
-        cvv_value = cvv_value[:3]
-
+        cvv_value = service.generate_cvv(pan, expiry, service_code)
         print("\n✅ CVV Generation Complete")
         print(f"\nGenerated {cvv_type}: {cvv_value}")
+
+        cvk_record = next((rec for rec in service.list_keys() if rec.integration_slot == "cvv_key"), None)
+        if cvk_record:
+            print(f"Using key {cvk_record.label} (KCV {cvk_record.kcv})")
 
         # Additional info based on type
         if cvv_type == "CVV":
@@ -1132,8 +1131,8 @@ def hsm_cvv_generate():
         print("HSM Response:")
         print(f"  Response Code: 00 (Success)")
         print(f"  CVV Value: {cvv_value}")
-        print(f"  Algorithm: EMV CVV Method (simulated)")
-        print(f"  Key Check Value: {hash_result[:6].upper()}")
+        if cvk_record:
+            print(f"  Key Reference: {cvk_record.label} / KCV {cvk_record.kcv}")
         print("-" * 60)
 
         print("\n⚠️  IMPORTANT SECURITY NOTES:")
@@ -1149,8 +1148,10 @@ def hsm_cvv_generate():
         print("    • American Express: CID (4 digits)")
         print("    • Discover: Card Code")
 
-    except Exception as e:
-        print(f"\n❌ Error during CVV generation: {e}")
+    except ValueError as exc:
+        print(f"\n❌ Error during CVV generation: {exc}")
+    except Exception as exc:  # noqa: BLE001
+        print(f"\n❌ Unexpected error during CVV generation: {exc}")
 
     print("\n" + "=" * 60)
 

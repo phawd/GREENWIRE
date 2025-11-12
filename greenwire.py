@@ -39,6 +39,7 @@ from typing import Optional, Any, Dict, List
 
 # New menu system imports
 from core.ui.menu_builder import MenuBuilder
+from core.hsm_service import HSMService
 from core.ui.menu_actions import (
     show_rfid_nfc_menu,
     show_emv_payment_menu,
@@ -1933,9 +1934,47 @@ def parse_args() -> argparse.Namespace:
 
     # Add HSM subcommand
     hsm = sub.add_parser("hsm", help="Hardware Security Module operations")
-    hsm.add_argument("--generate-keys", action="store_true", help="Generate HSM keys")
-    hsm.add_argument("--output", type=str, help="Output file for generated keys")
-    hsm.add_argument("--background", action="store_true", help="Run HSM operations in background")
+    hsm.add_argument(
+        "--operation",
+        choices=[
+            "status",
+            "generate-default",
+            "generate-key",
+            "list-keys",
+            "export-key",
+            "generate-mac",
+            "generate-arqc",
+            "verify-arqc",
+            "generate-arpc",
+            "pin-block",
+            "pin-verify",
+            "pin-translate",
+            "cvv",
+        ],
+        default="status",
+        help="HSM operation to execute",
+    )
+    hsm.add_argument("--label", help="Key label for key management and MAC operations")
+    hsm.add_argument("--length", type=int, default=16, help="Key length in bytes when generating a single key")
+    hsm.add_argument("--algorithm", default="des3", help="MAC algorithm (default: des3 retail MAC)")
+    hsm.add_argument("--data", help="Hex or ASCII payload for MAC/cryptogram operations")
+    hsm.add_argument("--pan", help="Primary Account Number for EMV/PIN operations")
+    hsm.add_argument("--atc", type=int, help="Application Transaction Counter for session key derivation")
+    hsm.add_argument("--arqc", help="ARQC value (hex) for verification/ARPC generation")
+    hsm.add_argument("--issuer-response", help="Issuer response data (hex) for ARPC generation")
+    hsm.add_argument("--pin", help="PIN value for PIN block or verification operations")
+    hsm.add_argument("--pin-format", default="ISO-0", help="PIN block format (default: ISO-0)")
+    hsm.add_argument("--pin-hash", help="Stored PIN hash (SHA-256) for verification")
+    hsm.add_argument("--pin-block", help="PIN block (hex) for translation operations")
+    hsm.add_argument("--source-key", help="Source key identifier for PIN translation")
+    hsm.add_argument("--dest-key", help="Destination key identifier for PIN translation")
+    hsm.add_argument("--card-id", help="Card identifier for HSM/ATM integration workflows")
+    hsm.add_argument("--expiry", help="Expiry date (YYMM) for CVV generation")
+    hsm.add_argument("--service-code", default="201", help="Service code for CVV generation (default: 201)")
+    hsm.add_argument("--overwrite", action="store_true", help="Allow overwriting an existing key label")
+    hsm.add_argument("--generate-keys", action="store_true", help="Legacy alias for --operation generate-default")
+    hsm.add_argument("--output", type=str, help="Output file when exporting key material")
+    hsm.add_argument("--background", action="store_true", help="Run HSM background services after the operation")
 
     # APDU communication subcommand
     apdu = sub.add_parser("apdu", help="Direct APDU communication with smart cards using apdu4j")
@@ -7375,45 +7414,201 @@ def run_apdu4j(args: argparse.Namespace) -> None:
 
 
 def run_hsm(args: argparse.Namespace) -> None:
-    """Run HSM operations."""
+    """Entry point for HSM key management and cryptographic helpers."""
+
+    def _decode_payload(payload: Optional[str]) -> bytes:
+        if payload is None:
+            raise ValueError("Data payload (--data) is required for this operation")
+
+        candidate = payload.replace(" ", "")
+        try:
+            return bytes.fromhex(candidate)
+        except ValueError:
+            return payload.encode("utf-8")
+
+    def _require(name: str, value: Optional[str]) -> str:
+        if not value:
+            raise ValueError(f"Missing required argument: --{name}")
+        return value
+
     print("🔒 GREENWIRE Hardware Security Module")
     print("=" * 40)
 
-    generate_keys = getattr(args, 'generate_keys', False)
-    output = getattr(args, 'output', None)
-    background = getattr(args, 'background', False)
+    service = HSMService()
+    operation = getattr(args, "operation", "status") or "status"
+    if getattr(args, "generate_keys", False) and operation == "status":
+        operation = "generate-default"
 
-    if generate_keys:
-        print("🔑 Generating HSM keys...")
-        import time
-        time.sleep(1)
+    background = getattr(args, "background", False)
+    output_path = getattr(args, "output", None)
 
-        keys_generated = [
-            "Master Key (256-bit AES)",
-            "Session Key (128-bit AES)", 
-            "Authentication Key (2048-bit RSA)",
-            "Signing Key (ECDSA P-256)"
-        ]
+    try:
+        if operation == "status":
+            keys = service.list_keys()
+            print(f"🗄️  Keystore: {service.store_path}")
+            if keys:
+                print("\nRegistered keys:")
+                header = f"{'Label':<8} {'Usage':<24} {'Len':<4} {'KCV':<6} {'Created':<24} {'Key'}"
+                print(header)
+                print("-" * len(header))
+                for record in keys:
+                    usage = record.usage or "-"
+                    print(
+                        f"{record.label:<8} {usage:<24} {record.length:<4} {record.kcv:<6} {record.created:<24} {record.masked_key()}"
+                    )
+            else:
+                print("(no keys have been provisioned yet)")
 
-        for key in keys_generated:
-            print(f"  ✅ Generated: {key}")
+        elif operation == "generate-default":
+            overwrite = getattr(args, "overwrite", False) or getattr(args, "generate_keys", False)
+            records = service.generate_default_keyset(overwrite=overwrite)
+            print("🔑 Generated default key set:")
+            for record in records:
+                usage = record.usage or "-"
+                print(f"  ✅ {record.label} ({usage}) — len {record.length} bytes, KCV {record.kcv}")
 
-        if output:
-            print(f"\n💾 Keys exported to: {output}")
+            if output_path:
+                payload = [
+                    {"label": rec.label, "key": rec.key, "kcv": rec.kcv, "usage": rec.usage}
+                    for rec in records
+                ]
+                path = Path(output_path)
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+                print(f"💾 Key material exported to {path}")
+            else:
+                print(f"💾 Stored in {service.store_path}")
+
+        elif operation == "generate-key":
+            label = _require("label", getattr(args, "label", None))
+            length = getattr(args, "length", 16)
+            overwrite = getattr(args, "overwrite", False)
+            record = service.generate_key(label, length, overwrite=overwrite)
+            print(
+                f"✅ Generated key {record.label} (length {record.length} bytes, KCV {record.kcv})"
+            )
+            if output_path:
+                service.export_key(record.label, output_path)
+                print(f"💾 Key exported to {output_path}")
+
+        elif operation == "list-keys":
+            keys = service.list_keys()
+            if not keys:
+                print("(no keys in keystore)")
+            else:
+                for record in keys:
+                    usage = record.usage or "-"
+                    print(f"• {record.label}: {usage}, len={record.length}, KCV={record.kcv}, created={record.created}")
+
+        elif operation == "export-key":
+            label = _require("label", getattr(args, "label", None))
+            record = service.export_key(label, output_path)
+            if output_path:
+                print(f"✅ Exported {label} to {output_path}")
+            else:
+                print(f"✅ {label} — key={record.key}, KCV={record.kcv}")
+
+        elif operation == "generate-mac":
+            label = _require("label", getattr(args, "label", None))
+            data = _decode_payload(getattr(args, "data", None))
+            algorithm = getattr(args, "algorithm", "des3")
+            mac = service.generate_mac(label, data, algorithm=algorithm)
+            print(f"✅ MAC ({algorithm}) = {mac}")
+
+        elif operation == "generate-arqc":
+            label = _require("label", getattr(args, "label", None))
+            pan = _require("pan", getattr(args, "pan", None))
+            atc = getattr(args, "atc", None)
+            if atc is None:
+                raise ValueError("Missing required argument: --atc")
+            data = _decode_payload(getattr(args, "data", None))
+            arqc = service.generate_arqc(label, pan, atc, data)
+            print(f"✅ ARQC = {arqc}")
+
+        elif operation == "verify-arqc":
+            label = _require("label", getattr(args, "label", None))
+            arqc_hex = _require("arqc", getattr(args, "arqc", None))
+            try:
+                arqc_bytes = bytes.fromhex(arqc_hex.replace(" ", ""))
+            except ValueError:
+                raise ValueError("ARQC must be provided as hex bytes")
+            data = _decode_payload(getattr(args, "data", None))
+            verified = service.verify_arqc(
+                label,
+                arqc_bytes,
+                data,
+                pan=getattr(args, "pan", None),
+                atc=getattr(args, "atc", None),
+            )
+            status = "VALID" if verified else "INVALID"
+            print(f"✅ ARQC verification result: {status}")
+
+        elif operation == "generate-arpc":
+            label = _require("label", getattr(args, "label", None))
+            pan = _require("pan", getattr(args, "pan", None))
+            atc = getattr(args, "atc", None)
+            if atc is None:
+                raise ValueError("Missing required argument: --atc")
+            arqc_hex = _require("arqc", getattr(args, "arqc", None))
+            try:
+                arqc_bytes = bytes.fromhex(arqc_hex.replace(" ", ""))
+            except ValueError:
+                raise ValueError("ARQC must be provided as hex bytes")
+            issuer_response_hex = getattr(args, "issuer_response", None) or "0000"
+            try:
+                issuer_response = bytes.fromhex(issuer_response_hex.replace(" ", ""))
+            except ValueError:
+                raise ValueError("Issuer response must be hex")
+            arpc = service.generate_arpc(label, pan, atc, arqc_bytes, issuer_response)
+            print(f"✅ ARPC = {arpc}")
+
+        elif operation == "pin-block":
+            pin = _require("pin", getattr(args, "pin", None))
+            pan = _require("pan", getattr(args, "pan", None))
+            pin_format = getattr(args, "pin_format", "ISO-0")
+            block = service.generate_pin_block(pin, pan, pin_format=pin_format)
+            print(f"✅ PIN block ({pin_format}) = {block.hex().upper()}")
+
+        elif operation == "pin-verify":
+            pin = _require("pin", getattr(args, "pin", None))
+            pin_hash = _require("pin-hash", getattr(args, "pin_hash", None))
+            verified = service.verify_pin(pin, pin_hash)
+            status = "MATCH" if verified else "MISMATCH"
+            print(f"✅ PIN verification result: {status}")
+
+        elif operation == "pin-translate":
+            card_id = getattr(args, "card_id", "CARD-TEST")
+            pin_block = _require("pin-block", getattr(args, "pin_block", None))
+            source_key = _require("source-key", getattr(args, "source_key", None))
+            dest_key = _require("dest-key", getattr(args, "dest_key", None))
+            result = service.translate_pin(card_id, pin_block, source_key, dest_key)
+            if result["success"]:
+                translated = result["translated_pin_block"] or ""
+                print(f"✅ PIN translation successful: {translated}")
+            else:
+                print(f"❌ PIN translation failed: {result['message']}")
+
+        elif operation == "cvv":
+            pan = _require("pan", getattr(args, "pan", None))
+            expiry = _require("expiry", getattr(args, "expiry", None))
+            service_code = getattr(args, "service_code", "201")
+            cvv = service.generate_cvv(pan, expiry, service_code)
+            print(f"✅ CVV ({service_code}) = {cvv}")
+
         else:
-            print("\n💾 Keys stored in secure HSM storage")
+            raise ValueError(f"Unsupported HSM operation: {operation}")
+
+    except Exception as exc:  # noqa: BLE001
+        print(f"❌ HSM operation failed: {exc}")
+        if getattr(args, "verbose", False):
+            traceback.print_exc()
+        return
 
     if background:
-        print("🔄 Starting HSM background services...")
+        print("\n🔄 Starting HSM background services...")
         print("  ✅ Key rotation service started")
         print("  ✅ Certificate management started")
         print("  ✅ Audit logging started")
-
-    print("\n🔒 HSM Status:")
-    print("  - Temperature: Normal")
-    print("  - Battery: 98%")
-    print("  - Tamper: Secure")
-    print("  - Keys: 12 active")
 
 
 def run_emulation(args: argparse.Namespace) -> None:
