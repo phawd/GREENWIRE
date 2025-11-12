@@ -6,35 +6,47 @@ GREENWIRE is now configured for fully static deployment with zero external depen
 ## Static Components Included
 
 ### Java Environment
-- ✅ **Bundled JDK 8** (`static/java/jdk/` or `temurin8.zip`)
-- ✅ **Apache Ant** (`static/java/apache-ant-1.10.15/`)
-- ✅ **JavaCard API** (`static/java/javacard_lib/api_classic.jar`)
-- ✅ **ant-javacard** (`static/java/ant-javacard.jar`)
-- ✅ **GlobalPlatformPro** (`static/java/gp.jar`)
+- Bundled JDK 8 (`static/java/jdk/` or `temurin8.zip`)
+- Apache Ant (`static/java/apache-ant-1.10.15/`)
+- JavaCard API (`static/java/javacard_lib/api_classic.jar`)
+- ant-javacard (`static/java/ant-javacard.jar`)
+- GlobalPlatformPro (`static/java/gp.jar`)
 
 ### Python Libraries
-- ✅ **NFC modules** (`static/lib/nfc/`)
-- ✅ **Smartcard modules** (`static/lib/smartcard/`)
-- ✅ **EMV compliance** (`static/lib/greenwire_emv_compliance.py`)
-- ✅ **Crypto fuzzer** (`static/lib/greenwire_crypto_fuzzer.py`)
+- NFC transport helpers (`static/lib/android_nfc.py`)
+- Card emulation core (`static/lib/emulation.py`)
+- EMV compliance checks (`static/lib/greenwire_emv_compliance.py`)
+- Cryptographic fuzzer (`static/lib/greenwire_crypto_fuzzer.py`)
+- Thales emulator (`static/lib/thales_emulator.py`)
 
 ### Compiled Java Classes
-- ✅ **All JavaCard applets** (merchant probes, EMV testers)
-- ✅ **Standard Java utilities** (CommandAPDU)
+- All JavaCard applets (merchant probes, EMV testers)
+- Standard Java utilities (CommandAPDU)
 
 ## Deployment Process
 
-### 1. Verify Static Build
+### 1. Mirror Python Modules
+```bash
+python -m tools.static_distribution prepare-python
+```
+
+### 1b. Catalogue Static Assets
+```bash
+python -m tools.static_distribution inventory
+```
+This produces `STATIC_DISTRIBUTION_INVENTORY.md` at the repository root with file sizes and roles.
+
+### 2. Verify Static Build
 ```bash
 python verify_static.py
 ```
 
-### 2. Create Static Build
+### 3. Create Static Build
 ```bash
 build_static.bat
 ```
 
-### 3. Deploy to Target System
+### 4. Deploy to Target System
 Copy the entire `build/` directory to target system. No additional installations required.
 
 ## Usage on Target System
@@ -57,26 +69,27 @@ deploy_cap.bat MyApplet.cap
 
 ## Self-Contained Features
 
-### ✅ No External Java Required
+### No External Java Required
 - Bundled JDK 8 handles all compilation
 - No JAVA_HOME or PATH dependencies
 
-### ✅ No External Tools Required
+### No External Tools Required
 - ant-javacard for CAP generation
 - GlobalPlatformPro for deployment
 - All utilities bundled
 
-### ✅ No Python Dependencies
+### No Python Dependencies
 - All required modules included in static/lib/
 - No pip install needed
 
-### ✅ Cross-Platform Ready
+### Cross-Platform Ready
 - Windows batch scripts included
 - Linux/macOS shell scripts generated
 - Platform-specific binaries bundled
 
 ## Verification Checklist
 
+- [ ] `python -m tools.static_distribution prepare-python` mirrors the modules
 - [ ] `verify_static.py` reports success
 - [ ] `build_static.bat` completes without errors
 - [ ] `build/` directory contains all dependencies
@@ -106,7 +119,7 @@ Ensure all Java files are using the fixed syntax (no String.getBytes(), proper i
 Verify JavaCard API is accessible: `static/java/javacard_lib/api_classic.jar`
 
 ## Result
-🎯 **GREENWIRE is now 100% static and self-contained**
+GREENWIRE is now 100% static and self-contained
 - Zero external dependencies
 - Portable across systems
 - Ready for secure deployment
