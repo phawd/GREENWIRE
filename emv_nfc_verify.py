@@ -161,7 +161,7 @@ class EMVNFCVerifier:
         # Build SELECT command - format: 00 A4 04 00 LC AID
         aid_clean = aid.replace(' ', '')
         aid_len = len(aid_clean) // 2  # Length in bytes
-        select_cmd = f"00A404000{aid_len:02X}{aid_clean}"
+        select_cmd = f"00A40400{aid_len:02X}{aid_clean}"
         
         if self.verbose:
             print(f"Testing AID: {aid}")
