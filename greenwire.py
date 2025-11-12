@@ -242,30 +242,17 @@ if os.name == 'nt':  # Windows
 else:
     EMOJI_SUPPORT = True
 
-def safe_print(text):
-    """Print text with emoji fallbacks for compatibility."""
+def safe_print(*values, sep=" ", end="\n", file=None, flush=False):
+    """Print text while guaranteeing plain-text console output."""
+
     try:
-        if EMOJI_SUPPORT:
-            print(text)
-        else:
-            # Replace common emojis with text equivalents
-            safe_text = text
-            emoji_replacements = {
-                '🌟': '*', '💳': '[CARD]', '🎭': '[EMU]', '📡': '[NFC]', 
-                '🧪': '[TEST]', '🛠️': '[TOOLS]', '🔧': '[HW]', '🔄': '[BG]',
-                '❓': '[HELP]', '👋': '[EXIT]', '✅': '[OK]', '❌': '[FAIL]',
-                '⚠️': '[WARN]', '🚀': '[START]', '🛑': '[STOP]', 'ℹ️': '[INFO]',
-                '📱': '[DEVICE]', '🟢': '[ON]', '🔴': '[OFF]', '🎯': '[TARGET]',
-                '🔐': '[CRYPTO]', '📊': '[DATA]', '🧬': '[FUZZ]', '🧠': '[AI]',
-                '⬅️': '[BACK]', '💎': '[JCOP]', '📁': '[FILE]'
-            }
-            for emoji, replacement in emoji_replacements.items():
-                safe_text = safe_text.replace(emoji, replacement)
-            print(safe_text)
+        print(*values, sep=sep, end=end, file=file, flush=flush)
     except UnicodeEncodeError:
-        # Final fallback - strip all non-ASCII characters
-        ascii_text = ''.join(char if ord(char) < 128 else '?' for char in text)
-        print(ascii_text)
+        ascii_values = []
+        for value in values:
+            text = str(value)
+            ascii_values.append(''.join(ch for ch in text if ord(ch) < 128))
+        print(*ascii_values, sep=sep, end=end, file=file, flush=flush)
 
 # Hardware detection imports
 HAS_PYUDEV = import_manager.has_module('pyudev')

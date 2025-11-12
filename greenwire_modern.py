@@ -128,7 +128,7 @@ class GreenwireCLI:
             self._output_table(result.data)
         else:
             # Text output
-            status = "✅" if result.success else "❌"
+            status = "[OK]" if result.success else "[ERROR]"
             print(f"{status} {result.message}")
             if result.data and self.verbose:
                 for key, value in result.data.items():

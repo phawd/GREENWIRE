@@ -1,113 +1,79 @@
 #!/usr/bin/env python3
-"""Verify GREENWIRE static build completeness"""
+"""Verify GREENWIRE static build completeness."""
 
-import os
+from __future__ import annotations
+
+import json
 import sys
 from pathlib import Path
 
-def check_static_dependencies():
-    """Check all static dependencies are present"""
-    base_path = Path(".")
-    missing = []
-    
-    # Required static Java components
-    java_deps = [
-        "static/java/javacard_lib/api_classic.jar",
-        "static/java/ant-javacard.jar", 
-        "static/java/gp.jar",
-        "static/java/apache-ant-1.10.15/bin/ant",
-    ]
-    
-    # Check for JDK (either extracted or zip)
-    jdk_extracted = base_path / "static/java/jdk/jdk8u462-b08/bin/javac.exe"
-    jdk_zip = base_path / "static/java/temurin8.zip"
-    
-    if not jdk_extracted.exists() and not jdk_zip.exists():
-        missing.append("static/java/jdk or temurin8.zip")
-    
-    # Check Java dependencies
-    for dep in java_deps:
-        if not (base_path / dep).exists():
-            missing.append(dep)
-    
-    # Required Python static libs
-    python_deps = [
-        "static/lib/android_nfc.py",
-        "static/lib/emulation.py",
-        "static/lib/greenwire_crypto_fuzzer.py",
-        "static/lib/greenwire_emv_compliance.py",
-    ]
-    
-    for dep in python_deps:
-        if not (base_path / dep).exists():
-            missing.append(dep)
-    
-    # Check compiled Java files exist
-    java_files = [
-        "CommandAPDU.java",
-        "caplets/merchant_probes/ECommerceProbe.java",
-        "applets/emv_vulntests/AmountModificationTester.java",
-        "javacard/applet/src/com/greenwire/PinLogicApplet.java",
-    ]
-    
-    for java_file in java_files:
-        if not (base_path / java_file).exists():
-            missing.append(java_file)
-    
-    return missing
+from tools.static_distribution import StaticDistribution
 
-def verify_build_capability():
-    """Verify build can be executed"""
-    issues = []
-    
-    # Check build script exists
-    if not Path("build_static.bat").exists():
-        issues.append("build_static.bat missing")
-    
-    # Check static directory structure
-    static_dirs = [
-        "static/java",
-        "static/lib", 
-        "build"
-    ]
-    
-    for dir_path in static_dirs:
-        if not Path(dir_path).exists():
-            issues.append(f"Directory {dir_path} missing")
-    
-    return issues
 
-def main():
+def _print_section(title: str) -> None:
+    print(title)
+    print("-" * len(title))
+
+
+def _render_issues(label: str, issues: list[dict[str, str]]) -> int:
+    if not issues:
+        print(f"[OK] {label}")
+        return 0
+
+    print(f"[ERROR] {label}:")
+    for entry in issues:
+        path = entry.get("path", "<unknown>")
+        instructions = entry.get("instructions")
+        print(f"  - {entry.get('name', path)} :: {path}")
+        if instructions:
+            print(f"      -> {instructions}")
+    return len(issues)
+
+
+def main() -> int:
     print("GREENWIRE Static Build Verification")
     print("=" * 40)
-    
-    # Check dependencies
-    missing_deps = check_static_dependencies()
-    if missing_deps:
-        print("[ERROR] Missing dependencies:")
-        for dep in missing_deps:
-            print(f"   - {dep}")
+
+    dist = StaticDistribution(Path.cwd())
+    report = dist.generate_report()
+
+    issue_total = 0
+
+    _print_section("Directory structure")
+    issue_total += _render_issues("Required directories", report["directory_issues"])
+    print()
+
+    _print_section("Python module mirror")
+    issue_total += _render_issues("Mirrored modules", report["python_missing"])
+    print()
+
+    _print_section("Java static artefacts")
+    issue_total += _render_issues("Java dependencies", report["java_missing"])
+    print()
+
+    _print_section("CAP source health")
+    cap_issues = report["cap_issues"]
+    if cap_issues:
+        print("[WARNING] CAP source anomalies detected:")
+        for entry in cap_issues:
+            print(f"  - {entry['name']} :: {entry['path']}")
+            print(f"      -> {entry.get('instructions', 'Review source implementation')}")
     else:
-        print("[OK] All static dependencies present")
-    
-    # Check build capability
-    build_issues = verify_build_capability()
-    if build_issues:
-        print("[ERROR] Build issues:")
-        for issue in build_issues:
-            print(f"   - {issue}")
-    else:
-        print("[OK] Build environment ready")
-    
-    # Summary
-    total_issues = len(missing_deps) + len(build_issues)
-    if total_issues == 0:
-        print("\n[SUCCESS] GREENWIRE is ready for static deployment!")
-        print("Run: build_static.bat")
+        print("[OK] CAP sources expose install/process hooks and INS metadata")
+
+    print()
+    _print_section("CAP feature summary")
+    print(json.dumps(report["cap_metadata"], indent=2))
+
+    if issue_total == 0:
+        print("\n[SUCCESS] GREENWIRE static artefacts located. Run build_static.bat or your Linux equivalent to assemble the offline bundle.")
         return 0
-    else:
-        print(f"\n[WARNING] {total_issues} issues found - fix before deployment")
-        return 1
+
+    print(
+        f"\n[WARNING] {issue_total} blocking issue(s) detected. Run `python -m tools.static_distribution check` after addressing the notes above."
+    )
+    return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())
