@@ -222,6 +222,15 @@ Documentation:
         except ImportError:
             self.logger.warning("CAP management command not available")
 
+        # Import and register issuer pipeline command
+        try:
+            from commands.issuer_pipeline import get_command
+            cmd_info = get_command()
+            parser = subparsers.add_parser(cmd_info.get_name(), help=cmd_info.get_description(), add_help=False)
+            parser.add_argument('sub_args', nargs=argparse.REMAINDER, help='Arguments for the command')
+        except ImportError:
+            self.logger.warning("Issuer pipeline command not available")
+
         # Register existing dynamic commands
         for name, cmd_info in self.commands.items(): # type: ignore
             # Skip aliases (they point to the same command info)
@@ -369,6 +378,26 @@ Documentation:
                 return CommandResult(
                     success=False,
                     message="CAP management module not available",
+                    exit_code=ExitCode.GENERAL_ERROR.value
+                )
+
+        if command == 'card-issue':
+            try:
+                from commands.issuer_pipeline import get_command as get_pipeline_command
+                cmd_instance = get_pipeline_command()
+                cmd_args = getattr(args, 'sub_args', [])
+                result_data = cmd_instance.execute(cmd_args)
+
+                return CommandResult(
+                    success=result_data.get('success', False),
+                    message=result_data.get('message', 'Card issuance completed'),
+                    data=result_data.get('data'),
+                    exit_code=ExitCode.SUCCESS.value if result_data.get('success') else ExitCode.GENERAL_ERROR.value
+                )
+            except ImportError:
+                return CommandResult(
+                    success=False,
+                    message="Issuer pipeline module not available",
                     exit_code=ExitCode.GENERAL_ERROR.value
                 )
 

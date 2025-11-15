@@ -13,7 +13,7 @@ The project has a significant amount of functionality across JavaCard applet pro
 
 The refactored architecture is designed around the `greenwire_modern.py` CLI, which acts as the central dispatcher. Core logic is encapsulated in modules, and a new `commands` directory serves as a bridge to expose this logic to the CLI.
 
-```
+```text
 GREENWIRE/
 ├── greenwire_modern.py       # Main CLI Entry Point
 |
@@ -104,9 +104,11 @@ This structure makes the tool intuitive. The user interacts with a single CLI, a
 
 1. **Expand Commands**: Add more commands to the `commands` directory to expose other features (e.g., fuzzing, emulation) through the modern CLI.
 2. **Configuration**: Integrate a centralized configuration system (e.g., `config.yaml`) that can be used by both the CLI and the underlying modules to manage settings like SDK paths, default timeouts, etc.
-3. **Testing**: Develop a comprehensive test suite that covers:
+3. **Issuer Pipeline**: Implement the multithreaded HSM → Issuer → Personalization → Merchant → Transaction services described in `docs/ARCHITECTURE_V5_MULTITHREADED.md`, and expose them through the modern CLI.
+4. **Testing**: Develop a comprehensive test suite that covers:
     - Unit tests for each command in the `commands/` directory.
     - Integration tests that run CLI commands and verify the output.
     - Mocking of hardware dependencies (like `pyscard` and `nfcpy`) to allow for testing in CI environments.
+    - Emulator vs hardware parity tests for the new issuer pipeline.
 
 ---
