@@ -5,7 +5,9 @@ Provides lightweight data-only profiles for generating test cards across common 
 from __future__ import annotations  # noqa: F401
 from dataclasses import dataclass, field
 from typing import Any, Dict, List
-import random, secrets
+import secrets
+from core.globalplatform_reference import get_test_key_profile
+from core.synthetic_identity import generate_pan
 
 @dataclass
 class CardProfile:
@@ -35,18 +37,23 @@ class CardProfile:
         }
 
 def _rand_pan(iin: str = "535522") -> str:
-    body = iin + ''.join(str(random.randint(0,9)) for _ in range(9))
-    # Luhn
-    digits = [int(c) for c in body]
-    for i in range(len(digits)-1, -1, -2):
-        digits[i] *= 2
-        if digits[i] > 9:
-            digits[i] -= 9
-    check = (10 - (sum(digits) % 10)) % 10
-    return body + str(check)
+    return generate_pan("mastercard", iin=iin, length=16)
 
 def _gen_key(size_bytes: int) -> str:
     return secrets.token_hex(size_bytes)
+
+
+def _triple_use_key(key_hex: str) -> Dict[str, str]:
+    return {
+        "ENC": key_hex,
+        "MAC": key_hex,
+        "DEK": key_hex,
+    }
+
+
+_DEFAULT_GP = get_test_key_profile("default")
+_EMV_GP = get_test_key_profile("emv_default")
+_GEMALTO_GP = get_test_key_profile("gemalto_visa2")
 
 # Base profiles
 JCOP_PROFILE = CardProfile(
@@ -59,14 +66,17 @@ JCOP_PROFILE = CardProfile(
     capabilities=["javacard3", "globalplatform2.3", "scp02", "scp03", "contactless"],
     kcv=None,
     keys={
-        "SCP02_ENC": _gen_key(16),
-        "SCP02_MAC": _gen_key(16),
-        "SCP02_DEK": _gen_key(16),
-        "SCP03_ENC": _gen_key(16),
-        "SCP03_MAC": _gen_key(16),
-        "SCP03_DEK": _gen_key(16),
+        "SCP02_MASTER_KEY": _GEMALTO_GP.key_hex,
+        "SCP02_DIVERSIFICATION": _GEMALTO_GP.diversification,
+        "SCP03_MASTER_KEY": _DEFAULT_GP.key_hex,
+        **{f"SCP03_{name}": value for name, value in _triple_use_key(_DEFAULT_GP.key_hex).items()},
     },
-    extra={"issuer_country": "US", "test_pan": _rand_pan(), "cvm": "ALWAYS_APPROVE"}
+    extra={
+        "issuer_country": "US",
+        "test_pan": _rand_pan(),
+        "cvm": "ALWAYS_APPROVE",
+        "gp_profiles": [_GEMALTO_GP.to_dict(), _DEFAULT_GP.to_dict()],
+    }
 )
 
 DESFIRE_PROFILE = CardProfile(
@@ -101,8 +111,17 @@ GLOBALPLATFORM_TEST_PROFILE = CardProfile(
     aid_list=["A000000151000000", "A0000001515350"],
     description="Generic GlobalPlatform reference with multiple security domains.",
     capabilities=["scp02", "scp03", "delegated-management"],
-    keys={"ISD_KEY_ENC": _gen_key(16)},
-    extra={"life_cycle": "SECURED"}
+    keys={
+        "SCP02_MASTER_KEY": _EMV_GP.key_hex,
+        "SCP02_DIVERSIFICATION": _EMV_GP.diversification,
+        "SCP03_MASTER_KEY": _DEFAULT_GP.key_hex,
+        **{f"SCP03_{name}": value for name, value in _triple_use_key(_DEFAULT_GP.key_hex).items()},
+    },
+    extra={
+        "life_cycle": "SECURED",
+        "gp_profiles": [_DEFAULT_GP.to_dict(), _EMV_GP.to_dict()],
+        "scp02_note": "Use SCP02 master key with EMV diversification against INITIALIZE UPDATE data.",
+    }
 )
 
 PROFILES = [JCOP_PROFILE, DESFIRE_PROFILE, PIV_PROFILE, GLOBALPLATFORM_TEST_PROFILE]

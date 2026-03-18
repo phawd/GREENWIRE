@@ -31,9 +31,9 @@ Utility functions:
 
 Usage:
 - Run the full unit test suite:
-    python -m unittest d.repo.GREENWIRE.apdu4j_data.test_apdu4j
+    python -m unittest apdu4j_data.test_apdu4j
   or
-    python d:\repo\GREENWIRE\apdu4j_data\test_apdu4j.py
+    python apdu4j_data/test_apdu4j.py
 
 Notes:
 - The tests expect the APDU helper modules (apdu_commands, gp_commands,
@@ -433,9 +433,9 @@ Utility functions:
 
 Usage:
 - Run the full unit test suite:
-    python -m unittest d.repo.GREENWIRE.apdu4j_data.test_apdu4j
+    python -m unittest apdu4j_data.test_apdu4j
   or
-    python d:\repo\GREENWIRE\apdu4j_data\test_apdu4j.py
+    python apdu4j_data/test_apdu4j.py
 
 Notes:
 - The tests expect the APDU helper modules (apdu_commands, gp_commands,

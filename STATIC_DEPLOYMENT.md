@@ -1,16 +1,16 @@
 # GREENWIRE Static Deployment Guide
 
 ## Overview
-GREENWIRE is now configured for fully static deployment with zero external dependencies.
+GREENWIRE supports a mostly self-contained static deployment, but some Java and JavaCard artifacts must still be supplied locally because they are not checked into this repository.
 
 ## Static Components Included
 
 ### Java Environment
-- Bundled JDK 8 (`static/java/jdk/` or `temurin8.zip`)
+- Java runtime staged under `static/java/jdk/` if you provide one locally
 - Apache Ant (`static/java/apache-ant-1.10.15/`)
-- JavaCard API (`static/java/javacard_lib/api_classic.jar`)
 - ant-javacard (`static/java/ant-javacard.jar`)
-- GlobalPlatformPro (`static/java/gp.jar`)
+- GlobalPlatformPro fat JAR (`lib/GlobalPlatformPro.jar`)
+- JavaCard SDK jars under `sdk/javacard/lib/`
 
 ### Python Libraries
 - NFC transport helpers (`static/lib/android_nfc.py`)
@@ -69,14 +69,14 @@ deploy_cap.bat MyApplet.cap
 
 ## Self-Contained Features
 
-### No External Java Required
-- Bundled JDK 8 handles all compilation
-- No JAVA_HOME or PATH dependencies
+### Java Runtime Requirements
+- A Java runtime must be available in `PATH` or staged under `static/java/jdk/`
+- JavaCard conversion also requires SDK jars under `sdk/javacard/lib/`
 
 ### No External Tools Required
 - ant-javacard for CAP generation
-- GlobalPlatformPro for deployment
-- All utilities bundled
+- GlobalPlatformPro for deployment once `lib/GlobalPlatformPro.jar` is provided
+- The repository already contains the Python-side static mirrors and Ant assets
 
 ### No Python Dependencies
 - All required modules included in static/lib/
@@ -85,12 +85,12 @@ deploy_cap.bat MyApplet.cap
 ### Cross-Platform Ready
 - Windows batch scripts included
 - Linux/macOS shell scripts generated
-- Platform-specific binaries bundled
+- Platform-specific runtime artifacts can be staged into the static bundle
 
 ## Verification Checklist
 
 - [ ] `python -m tools.static_distribution prepare-python` mirrors the modules
-- [ ] `verify_static.py` reports success
+- [ ] `verify_static.py` reports success after required Java artifacts are supplied
 - [ ] `build_static.bat` completes without errors
 - [ ] `build/` directory contains all dependencies
 - [ ] Test compilation works: `build/compile_static.bat`
@@ -110,16 +110,13 @@ deploy_cap.bat MyApplet.cap
 ## Troubleshooting
 
 ### JDK Not Found
-If JDK extraction fails, manually extract `static/java/temurin8.zip` to `static/java/jdk/`
+If no Java runtime is available, install one locally or stage it under `static/java/jdk/`
 
 ### Compilation Errors
 Ensure all Java files are using the fixed syntax (no String.getBytes(), proper imports, etc.)
 
 ### CAP Generation Issues
-Verify JavaCard API is accessible: `static/java/javacard_lib/api_classic.jar`
+Verify the JavaCard SDK jars are accessible under `sdk/javacard/lib/`
 
 ## Result
-GREENWIRE is now 100% static and self-contained
-- Zero external dependencies
-- Portable across systems
-- Ready for secure deployment
+GREENWIRE can be packaged for portable deployment once the required Java runtime, JavaCard SDK, and GlobalPlatform artifacts are present.

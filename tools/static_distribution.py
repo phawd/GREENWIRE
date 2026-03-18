@@ -74,12 +74,12 @@ DEFAULT_MANIFEST: Dict[str, object] = {
             "static/java/ to enable CAP deployment.",
             "description": "GlobalPlatformPro tooling used to load CAPs",
         },
-        "api_classic.jar": {
-            "path": "static/java/javacard_lib/api_classic.jar",
+        "GlobalPlatformPro.jar": {
+            "path": "lib/GlobalPlatformPro.jar",
             "external": True,
-            "instructions": "Copy the JavaCard SDK API jar to "
-            "static/java/javacard_lib/",
-            "description": "JavaCard SDK classes referenced during compilation",
+            "instructions": "Place GlobalPlatformPro.jar under lib/ to support "
+            "Gradle deployCap and CAP management workflows.",
+            "description": "GlobalPlatformPro fat JAR used by deploy helpers",
         },
     },
     "required_directories": [

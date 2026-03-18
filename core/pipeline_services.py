@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Dict, Optional
 
 from core.base_service import BaseService, ServiceMessage
+from core.synthetic_identity import generate_cardholder_name
 from core.pipeline_events import (
     CARD_PERSONALIZED,
     HSM_ARQC_GENERATED,
@@ -63,6 +64,7 @@ from core.pipeline_providers import (
     SettlementRecord,
     TokenizationProvider,
     TokenizationResult,
+    build_cryptogram_payload,
 )
 
 
@@ -73,6 +75,7 @@ class IssuerRequestState:
     pan_sequence: str
     amount: float
     cardholder: str
+    pin: str
     mode: str
     atc: int
     network: str = "ach"
@@ -90,6 +93,7 @@ class TransactionState:
     terminal_data: Dict[str, str]
     network: str
     created_at: float = field(default_factory=lambda: time.time())
+    cryptogram_payload: bytes = b""
 
 
 class PipelineHSMService(BaseService):
@@ -202,7 +206,8 @@ class IssuerService(BaseService):
         request_id = payload.get("request_id") or uuid.uuid4().hex
         pan_sequence = payload.get("pan_sequence", "00")
         amount = float(payload.get("amount", 1.00))
-        cardholder = payload.get("cardholder", "TEST CARDHOLDER")
+        cardholder = payload.get("cardholder") or generate_cardholder_name()
+        pin = str(payload.get("pin") or "6666")
         mode = payload.get("mode", self._default_mode)
         atc = int(payload.get("atc", 1))
         network = (payload.get("network") or "ach").lower()
@@ -213,6 +218,7 @@ class IssuerService(BaseService):
             pan_sequence=pan_sequence,
             amount=amount,
             cardholder=cardholder,
+            pin=pin,
             mode=mode,
             atc=atc,
             network=network,
@@ -267,6 +273,7 @@ class IssuerService(BaseService):
             "request_id": request_id,
             "pan": state.pan,
             "cardholder": state.cardholder,
+            "pin": state.pin,
             "aid": payload.get("aid", "A0000000031010"),
             "atc": state.atc,
             "mode": state.mode,
@@ -499,6 +506,24 @@ class MobileWalletService(BaseService):
                         artifacts=artifacts,
                         device_metadata=meta,
                     )
+                elif target.lower() == "samsung":
+                    meta = self._metadata_for_target(device_metadata, "samsung")
+                    wallet_result = self._integrator.provision_samsung_wallet(
+                        artifacts=artifacts,
+                        device_metadata=meta,
+                    )
+                elif target.lower() == "generic_nfc":
+                    meta = self._metadata_for_target(device_metadata, "generic_nfc")
+                    wallet_result = self._integrator.provision_generic_nfc(
+                        artifacts=artifacts,
+                        device_metadata=meta,
+                    )
+                elif target.lower() == "transit_rfid":
+                    meta = self._metadata_for_target(device_metadata, "transit_rfid")
+                    wallet_result = self._integrator.provision_transit_rfid(
+                        artifacts=artifacts,
+                        device_metadata=meta,
+                    )
                 else:
                     self._logger.warning("Unsupported wallet target '%s'", target)
                     continue
@@ -530,9 +555,24 @@ class MobileWalletService(BaseService):
         merged = {**defaults, **(base or {})}
         if target == "google":
             merged.setdefault("device_account_id", "pixel-emulator")
-        else:
+        elif target == "apple":
             merged.setdefault("device_account_number", "ADP-EMU-0001")
             merged.setdefault("secure_element_id", "SE-EMU")
+        elif target == "samsung":
+            merged.setdefault("device_account_id", "galaxy-emulator")
+            merged.setdefault("secure_element_id", "SE-SAM-EMU")
+            merged.setdefault("wallet_profile", "mst_nfc")
+            merged.setdefault("assurance_level", "L3")
+        elif target == "generic_nfc":
+            merged.setdefault("uid", "04A1B2C3D4")
+            merged.setdefault("tech", "ISO14443-4")
+            merged.setdefault("ndef_profile", "payment-card")
+            merged.setdefault("assurance_level", "LAB")
+        elif target == "transit_rfid":
+            merged.setdefault("uid", "04112233445566")
+            merged.setdefault("transit_agency", "Metro Transit Lab")
+            merged.setdefault("reader_profile", "iso14443a-gate")
+            merged.setdefault("assurance_level", "TRANSIT")
         return merged
 
 
@@ -593,6 +633,11 @@ class TransactionService(BaseService):
     def on_start(self) -> None:
         self._transactions: Dict[str, TransactionState] = {}
         self._logger = self.context.logger
+        providers = self.context.providers
+        backend = providers.get("hsm") if providers else None
+        if not isinstance(backend, HSMBackend):
+            raise RuntimeError("HSM provider not configured or invalid")
+        self._hsm_backend: HSMBackend = backend
 
     def handle_message(self, message: ServiceMessage) -> None:
         if message.topic == MERCHANT_TXN_INITIATED:
@@ -630,17 +675,28 @@ class TransactionService(BaseService):
             atc=atc,
             terminal_data=transaction,
             network=network,
+            cryptogram_payload=bytes.fromhex(
+                transaction.get("cryptogram_payload")
+                or build_cryptogram_payload(
+                    pan=pan,
+                    track2=transaction.get("track2", pan),
+                    amount=float(transaction.get("amount", 1.0)),
+                    currency=str(transaction.get("currency", "USD")),
+                    terminal_country=str(transaction.get("terminal_country", "840")),
+                    transaction_id=txn_id,
+                    atc=atc,
+                ).hex()
+            ),
         )
         self._transactions[request_id] = state
 
-        token = transaction.get("track2", pan).encode().hex()
         self.publish(
             HSM_GENERATE_ARQC,
             {
                 "request_id": request_id,
                 "pan": pan,
                 "atc": atc,
-                "token": token,
+                "token": state.cryptogram_payload.hex().upper(),
                 "network": network,
             },
         )
@@ -654,12 +710,25 @@ class TransactionService(BaseService):
             return
 
         state = self._transactions.pop(request_id)
+        issuer_valid = self._hsm_backend.verify_arqc(
+            pan=state.pan,
+            atc=state.atc,
+            payload=state.cryptogram_payload,
+            arqc=arqc,
+        )
+        merchant_valid = issuer_valid and state.terminal_data.get("cryptogram_payload") == state.cryptogram_payload.hex().upper()
         result = {
             "request_id": request_id,
             "transaction_id": state.transaction_id,
             "amount": state.amount,
             "pan": state.pan,
             "arqc": arqc,
+            "cryptogram_validation": {
+                "issuer_valid": issuer_valid,
+                "merchant_valid": merchant_valid,
+                "pan_bound": True,
+                "payload_hex": state.cryptogram_payload.hex().upper(),
+            },
             "terminal": state.terminal_data,
             "network": state.network,
             "completed_at": time.time(),

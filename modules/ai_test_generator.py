@@ -19,6 +19,8 @@ import sqlite3
 from datetime import datetime
 from typing import List, Dict, Optional, Tuple
 import random
+from core.emv_kernel_registry import infer_kernel_from_aid, infer_kernel_from_scheme
+from core.wireless_kernel_profiles import infer_wireless_kernel
 
 try:
     from sklearn.ensemble import GradientBoostingClassifier
@@ -215,7 +217,9 @@ class AITestGenerator:
         merchant_type: str,
         terminal_capabilities: str,
         transaction_amount: float,
-        time_of_day: int
+        time_of_day: int,
+        scheme: str = "generic",
+        aid: Optional[str] = None,
     ) -> List[float]:
         """
         Extract feature vector for ML model.
@@ -252,6 +256,15 @@ class AITestGenerator:
         # Time of day (sin/cos encoding for cyclical nature)
         features.append(np.sin(2 * np.pi * time_of_day / 24))
         features.append(np.cos(2 * np.pi * time_of_day / 24))
+
+        kernel = infer_kernel_from_aid(aid) if aid else infer_kernel_from_scheme(scheme)
+        for kernel_id in range(2, 9):
+            features.append(1.0 if kernel.kernel_id == kernel_id else 0.0)
+
+        wireless = infer_wireless_kernel(scheme=scheme, channel="merchant")
+        features.append(float(wireless.merchant_config.get("cvm_floor_limit", 0)) / 10000.0)
+        features.append(1.0 if wireless.merchant_config.get("supports_cdcvm") else 0.0)
+        features.append(1.0 if wireless.hsm_config.get("expects_arqc") else 0.0)
 
         return features
 

@@ -10,9 +10,11 @@ optional Dynamic Data Authentication (--dda).
 
 # Standard library imports (consolidated to reduce inline imports)
 from core.global_defaults import load_defaults
+from core.emv_kernel_registry import build_kernel_seed_corpus, get_kernel_profile
 from core.nfc_manager import get_nfc_manager
 from core.menu_system import get_menu_system
 from core.utils.java_env import prefer_static_jdk
+from core.windows_compat import configure_windows_console
 from core.imports import ModuleManager
 from core.config import get_config
 from greenwire.core.data_manager import list_datasets, choose_dataset_interactive, load_dataset
@@ -228,20 +230,8 @@ nfc_manager = get_nfc_manager()
 global_defaults = load_defaults()
 
 # Configure Unicode output for Windows compatibility
-if os.name == 'nt':  # Windows
-    try:
-        # Try to enable UTF-8 mode for console output
-        import codecs
-        # Only redirect if we're actually running in a console
-        if hasattr(sys.stdout, 'buffer') and hasattr(sys.stderr, 'buffer'):
-            sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
-            sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
-        EMOJI_SUPPORT = True
-    except (AttributeError, UnicodeError, OSError):
-        # Fallback for older Python or systems without UTF-8 support
-        EMOJI_SUPPORT = False
-else:
-    EMOJI_SUPPORT = True
+_WINDOWS_RUNTIME = configure_windows_console()
+EMOJI_SUPPORT = True
 
 def safe_print(*values, sep=" ", end="\n", file=None, flush=False):
     """Print text while guaranteeing plain-text console output."""
@@ -1590,6 +1580,7 @@ def get_auto_ca_file(user_file):
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="GREENWIRE CLI")
+    parser.add_argument("--version", action="version", version="GREENWIRE 2.0")
     parser.add_argument("--production", action="store_true", help="Run in production mode (disable debug output)")
     parser.add_argument("--no-probe", action="store_true", help="Skip automatic hardware probing on startup")
     parser.add_argument("--menu", action="store_true", help="Show interactive menu instead of requiring command line arguments")
@@ -1701,6 +1692,7 @@ def parse_args() -> argparse.Namespace:
     ai_vuln_cmd.add_argument("--android", action="store_true", help="Attempt Android relay (placeholder)")
     ai_vuln_cmd.add_argument("--timeout-ms", type=int, default=1200, help="Per APDU execution timeout")
     ai_vuln_cmd.add_argument("--seed-file", type=str, help="JSON file containing list of seed APDUs")
+    ai_vuln_cmd.add_argument("--kernel", type=int, choices=range(2, 9), help="Focus mutations on a public EMV contactless kernel profile")
     ai_vuln_cmd.add_argument("--json-out", type=str, help="Write full session artifact to JSON file")
     ai_vuln_cmd.add_argument("--no-anomaly", action="store_true", help="Disable anomaly detection heuristics")
     ai_vuln_cmd.add_argument("--sw-whitelist", type=str, help="Comma separated list of expected SW codes (default 9000)")
@@ -6937,18 +6929,15 @@ def run_filefuzz(args: argparse.Namespace) -> None:
 
 def run_gp(args: argparse.Namespace) -> None:
     """Execute a gp.jar command."""
-    # Check for bundled gp.jar using static path resolution
-    gp_path = get_static_path("java/gp.jar")
+    from core.globalplatform_reference import gp_jar_candidates, resolve_gp_jar
 
-    # Fallback to original path if not found
-    if not gp_path.exists():
-        gp_path = Path("d:/repo/GlobalPlatformPro/tool/target/gp.jar")
+    gp_path = resolve_gp_jar(Path.cwd())
 
-    if not gp_path.exists():
+    if gp_path is None or not gp_path.exists():
         print("Error: gp.jar not found at", gp_path)
         print("Available locations checked:")
-        print(f"  - {get_static_path('java/gp.jar')}")
-        print(f"  - {Path('d:/repo/GlobalPlatformPro/tool/target/gp.jar')}")
+        for candidate in gp_jar_candidates(Path.cwd()):
+            print(f"  - {candidate}")
         return
 
     # Filter out the '--' separator if present
@@ -7914,6 +7903,10 @@ def run_testing(args: argparse.Namespace) -> None:
             anomaly = not getattr(args, 'no_anomaly', False)
             min_latency_ms = getattr(args, 'min_latency_ms', None)
             limit_mutations = getattr(args, 'limit_mutations', None)
+            kernel = getattr(args, 'kernel', None)
+            if kernel and not seed_list:
+                seed_list = build_kernel_seed_corpus(kernel)
+            kernel_profile = get_kernel_profile(kernel).to_dict() if kernel else None
 
             print("🧠 Starting AI Vulnerability Heuristic Session...")
             print(f"  Iterations: {iterations}")
@@ -7921,6 +7914,8 @@ def run_testing(args: argparse.Namespace) -> None:
             print(f"  Max Lc: {max_lc} bytes")
             print(f"  PC/SC: {'yes' if use_pcsc else 'no'} | Android: {'yes' if use_android else 'no'}")
             print(f"  Anomaly Detection: {'enabled' if anomaly else 'disabled'}")
+            if kernel_profile:
+                print(f"  Kernel: {kernel_profile['display_name']}")
 
             result = run_ai_vuln_session(
                 iterations=iterations,
@@ -7934,7 +7929,8 @@ def run_testing(args: argparse.Namespace) -> None:
                 sw_whitelist=sw_whitelist,
                 min_latency_ms=min_latency_ms,
                 capture_all=limit_mutations is None,
-                random_seed=random_seed
+                random_seed=random_seed,
+                kernel=kernel
             )
 
             # Truncate mutations if requested
@@ -9028,15 +9024,15 @@ def handle_easycard_command(args):
                 return
 
             # Build GlobalPlatform command using static path resolution
-            gp_path = get_static_path("java/gp.jar")
-            if not gp_path.exists():
-                gp_path = Path("d:/repo/GlobalPlatformPro/tool/target/gp.jar")
+            from core.globalplatform_reference import gp_jar_candidates, resolve_gp_jar
 
-            if not gp_path.exists():
+            gp_path = resolve_gp_jar(Path.cwd())
+
+            if gp_path is None or not gp_path.exists():
                 print("❌ Error: gp.jar not found. GlobalPlatform Pro is required for card installation.")
                 print("Available locations checked:")
-                print(f"  - {get_static_path('java/gp.jar')}")
-                print(f"  - {Path('d:/repo/GlobalPlatformPro/tool/target/gp.jar')}")
+                for candidate in gp_jar_candidates(Path.cwd()):
+                    print(f"  - {candidate}")
                 return
 
             # Build the installation command

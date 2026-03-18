@@ -87,15 +87,15 @@ python tools/create_static_bundle.py
 
 ---
 
-## Modern CLI v4.0 (Machine-Friendly)
+## Modern CLI v4.1 (Machine-Friendly)
 
-GREENWIRE v4.0 introduces a completely rewritten CLI that is **machine/AI-friendly** with structured output and comprehensive documentation.
+GREENWIRE v4.1 keeps the rewritten modern CLI and improves day-to-day usability with a better help overview, categorized command catalog, and support for placing global flags before or after subcommands.
 
 ### Key Features
 
 - **Structured Output:** JSON, YAML, and table formats for automation
 - **Self-Documenting:** Comprehensive help system for every command
-- **16 Commands:** Covering card management, security testing, emulation, cryptography, and NFC
+- **22 Commands:** Covering card management, security testing, emulation, cryptography, NFC, wallet provisioning, and core operations
 - **Machine Integration:** Perfect for CI/CD, automation, and AI workflows
 
 ### Quick Examples
@@ -107,8 +107,14 @@ python greenwire_modern.py --format json card-create --generate-pan --emv-data -
 # Run comprehensive security testing
 python greenwire_modern.py extract-data --attack-type all --iterations 100
 
-# List all 16 available commands
+# List all available commands
 python greenwire_modern.py list commands
+
+# Helpful categorized overview
+python greenwire_modern.py help
+
+# Global flags also work after the subcommand in v4.1
+python greenwire_modern.py list commands --format json
 
 # Get structured help for any command
 python greenwire_modern.py <command> --help
@@ -123,7 +129,7 @@ python greenwire_modern.py <command> --help
 
 ## Architecture & Key Components
 
-- **Modern CLI:** `greenwire_modern.py` (v4.0 machine-friendly interface)
+- **Modern CLI:** `greenwire_modern.py` (v4.1 machine-friendly interface)
 - **Legacy CLI:** `greenwire.py` (backwards compatibility)
 - **Menu system:** `menu_handlers.py` (registry), `menu_implementations.py` (logic)
 - **Core modules:** `core/` (fuzzers, NFC, EMV, config, dynamic imports)
@@ -599,7 +605,7 @@ See: `APDU_FUZZING.md` (section "Configuration Center & Global Defaults") for de
 
 | Variable | Effect |
 |----------|--------|
-| GREENWIRE_STATIC | Forces static/bundled import mode |
+| GREENWIRE_STATIC | Forces static import mode |
 | JAVA_HOME (indirect) | Java toolchain resolution for GP/JC builds |
 
 ---
@@ -624,12 +630,11 @@ When adding new global behaviors that should persist across sessions:
 
 ## Offline Java toolchain (JavaCard/GlobalPlatform)
 
-GREENWIRE includes local JARs to operate fully offline for JavaCard CAP workflows.
+GREENWIRE supports an offline JavaCard workflow when the required local JARs are populated in-repo.
 
-- static/java/gp.jar — GlobalPlatformPro lightweight CLI
 - lib/GlobalPlatformPro.jar — GlobalPlatformPro fat JAR
 - static/java/ant-javacard.jar — ant-javacard helper
-- sdk/javacard/lib — Optional local JavaCard SDK (for converter API stubs/tools)
+- sdk/javacard/lib — Local JavaCard SDK location for converter API stubs/tools
 
 Quick audit:
 
@@ -645,7 +650,7 @@ Gradle (offline) tasks:
 Notes:
 
 - CAP conversion requires a local JavaCard SDK; the verifier shows optional missing SDK jars.
-- Deployment can be done with local GlobalPlatformPro: `java -jar static/java/gp.jar --help`.
+- Deployment can be done with local GlobalPlatformPro: `java -jar lib/GlobalPlatformPro.jar --help`.
 
 (End of appended sections.)
 
@@ -653,7 +658,7 @@ Notes:
 
 ## JavaCard: Offline .cap Build and Deploy (Gradle)
 
-GREENWIRE includes a fully offline JavaCard toolchain. Place the JavaCard SDK jars under `sdk/javacard/lib` (we already include `tools.jar` and `api_classic.jar`), and place JavaCard API export files under `sdk/javacard/api_export_files` (or `export`/`exp`).
+GREENWIRE supports a fully offline JavaCard toolchain once you place the required JavaCard SDK jars under `sdk/javacard/lib`, and place JavaCard API export files under `sdk/javacard/api_export_files` (or `export`/`exp`).
 
 From `javacard/applet`:
 

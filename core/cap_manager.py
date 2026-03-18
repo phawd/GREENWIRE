@@ -7,6 +7,7 @@ import json, os, subprocess
 from typing import Any, Dict, List, Optional, Union  # noqa: F401
 from .logging_system import get_logger, handle_errors
 from .config import get_config
+from .globalplatform_reference import GP_DEFAULT_TEST_KEY, resolve_gp_jar
 
 class CAPFileManager:
     """Manages JavaCard CAP file operations."""
@@ -16,7 +17,7 @@ class CAPFileManager:
         self.config = get_config()
         self.valid_extensions = {'.cap', '.CAP'}
         self.aid_cache = {}
-        self.default_android_key = "404142434445464748494A4B4C4D4E4F"  # Default Android HCE key
+        self.default_android_key = GP_DEFAULT_TEST_KEY  # Default Android/GP lab key
     
     @handle_errors("CAP file validation", return_on_error=False)
     def validate_cap_file(self, file_path: str) -> bool:
@@ -118,26 +119,13 @@ class CAPFileManager:
         Returns:
             True if installation successful
         """
-        # Check for GlobalPlatform Pro (gp.jar)
-        gp_jar_paths = [
-            "gp.jar",
-            "static/java/gp.jar",
-            "lib/gp.jar",
-            os.path.join(os.path.dirname(__file__), "..", "static", "java", "gp.jar")
-        ]
-        
-        gp_jar = None
-        for path in gp_jar_paths:
-            if os.path.exists(path):
-                gp_jar = path
-                break
-        
+        gp_jar = resolve_gp_jar(os.path.join(os.path.dirname(__file__), ".."))
         if not gp_jar:
             self.logger.error("GlobalPlatform Pro (gp.jar) not found")
             return False
         
         # Build installation command
-        cmd = ['java', '-jar', gp_jar, '--install', file_path]
+        cmd = ['java', '-jar', str(gp_jar), '--install', file_path]
         if reader:
             cmd.extend(['--reader', reader])
 
@@ -378,26 +366,13 @@ class CAPFileManager:
         Returns:
             Command output
         """
-        # Find gp.jar
-        gp_jar_paths = [
-            "gp.jar",
-            "static/java/gp.jar", 
-            "lib/gp.jar",
-            os.path.join(os.path.dirname(__file__), "..", "static", "java", "gp.jar")
-        ]
-        
-        gp_jar = None
-        for path in gp_jar_paths:
-            if os.path.exists(path):
-                gp_jar = path
-                break
-        
+        gp_jar = resolve_gp_jar(os.path.join(os.path.dirname(__file__), ".."))
         if not gp_jar:
             self.logger.error("GlobalPlatform Pro (gp.jar) not found")
             return "Error: gp.jar not found"
         
         try:
-            cmd = ['java', '-jar', gp_jar] + gp_args
+            cmd = ['java', '-jar', str(gp_jar)] + gp_args
             self.logger.info(f"Executing GP command: {' '.join(cmd)}")
             
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)

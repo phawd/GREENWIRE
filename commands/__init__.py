@@ -39,6 +39,10 @@ def register_all_commands(cli):
         ("fuzz", "register_fuzz_commands"),
         ("nfc", "register_nfc_commands"),
         ("security", "register_security_commands"),
+        ("wallet", "register_wallet_commands"),
+        ("gp", "register_gp_commands"),
+        ("wireless_kernel", "register_wireless_kernel_commands"),
+        ("mutant_card", "register_mutant_card_commands"),
     ]
 
     for module_name, registrar_name in registrars:

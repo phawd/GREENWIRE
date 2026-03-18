@@ -14,12 +14,11 @@ This note captures the current state and key decisions so future work can pick u
   - Tests migrated to pytest; all tests passing (26/26) at last run.
 - Static Java/JavaCard toolchain
   - Gradle configured for offline/local JARs via flatDir repositories (no network).
-  - Bundled SDK JARs under `sdk/javacard/lib/`:
+  - Expected SDK JAR locations under `sdk/javacard/lib/`:
     - `api_classic.jar`
     - `tools.jar`
-  - GlobalPlatform tools available locally:
+  - Expected GlobalPlatform tool locations:
     - `lib/GlobalPlatformPro.jar`
-    - `static/java/gp.jar`
   - Convenience wrappers: `gp.ps1` / `gp.cmd` in repo root and `lib/`.
 - Verification & docs
   - `tools/verify_java_static_setup.py` audits JavaCard/GP prerequisites and prints readiness.

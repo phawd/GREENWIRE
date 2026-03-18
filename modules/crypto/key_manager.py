@@ -35,6 +35,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes  # 
 from cryptography.hazmat.backends import default_backend  # noqa: F401
 
 # GREENWIRE imports
+from core.globalplatform_reference import common_test_keys
 from .emv_crypto import EMVKeyDerivation, create_emv_crypto_manager
 from .primitives import adjust_key_parity, decrypt_tdes_ecb, encrypt_tdes_ecb  # noqa: F401
 
@@ -714,13 +715,7 @@ class KeyCracker:
     def _load_common_keys(self) -> List[str]:
         """Load database of common/default keys"""
         return [
-            # Default GlobalPlatform keys
-            '404142434445464748494A4B4C4D4E4F',
-            '000102030405060708090A0B0C0D0E0F', 
-            'FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF',
-            '00000000000000000000000000000000',
-            '0123456789ABCDEF0123456789ABCDEF',
-            'FEDCBA9876543210FEDCBA9876543210',
+            *common_test_keys(),
             # Common weak keys
             'FEFEFEFEFEFEFEFEFEFEFEFEFEFEFEFE',
             '0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F0F',

@@ -4,17 +4,18 @@ GREENWIRE Unified NFC Device Manager
 Combines NFCDaemon and AndroidNFCVerifier functionality into a single, coherent system
 """
 
-import json, subprocess, threading, time  # noqa: F401
+import json, os, subprocess, threading, time  # noqa: F401
 from typing import Any, Dict, List, Optional
 from dataclasses import dataclass
 from core.logging_system import get_logger, handle_errors, log_operation, track_operation
 from core.config import get_config
+from core.native_wireless_support import build_wireless_support_matrix, is_acr_reader
 
 @dataclass
 class NFCDevice:
     """Unified representation of an NFC device."""
     device_id: str
-    device_type: str  # 'android', 'hardware', 'pcsc'
+    device_type: str  # 'android', 'ios_companion', 'hardware', 'pcsc', 'acr'
     name: str
     status: str  # 'available', 'unavailable', 'unknown'
     capabilities: Dict[str, Any]
@@ -41,6 +42,9 @@ class UnifiedNFCManager:
         # Hardware NFC setup
         self.hardware_available = self._check_hardware_availability()
         self.hardware_devices = []
+
+        # iOS companion support
+        self.ios_companion_devices = []
         
         self.logger.info("UnifiedNFCManager initialized", "NFC_INIT")
     
@@ -193,17 +197,21 @@ class UnifiedNFCManager:
             devices = []
             
             for i, reader in enumerate(available_readers):
-                device_id = f"pcsc_{i}"
+                reader_name = str(reader)
+                reader_type = 'acr' if is_acr_reader(reader_name) else 'pcsc'
+                device_id = f"{reader_type}_{i}"
                 capabilities = {
-                    'reader_name': str(reader),
+                    'reader_name': reader_name,
                     'status': 'available',
-                    'supports_card_detection': True
+                    'supports_card_detection': True,
+                    'native_transport': 'pcsc_ccid',
+                    'acr_family': reader_type == 'acr',
                 }
                 
                 nfc_device = NFCDevice(
                     device_id=device_id,
-                    device_type='pcsc',
-                    name=str(reader),
+                    device_type=reader_type,
+                    name=reader_name,
                     status='available',
                     capabilities=capabilities,
                     connection_info={'reader': reader, 'index': i}
@@ -217,6 +225,31 @@ class UnifiedNFCManager:
         except Exception as e:
             self.logger.error(f"Hardware NFC scan failed: {e}", "HW_NFC_SCAN")
             return []
+
+    @handle_errors("iOS companion scan", return_on_error=[])
+    def scan_ios_companion_devices(self) -> List[NFCDevice]:
+        """Expose configured iOS companion targets for Apple Wallet/Core NFC workflows."""
+        endpoint = os.getenv("GREENWIRE_IOS_COMPANION_ENDPOINT", "").strip()
+        explicit_name = os.getenv("GREENWIRE_IOS_DEVICE_NAME", "").strip()
+        if not endpoint and not explicit_name:
+            return []
+        device_name = explicit_name or "iOS Companion"
+
+        device = NFCDevice(
+            device_id="ios_companion_0",
+            device_type="ios_companion",
+            name=device_name,
+            status="available" if endpoint else "planned",
+            capabilities={
+                "native_transport": "companion_wallet",
+                "supports_wallet_provisioning": True,
+                "supports_tag_reading": True,
+                "direct_host_hce": False,
+            },
+            connection_info={"endpoint": endpoint or None},
+        )
+        self.ios_companion_devices = [device]
+        return list(self.ios_companion_devices)
     
     @log_operation("Complete device scan")
     def scan_all_devices(self) -> List[NFCDevice]:
@@ -230,6 +263,9 @@ class UnifiedNFCManager:
         if self.config.nfc.use_hardware:
             hardware_devices = self.scan_hardware_devices()
             all_devices.extend(hardware_devices)
+        
+        ios_devices = self.scan_ios_companion_devices()
+        all_devices.extend(ios_devices)
         
         # Update internal device registry
         self.devices.clear()
@@ -380,16 +416,25 @@ class UnifiedNFCManager:
         """Get comprehensive status summary."""
         android_devices = self.get_devices_by_type('android')
         hardware_devices = self.get_devices_by_type('pcsc')
+        acr_devices = self.get_devices_by_type('acr')
+        ios_devices = self.get_devices_by_type('ios_companion')
         available_devices = self.get_available_devices()
         
         return {
             'total_devices': len(self.devices),
             'android_devices': len(android_devices),
-            'hardware_devices': len(hardware_devices),
+            'hardware_devices': len(hardware_devices) + len(acr_devices),
+            'acr_devices': len(acr_devices),
+            'ios_companion_devices': len(ios_devices),
             'available_devices': len(available_devices),
             'adb_available': self.adb_available,
             'hardware_available': self.hardware_available,
             'monitoring_active': self.running,
+            'wireless_support': build_wireless_support_matrix(
+                adb_available=self.adb_available,
+                pcsc_readers=[device.name for device in hardware_devices + acr_devices],
+                ios_available=bool(ios_devices),
+            ),
             'devices': {device.device_id: {
                 'name': device.name,
                 'type': device.device_type,

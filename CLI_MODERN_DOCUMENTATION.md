@@ -1,8 +1,8 @@
-# GREENWIRE v4.0 - Modern CLI Documentation
+# GREENWIRE v4.1 - Modern CLI Documentation
 
 ## Overview
 
-GREENWIRE v4.0 features a completely rewritten command-line interface that is:
+GREENWIRE v4.1 features the modern command-line interface with improved help output, categorized command discovery, and more forgiving global flag parsing.
 
 - **Machine/AI-friendly** with structured JSON/YAML output
 - **Self-documenting** with comprehensive help system
@@ -17,6 +17,9 @@ GREENWIRE v4.0 features a completely rewritten command-line interface that is:
 ```bash
 # Run the modern CLI
 python greenwire_modern.py --help
+
+# Show the guided overview
+python greenwire_modern.py help
 
 # List all available commands
 python greenwire_modern.py list commands
@@ -35,6 +38,8 @@ All commands support these global options:
 - `--dry-run` - Show what would be done without executing
 - `--log-level {DEBUG,INFO,WARNING,ERROR}` - Set logging level
 - `--config CONFIG` - Configuration file path
+
+In v4.1, these global options may appear either before or after the subcommand.
 
 ## Available Commands
 

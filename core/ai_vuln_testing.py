@@ -11,6 +11,8 @@ from __future__ import annotations  # noqa: F401
 import json, os, random, statistics, time  # noqa: F401
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
+from core.emv_kernel_registry import build_kernel_seed_corpus, infer_kernel_from_aid, infer_kernel_from_scheme
+from core.wireless_kernel_profiles import infer_wireless_kernel
 
 DEFAULT_SEED_CORPUS = [
     "00A4040007A0000002471001",  # PPSE / AID select
@@ -137,13 +139,48 @@ class AIVulnTester:
     # -------------------- Run Orchestration --------------------
     def run(self, iterations: int=100, strategy: str="mixed", max_lc: int=64, seed_corpus: Optional[List[str]]=None,
             anomaly: bool=True, sw_whitelist: Optional[List[str]]=None, min_latency_ms: Optional[int]=None,
-            capture_all: bool=True, random_seed: Optional[int]=None) -> AIVulnRunResult:
+            capture_all: bool=True, random_seed: Optional[int]=None, kernel: Optional[int]=None,
+            scheme: Optional[str]=None, wireless_profile: Optional[str]=None,
+            merchant_mode: Optional[str]=None, hsm_mode: Optional[str]=None, channel: Optional[str]=None) -> AIVulnRunResult:
         if iterations <= 0:
             raise ValueError("iterations must be > 0")
         if random_seed is not None:
             random.seed(random_seed)
 
-        seeds = seed_corpus or DEFAULT_SEED_CORPUS
+        if seed_corpus:
+            seeds = seed_corpus
+        elif kernel is not None:
+            seeds = build_kernel_seed_corpus(kernel)
+        elif scheme:
+            seeds = build_kernel_seed_corpus(infer_kernel_from_scheme(scheme).kernel_id)
+        else:
+            seeds = DEFAULT_SEED_CORPUS
+
+        wireless_kernel = infer_wireless_kernel(
+            scheme=scheme,
+            merchant_mode=merchant_mode,
+            hsm_mode=hsm_mode,
+            channel=channel,
+        )
+        if wireless_profile:
+            wireless_kernel = infer_wireless_kernel(
+                scheme=scheme,
+                merchant_mode=wireless_profile,
+                hsm_mode=hsm_mode,
+                channel=channel,
+            )
+        for focus in wireless_kernel.ai_biases.get("focus", []):
+            seeds.append(focus.encode().hex().upper()[:16] or "00")
+        seeds = list(dict.fromkeys(seeds))
+
+        kernel_profile = None
+        if kernel is not None:
+            from core.emv_kernel_registry import get_kernel_profile
+
+            profile = get_kernel_profile(kernel)
+            kernel_profile = profile.to_dict() if profile else None
+        elif seeds:
+            kernel_profile = infer_kernel_from_aid(seeds[0]).to_dict()
         mutations: List[MutationResult] = []
         start = time.time()
         latencies = []
@@ -186,7 +223,9 @@ class AIVulnTester:
                 "use_pcsc": self.use_pcsc,
                 "use_android": self.use_android,
                 "anomaly_detection": anomaly,
-                "seed_count": len(seeds)
+                "seed_count": len(seeds),
+                "kernel_profile": kernel_profile,
+                "wireless_kernel": wireless_kernel.to_dict(),
             },
             mutations=mutations if capture_all else mutations[:50],
             stats=stats,
@@ -237,7 +276,13 @@ def run_ai_vuln_session(**kwargs) -> Dict[str, Any]:
         sw_whitelist=kwargs.get("sw_whitelist"),
         min_latency_ms=kwargs.get("min_latency_ms"),
         capture_all=kwargs.get("capture_all", True),
-        random_seed=kwargs.get("random_seed")
+        random_seed=kwargs.get("random_seed"),
+        kernel=kwargs.get("kernel"),
+        scheme=kwargs.get("scheme"),
+        wireless_profile=kwargs.get("wireless_profile"),
+        merchant_mode=kwargs.get("merchant_mode"),
+        hsm_mode=kwargs.get("hsm_mode"),
+        channel=kwargs.get("channel"),
     )
     # Convert dataclasses to serializable form
     out = {

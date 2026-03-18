@@ -18,6 +18,8 @@ import hashlib
 from datetime import datetime, timedelta
 from typing import Dict, List, Tuple, Optional
 from pathlib import Path
+from core.emv_kernel_registry import infer_kernel_from_scheme
+from core.synthetic_identity import generate_cardholder_name, generate_cvv, generate_identity
 
 # TLV encoding utilities
 class TLV:
@@ -378,7 +380,7 @@ class EMVCoCardPersonalizer:
 
         # Contactless kernel configuration
         rfid_data["kernel_config"] = {
-            "kernel_id": 2,  # EMVCo Kernel 2 (Mastercard)
+            "kernel_id": infer_kernel_from_scheme(card_data.get("card_type", "visa")).kernel_id,
             "transaction_limit": card_data.get("contactless_limit", 10000),  # Cents
             "cvm_required_limit": card_data.get("cvm_limit", 5000)
         }
@@ -492,21 +494,15 @@ class EMVCoCardPersonalizer:
     def generate_test_card(self, card_type: str = "VISA") -> Dict:
         """Generate test card data for EMVCo compliance testing."""
         # Test PAN ranges (from EMVCo test specifications)
-        test_pans = {
-            "VISA": "4761120010000492",
-            "MASTERCARD": "5413330089000019",
-            "AMEX": "341111111111111",
-            "DISCOVER": "6011111111111117",
-            "JCB": "3528000000000007"
-        }
-
         expiry = datetime.now() + timedelta(days=365*3)
+        normalized_card_type = card_type.lower()
+        identity = generate_identity(normalized_card_type)
 
         card_data = {
-            "PAN": test_pans.get(card_type.upper(), test_pans["VISA"]),
+            "PAN": identity["pan"],
             "expiry_date": expiry.strftime("%m/%y"),
-            "cardholder_name": "TEST CARDHOLDER",
-            "CVV": "123",
+            "cardholder_name": generate_cardholder_name(identity["cardholder_name"]),
+            "CVV": generate_cvv(normalized_card_type),
             "card_type": card_type.upper(),
             "service_code": "201",
             "country_code": "840",

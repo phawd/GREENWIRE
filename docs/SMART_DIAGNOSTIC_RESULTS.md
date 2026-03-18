@@ -331,7 +331,7 @@ The smart diagnostic test suite successfully identified all 4 critical issues in
 
 ---
 
-**Test Suite Location:** `d:\repo\GREENWIRE\tests\test_smart_diagnostics.py`  
+**Test Suite Location:** `tests/test_smart_diagnostics.py`  
 **Test Run Date:** October 5, 2025  
 **Total Test Duration:** ~3 seconds  
 **Result:** ✅ **ALL CRITICAL TESTS PASSED**

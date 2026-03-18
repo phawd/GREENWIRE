@@ -31,6 +31,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
 import tempfile
 import zipfile
+from core.globalplatform_reference import resolve_gp_jar
 
 class CapletProductionSystem:
     """
@@ -1276,13 +1277,13 @@ public class {variant['name']} extends Applet {{
         """
         self.logger.info(f"Deploying caplet to card: {cap_file_path}")
         
-        gp_jar = self.lib_dir / 'GlobalPlatformPro.jar'
+        gp_jar = resolve_gp_jar(Path.cwd())
         
-        if not gp_jar.exists():
+        if gp_jar is None or not gp_jar.exists():
             return {
                 'success': False,
                 'status': 'gp_not_found',
-                'error': f'GlobalPlatformPro.jar not found at {gp_jar}'
+                'error': 'GlobalPlatformPro jar not found in expected repository locations'
             }
         
         try:

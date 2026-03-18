@@ -423,6 +423,5 @@ See the advanced engineering document: `emv_mifare_rfid_comprehensive_overview.m
 4. Stores and protects payment / identity secrets, performing secure operations.
 5. Real card number isn’t exposed to merchants; reduces fraud if data is stolen.
 
-[← Back to Documentation Index](docs/DOCUMENTATION_INDEX.md)
-
+[← Back to README](../README.md)
 

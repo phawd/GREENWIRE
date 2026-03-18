@@ -17,6 +17,9 @@ _DEFAULT_CONFIG: Dict[str, Any] = {
         "default_profile": "visa_premium_contact_credit",
         "default_variant": "dda",
         "authentication_modes": ["dda", "sda", "mifare_classic"],
+        "default_pin": "6666",
+        "default_nfc_enabled": True,
+        "default_rfid_enabled": True,
         "prompt_operator_on_creation": True,
         "allow_production_overrides": True,
         "log_apdu_transcript": True,
@@ -75,6 +78,15 @@ _DEFAULT_CONFIG: Dict[str, Any] = {
         "max_records": 256,
         "include_apdu_payloads": True,
         "mirror_transaction_log": True,
+    },
+    "transaction_mutation": {
+        "enabled": True,
+        "randomize_floor_limit": True,
+        "randomize_cvm": True,
+        "enable_pattern_injection": True,
+        "persist_to_card": True,
+        "unexpected_mode_rate": 0.35,
+        "max_injections_per_scenario": 3,
     },
     "terminal_profiles": [
         {
@@ -157,7 +169,9 @@ class ConfigurationManager:
     def _load(self) -> Dict[str, Any]:
         if not self.config_path.exists():
             self._write(_DEFAULT_CONFIG)
-            return deepcopy(_DEFAULT_CONFIG)
+            base = deepcopy(_DEFAULT_CONFIG)
+            _deep_update(base, self._load_conf_overrides())
+            return base
         try:
             with self.config_path.open("r", encoding="utf-8") as fh:
                 data = json.load(fh)
@@ -165,7 +179,33 @@ class ConfigurationManager:
             data = {}
         merged = deepcopy(_DEFAULT_CONFIG)
         _deep_update(merged, data)
+        _deep_update(merged, self._load_conf_overrides())
         return merged
+
+    def _load_conf_overrides(self) -> Dict[str, Any]:
+        for candidate in self._conf_candidates():
+            if not candidate.exists():
+                continue
+            try:
+                return _parse_conf_file(candidate)
+            except OSError:
+                continue
+        return {}
+
+    def _conf_candidates(self) -> list[Path]:
+        candidates = [self.config_path.parent / "GREENWIRE.conf"]
+        if self.config_path.parent.name.lower() == "config":
+            candidates.append(self.config_path.parent.parent / "GREENWIRE.conf")
+        candidates.append(self.config_path.with_suffix(".conf"))
+        unique: list[Path] = []
+        seen: set[Path] = set()
+        for candidate in candidates:
+            resolved = candidate.resolve(strict=False)
+            if resolved in seen:
+                continue
+            seen.add(resolved)
+            unique.append(candidate)
+        return unique
 
     def _write(self, data: Dict[str, Any]) -> None:
         with self.config_path.open("w", encoding="utf-8") as fh:
@@ -241,6 +281,9 @@ class ConfigurationManager:
     def store_logs_on_card(self) -> bool:
         return bool(self.get("logging.store_on_card", True))
 
+    def default_card_pin(self) -> str:
+        return str(self.get("cards.default_pin", _DEFAULT_CONFIG["cards"]["default_pin"]))
+
 
 def _deep_update(base: Dict[str, Any], updates: Dict[str, Any]) -> Dict[str, Any]:
     for key, value in updates.items():
@@ -249,6 +292,52 @@ def _deep_update(base: Dict[str, Any], updates: Dict[str, Any]) -> Dict[str, Any
         else:
             base[key] = value
     return base
+
+
+def _parse_conf_file(path: Path) -> Dict[str, Any]:
+    data: Dict[str, Any] = {}
+    section: Optional[str] = None
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or line.startswith(";"):
+            continue
+        if line.startswith("[") and line.endswith("]"):
+            section = line[1:-1].strip().lower() or None
+            continue
+        if "=" not in line:
+            continue
+        key, value = [part.strip() for part in line.split("=", 1)]
+        if not key:
+            continue
+        parsed_value = _parse_conf_value(value)
+        if "." in key:
+            _set_path_value(data, key.lower(), parsed_value)
+            continue
+        if section:
+            _set_path_value(data, f"{section}.{key.lower()}", parsed_value)
+            continue
+        if key.lower() == "default_pin":
+            _set_path_value(data, "cards.default_pin", parsed_value)
+            continue
+        _set_path_value(data, key.lower(), parsed_value)
+    return data
+
+
+def _parse_conf_value(value: str) -> Any:
+    if value.lower() in {"true", "false"}:
+        return value.lower() == "true"
+    if value.isdigit():
+        return value
+    return value
+
+
+def _set_path_value(target: Dict[str, Any], path: str, value: Any) -> None:
+    node = target
+    segments = [segment for segment in path.split(".") if segment]
+    for segment in segments[:-1]:
+        node = node.setdefault(segment, {})
+    if segments:
+        node[segments[-1]] = value
 
 
 def get_configuration_manager() -> ConfigurationManager:

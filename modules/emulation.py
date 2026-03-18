@@ -14,6 +14,7 @@ better modularity and can be run as a separate process when needed.
 import argparse, logging, os, subprocess, sys, threading, time  # noqa: F401
 from typing import Dict, List, Optional, Union  # noqa: F401
 from pathlib import Path
+from core.synthetic_identity import generate_cardholder_name, generate_identity, generate_issuer_name
 
 
 class EmulationBase:
@@ -107,7 +108,7 @@ class CardEmulator(EmulationBase):
         self.data_file = kwargs.get('data_file', None)
         self.aids = kwargs.get('aids', [])
         self.ca_file = kwargs.get('ca_file', None)
-        self.issuer = kwargs.get('issuer', 'GREENWIRE TEST')
+        self.issuer = kwargs.get('issuer') or generate_issuer_name(self.card_type)
         self.use_android = kwargs.get('use_android', True)
         
         # Generate or use custom UID
@@ -191,10 +192,11 @@ class CardEmulator(EmulationBase):
         }
         
         if self.card_type in ['visa', 'mastercard', 'amex']:
+            identity = generate_identity(self.card_type, issuer_name=self.issuer)
             data.update({
-                'pan': '4111111111111111' if self.card_type == 'visa' else '5555555555554444',
+                'pan': identity['pan'],
                 'expiry': '12/28',
-                'cardholder_name': 'GREENWIRE TEST',
+                'cardholder_name': generate_cardholder_name(),
                 'aid': self.card_config['aid']
             })
             

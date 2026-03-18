@@ -36,6 +36,9 @@ from pathlib import Path  # noqa: F401
 from typing import Any, Dict, List, Optional, Tuple, Union  # noqa: F401
 from dataclasses import asdict, dataclass
 from enum import Enum
+from core.emv_reference_vectors import get_reference_cryptogram
+from core.globalplatform_reference import GP_DEFAULT_TEST_KEY
+from core.synthetic_identity import generate_cardholder_name, generate_issuer_name, generate_pan
 
 # Cryptographic imports
 try:
@@ -424,31 +427,37 @@ class ProductionCryptoEngine:
         
     def _initialize_test_vectors(self):
         """Initialize comprehensive test vectors for validation."""
-        
+        visa_ref = get_reference_cryptogram("visa")
+        mastercard_ref = get_reference_cryptogram("mastercard")
+        amex_ref = get_reference_cryptogram("amex")
+
         self.test_vectors = {
             "visa_cvn_10": {
                 "pan": "4000000000000002",
                 "psn": "00",
-                "master_key": "404142434445464748494A4B4C4D4E4F",
+                "master_key": GP_DEFAULT_TEST_KEY,
                 "transaction_data": "00000000010000000008400000000000000000000000",
-                "expected_arqc": "4E6AF5324A7F4C68",
-                "source": "Visa EMV Test Cases v2.1"
+                "expected_arqc": (visa_ref or {}).get("cryptogram_example", "4E6AF5324A7F4C68"),
+                "reference_hex": (visa_ref or {}).get("reference_hex"),
+                "source": (visa_ref or {}).get("source_file", "Visa EMV Test Cases v2.1"),
             },
             "mastercard_cvn_17": {
                 "pan": "5555555555554444",
                 "psn": "00",
                 "master_key": "505152535455565758595A5B5C5D5E5F",
                 "transaction_data": "00000001000000000840000000000000000000000000",
-                "expected_arqc": "2A8B3C4D5E6F7A8B",
-                "source": "MasterCard M/Chip Test Vectors v1.3"
+                "expected_arqc": (mastercard_ref or {}).get("cryptogram_example", "2A8B3C4D5E6F7A8B"),
+                "reference_hex": (mastercard_ref or {}).get("reference_hex"),
+                "source": (mastercard_ref or {}).get("source_file", "MasterCard M/Chip Test Vectors v1.3"),
             },
             "amex_proprietary": {
                 "pan": "374245455400126",
                 "psn": "001",
                 "master_key": "606162636465666768696A6B6C6D6E6F",
                 "transaction_data": "000000020000000008400000000000000000000000",
-                "expected_arqc": "9C8D7E6F5A4B3C2D",
-                "source": "American Express Test Environment"
+                "expected_arqc": (amex_ref or {}).get("cryptogram_example", "9C8D7E6F5A4B3C2D"),
+                "reference_hex": (amex_ref or {}).get("reference_hex"),
+                "source": (amex_ref or {}).get("source_file", "American Express Test Environment"),
             },
             "dda_validation": {
                 "icc_private_key": "3082025C02010002818100C1D2E3F4A5B6C7D8E9F0",
@@ -561,18 +570,8 @@ class ProductionCryptoEngine:
         
     def _generate_realistic_pan(self, scheme: KeyScheme) -> str:
         """Generate realistic PAN for scheme."""
-        if scheme == KeyScheme.VISA:
-            return "4" + "".join([str(secrets.randbelow(10)) for _ in range(15)])
-        elif scheme == KeyScheme.MASTERCARD:
-            return "5" + str(secrets.randbelow(5) + 1) + "".join([str(secrets.randbelow(10)) for _ in range(14)])
-        elif scheme == KeyScheme.AMEX:
-            return "34" + "".join([str(secrets.randbelow(10)) for _ in range(13)])
-        elif scheme == KeyScheme.DISCOVER:
-            return "6011" + "".join([str(secrets.randbelow(10)) for _ in range(12)])
-        elif scheme == KeyScheme.JCB:
-            return "3528" + "".join([str(secrets.randbelow(10)) for _ in range(12)])
-        else:
-            return "4000" + "".join([str(secrets.randbelow(10)) for _ in range(12)])
+        scheme_name = scheme.value if isinstance(scheme, KeyScheme) else str(scheme)
+        return generate_pan(scheme_name)
             
     def _generate_expiry(self) -> str:
         """Generate realistic expiry date."""
@@ -581,20 +580,12 @@ class ProductionCryptoEngine:
         
     def _generate_cardholder_name(self) -> str:
         """Generate realistic cardholder name."""
-        first_names = ["JOHN", "JANE", "MICHAEL", "SARAH", "DAVID", "LISA", "ROBERT", "MARY"]
-        last_names = ["SMITH", "JOHNSON", "WILLIAMS", "BROWN", "JONES", "GARCIA", "MILLER", "DAVIS"]
-        return f"{secrets.choice(first_names)} {secrets.choice(last_names)}"
+        return generate_cardholder_name()
         
     def _get_realistic_issuer(self, scheme: KeyScheme) -> str:
         """Get realistic issuer for scheme."""
-        issuers = {
-            KeyScheme.VISA: ["Chase Bank", "Bank of America", "Wells Fargo", "Citibank"],
-            KeyScheme.MASTERCARD: ["Capital One", "Chase Bank", "Citi", "Bank of America"],
-            KeyScheme.AMEX: ["American Express", "American Express Bank"],
-            KeyScheme.DISCOVER: ["Discover Bank", "Discover Financial"],
-            KeyScheme.JCB: ["JCB International", "Sumitomo Mitsui Card"]
-        }
-        return secrets.choice(issuers.get(scheme, ["Test Bank"]))
+        scheme_name = scheme.value if isinstance(scheme, KeyScheme) else str(scheme)
+        return generate_issuer_name(scheme_name)
         
     def _get_rid_for_scheme(self, scheme: KeyScheme) -> str:
         """Get RID for payment scheme."""

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-GREENWIRE v4.0 - Modern CLI Framework
+GREENWIRE v4.1 - Modern CLI Framework
 ====================================
 
 A completely rewritten command-line interface that is:
@@ -37,9 +37,41 @@ from dataclasses import dataclass, asdict
 from enum import Enum
 
 # Version and metadata
-__version__ = "4.0.0"
+__version__ = "4.1.0"
 __author__ = "GREENWIRE Team"
 __description__ = "Advanced Payment Card Security Suite - Modern CLI"
+
+COMMAND_CATEGORIES = {
+    "Core": ["list", "help", "docs", "config", "health"],
+    "Card": [
+        "card-issue",
+        "card-create",
+        "card-read",
+        "card-read-full",
+        "card-history",
+        "card-list",
+        "card-validate",
+        "card-clone",
+        "mutant-card",
+    ],
+    "Crypto": ["crypto-keygen", "crypto-encrypt"],
+    "Emulation": ["emulate-terminal", "emulate-card", "wallet-provision"],
+    "Fuzzing": ["fuzz-apdu", "fuzz-nfc", "fuzz", "extract-data"],
+    "NFC": ["nfc-scan", "nfc-read", "rfid-test"],
+    "Security": ["security-scan", "pentest", "cap"],
+}
+
+GLOBAL_FLAG_SPECS = {
+    "--version": 0,
+    "--verbose": 0,
+    "-v": 0,
+    "--quiet": 0,
+    "-q": 0,
+    "--dry-run": 0,
+    "--format": 1,
+    "--config": 1,
+    "--log-level": 1,
+}
 
 class OutputFormat(Enum):
     """Output format options"""
@@ -168,21 +200,25 @@ class GreenwireCLI:
 
     def create_parser(self) -> argparse.ArgumentParser:
         """Create the main argument parser"""
+        command_count = len(self._command_catalog())
         parser = argparse.ArgumentParser(
             prog='greenwire',
             description=__description__,
             formatter_class=argparse.RawDescriptionHelpFormatter,
-            epilog="""
-Examples:
-  greenwire list commands                    # List all commands
+            epilog=f"""
+Quick Start:
+  greenwire help                             # Guided command overview
+  greenwire list commands                    # List all {command_count} commands
   greenwire card-create --pan 4000123456789012
-  greenwire fuzz-apdu --iterations 100 --json
+  greenwire list commands --format json
   greenwire emulate-terminal --wireless
   greenwire docs generate --format html
-  
+
 For command-specific help:
   greenwire <command> --help
-  
+
+Global flags may be placed before or after the subcommand in v4.1.
+
 Documentation:
   https://github.com/phawd/greenwire/docs
             """.strip()
@@ -277,6 +313,10 @@ Documentation:
         list_subparsers.add_parser('devices', help='List connected devices')
         list_subparsers.add_parser('cards', help='List detected cards')
 
+        # Help command
+        help_parser = subparsers.add_parser('help', help='Show a categorized help overview')
+        help_parser.add_argument('topic', nargs='?', help='Optional command name to inspect')
+
         # Documentation command
         docs_parser = subparsers.add_parser('docs', help='Documentation management')
         docs_parser.add_argument('action', choices=['generate', 'view', 'export'], 
@@ -301,6 +341,7 @@ Documentation:
 
         if args is None:
             args = sys.argv[1:]
+        args = self._normalize_global_args(args)
 
         # Parse arguments
         try:
@@ -361,12 +402,18 @@ Documentation:
         """Execute a parsed command"""
         command = args.command
 
+        def _normalize_sub_args() -> List[str]:
+            cmd_args = list(getattr(args, 'sub_args', []) or [])
+            if cmd_args and cmd_args[0] == "--":
+                return cmd_args[1:]
+            return cmd_args
+
         # Handle RFID testing command
         if command == 'rfid-test':
             try:
                 from commands.rfid_testing import get_command as get_rfid_command
                 cmd_instance = get_rfid_command()
-                cmd_args = getattr(args, 'sub_args', [])
+                cmd_args = _normalize_sub_args()
                 result_data = cmd_instance.execute(cmd_args)
 
                 return CommandResult(
@@ -387,7 +434,7 @@ Documentation:
             try:
                 from commands.cap_management import get_command as get_cap_command
                 cmd_instance = get_cap_command()
-                cmd_args = getattr(args, 'sub_args', [])
+                cmd_args = _normalize_sub_args()
                 result_data = cmd_instance.execute(cmd_args)
 
                 return CommandResult(
@@ -407,7 +454,7 @@ Documentation:
             try:
                 from commands.issuer_pipeline import get_command as get_pipeline_command
                 cmd_instance = get_pipeline_command()
-                cmd_args = getattr(args, 'sub_args', [])
+                cmd_args = _normalize_sub_args()
                 result_data = cmd_instance.execute(cmd_args)
 
                 return CommandResult(
@@ -426,6 +473,8 @@ Documentation:
         # Handle built-in commands
         if command == 'list':
             return self._handle_list_command(args)
+        elif command == 'help':
+            return self._handle_help_command(args)
         elif command == 'docs':
             return self._handle_docs_command(args)
         elif command == 'config':
@@ -447,25 +496,7 @@ Documentation:
     def _handle_list_command(self, args: argparse.Namespace) -> CommandResult:
         """Handle list commands"""
         if args.list_target == 'commands':
-            # List all available commands including new ones
-            commands_data = []
-            alias_names = {
-                alias
-                for cmd_info in self.commands.values()
-                if isinstance(cmd_info, dict)
-                for alias in cmd_info.get('aliases', [])
-            }
-
-            # Add dynamically registered commands
-            for name, info in self.commands.items():
-                if not isinstance(info, dict) or name in alias_names:
-                    continue
-
-                commands_data.append({
-                    'name': name,
-                    'description': info['description'],
-                    'aliases': ', '.join(info.get('aliases', []))
-                })
+            commands_data = self._command_catalog()
 
             return CommandResult(
                 success=True,
@@ -494,6 +525,44 @@ Documentation:
             message=f"Unknown list target: {args.list_target}",
             exit_code=ExitCode.MISUSE.value
         )
+
+    def _handle_help_command(self, args: argparse.Namespace) -> CommandResult:
+        """Return a categorized help overview."""
+        topic = getattr(args, "topic", None)
+        commands = self._command_catalog()
+        if topic:
+            for command in commands:
+                if command["name"] == topic or topic in command["aliases"]:
+                    return CommandResult(
+                        success=True,
+                        message=f"Help for {topic}",
+                        data=command,
+                    )
+            return CommandResult(
+                success=False,
+                message=f"Unknown help topic: {topic}",
+                exit_code=ExitCode.MISUSE.value,
+            )
+
+        grouped: Dict[str, List[Dict[str, Any]]] = {category: [] for category in COMMAND_CATEGORIES}
+        grouped["Other"] = []
+        for command in commands:
+            category = command["category"]
+            grouped.setdefault(category, []).append(command)
+
+        overview = {
+            "version": __version__,
+            "global_flags": sorted({flag for flag in GLOBAL_FLAG_SPECS if flag.startswith("--")}),
+            "categories": grouped,
+            "examples": [
+                "greenwire list commands",
+                "greenwire list commands --format json",
+                "greenwire card-create --generate-pan --emv-data",
+                "greenwire emulate-terminal --wireless",
+                "greenwire help wallet-provision",
+            ],
+        }
+        return CommandResult(success=True, message="GREENWIRE 4.1 help overview", data=overview)
 
     def _handle_docs_command(self, args: argparse.Namespace) -> CommandResult:
         """Handle documentation commands"""
@@ -555,6 +624,71 @@ Documentation:
             message="System healthy" if all_healthy else "Issues detected",
             data={'checks': checks}
         )
+
+    def _command_catalog(self) -> List[Dict[str, Any]]:
+        alias_names = {
+            alias
+            for cmd_info in self.commands.values()
+            if isinstance(cmd_info, dict)
+            for alias in cmd_info.get('aliases', [])
+        }
+        catalog: List[Dict[str, Any]] = []
+
+        builtin_descriptions = {
+            "list": "List available items",
+            "help": "Show a categorized help overview",
+            "docs": "Documentation management",
+            "config": "Configuration management",
+            "health": "System health check",
+        }
+        for name, description in builtin_descriptions.items():
+            catalog.append(
+                {
+                    "name": name,
+                    "description": description,
+                    "aliases": [],
+                    "category": self._categorize_command(name),
+                }
+            )
+
+        for name, info in self.commands.items():
+            if not isinstance(info, dict) or name in alias_names:
+                continue
+            catalog.append(
+                {
+                    "name": name,
+                    "description": info["description"],
+                    "aliases": info.get("aliases", []),
+                    "category": self._categorize_command(name),
+                }
+            )
+        return sorted(catalog, key=lambda item: (item["category"], item["name"]))
+
+    def _categorize_command(self, name: str) -> str:
+        for category, commands in COMMAND_CATEGORIES.items():
+            if name in commands:
+                return category
+        return "Other"
+
+    def _normalize_global_args(self, args: List[str]) -> List[str]:
+        """Allow global flags before or after the subcommand."""
+        reordered: List[str] = []
+        trailing: List[str] = []
+        i = 0
+        while i < len(args):
+            token = args[i]
+            spec = GLOBAL_FLAG_SPECS.get(token)
+            if spec is None:
+                trailing.append(token)
+                i += 1
+                continue
+            reordered.append(token)
+            if spec == 1 and i + 1 < len(args):
+                reordered.append(args[i + 1])
+                i += 2
+            else:
+                i += 1
+        return reordered + trailing
 
 
 def main():

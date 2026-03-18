@@ -8,6 +8,7 @@ AID testing, GPO commands, and CAP file personalization.
 import json, os, subprocess, sys, time  # noqa: F401
 from typing import Any, Dict, List, Optional, Tuple  # noqa: F401
 from pathlib import Path  # noqa: F401
+from core.windows_compat import configure_windows_console
 
 # Common EMV AIDs for testing
 COMMON_EMVCO_AIDS = [
@@ -395,6 +396,7 @@ class EMVNFCVerifier:
 
 def main():
     """Command line interface for EMV NFC verification."""
+    configure_windows_console()
     import argparse
     
     parser = argparse.ArgumentParser(description="EMV NFC Verification Tool")

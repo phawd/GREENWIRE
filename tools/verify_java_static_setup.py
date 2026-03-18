@@ -9,6 +9,10 @@ from __future__ import annotations  # noqa: F401
 import shutil
 import sys
 from pathlib import Path
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from core.windows_compat import configure_windows_console
 
 
 REQUIRED_ITEMS = [
@@ -34,6 +38,7 @@ def status(path: Path) -> str:
 
 
 def main() -> int:
+    configure_windows_console()
     root = Path(__file__).resolve().parents[1]
     print(f"📦 GREENWIRE static Java audit\nRoot: {root}\n")
 

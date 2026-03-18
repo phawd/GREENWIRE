@@ -51,7 +51,7 @@ cd javacard/applet && ./gradlew convertCap  # Build JavaCard applets
 
 # Static distribution
 python tools/create_static_bundle.py  # Creates dist/greenwire-static/ with launcher
-python dist/greenwire-static/run_greenwire.py --menu  # Run static bundle
+python dist/greenwire-static/run_greenwire.py --menu  # Run generated static bundle launcher
 ```
 
 ### Testing Commands
@@ -277,8 +277,8 @@ from greenwire.core.data_manager import list_datasets, choose_dataset_interactiv
 
 ### Enhanced Static Distribution  
 - **Improved bundle creator**: `tools/create_static_bundle.py` with comprehensive module copying
-- **Fallback modules**: Complete smartcard library stubs in `static/lib/smartcard/`
-- **Static launcher**: `run_greenwire.py` for portable execution without Python deps
+- **Fallback modules**: Mirrored Python helpers in `static/lib/`
+- **Static launcher**: Generated as `dist/greenwire-static/run_greenwire.py`
 - **Environment detection**: Automatic static mode via `GREENWIRE_STATIC=1`
 
 ### Import Consolidation

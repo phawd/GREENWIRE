@@ -14,13 +14,10 @@ Required files (not distributable in many cases due to vendor licenses):
 - lib/GlobalPlatformPro.jar
   - GlobalPlatformPro fat JAR used by the `deployCap` Gradle tasks. Place it at `lib/GlobalPlatformPro.jar`.
 
-Optional helper jars already included if present:
+Optional helper jars:
 
 - static/java/ant-javacard.jar
   - A standalone tool that can build CAPs without the full SDK in some cases; present in the repository's static/java directory.
-
-- static/java/gp.jar
-  - A small wrapper sometimes used alongside GlobalPlatformPro.
 
 How to obtain and place artifacts:
 

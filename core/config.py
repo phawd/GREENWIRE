@@ -121,7 +121,8 @@ class CardConfig:
     """Card generation and operation settings."""
     default_scheme: str = "visa"
     default_region: str = "us" 
-    cardholder_name: str = "GREENWIRE USER"
+    cardholder_name: str = "ALEX MORGAN"
+    default_pin: str = "6666"
     expiry_offset_months: int = 36
     floor_limit: int = 50
     risk_level: str = "very_low"

@@ -22,6 +22,35 @@ from core.logging_system import get_logger
 LOGGER = get_logger("pipeline_providers")
 
 
+def build_cryptogram_payload(
+    *,
+    pan: str,
+    track2: str,
+    amount: float,
+    currency: str,
+    terminal_country: str,
+    transaction_id: str,
+    atc: int,
+) -> bytes:
+    """Build a deterministic cryptogram payload bound to PAN and terminal context."""
+
+    normalized_pan = "".join(ch for ch in pan if ch.isdigit())
+    normalized_track2 = track2.replace("=", "D").upper()
+    amount_cents = int(round(float(amount) * 100))
+    payload = "|".join(
+        [
+            normalized_pan,
+            normalized_track2,
+            f"{amount_cents:012d}",
+            currency.upper(),
+            terminal_country,
+            transaction_id,
+            f"{atc:04d}",
+        ]
+    )
+    return payload.encode("ascii")
+
+
 @dataclass
 class SessionKeys:
     """Container for derived session keys."""
@@ -41,6 +70,9 @@ class HSMBackend:
     def generate_arqc(self, *, pan: str, atc: int, payload: bytes) -> str:
         raise NotImplementedError
 
+    def verify_arqc(self, *, pan: str, atc: int, payload: bytes, arqc: str) -> bool:
+        raise NotImplementedError
+
 
 class EmulatorHSMBackend(HSMBackend):
     """Soft HSM backend using the existing HSMService emulator."""
@@ -48,6 +80,7 @@ class EmulatorHSMBackend(HSMBackend):
     def __init__(self, *, store_path: Path | str | None = None) -> None:
         self._store_path = store_path or Path("data/hsm_keystore.json")
         self._service = HSMService(store_path=self._store_path)
+        self._master_key_label = "IMK"
         try:
             self._service.generate_default_keyset(overwrite=False)
         except ValueError:
@@ -55,20 +88,32 @@ class EmulatorHSMBackend(HSMBackend):
             pass
 
     def derive_session_keys(self, *, pan: str, pan_sequence: str, atc: int) -> SessionKeys:
-        seed = f"{pan}:{pan_sequence}:{atc}".encode()
-        digest = hashlib.sha256(seed).hexdigest().upper()
+        session_key = self._service._emulator.derive_emv_session_key(self._master_key_label, pan, atc)
+        digest = hashlib.sha256(session_key + pan_sequence.encode("ascii")).hexdigest().upper()
         mac_key = digest[:32]
         enc_key = digest[16:48]
         dek_key = digest[8:40]
-        metadata = {"algorithm": "sha256", "source": "emulator"}
+        metadata = {
+            "algorithm": "3des-retail-mac",
+            "source": "emulator-hsm",
+            "master_key_label": self._master_key_label,
+            "pan_sequence": pan_sequence,
+        }
         return SessionKeys(mac_key=mac_key, enc_key=enc_key, dek_key=dek_key, metadata=metadata)
 
     def generate_arqc(self, *, pan: str, atc: int, payload: bytes) -> str:
         if not payload:
             payload = b"\x00" * 8
-        data_hex = payload.hex().upper()
-        seed = f"{pan}:{atc}:{data_hex}".encode()
-        return hashlib.sha256(seed).hexdigest().upper()[:32]
+        return self._service.generate_arqc(self._master_key_label, pan, atc, payload)
+
+    def verify_arqc(self, *, pan: str, atc: int, payload: bytes, arqc: str) -> bool:
+        return self._service.verify_arqc(
+            self._master_key_label,
+            bytes.fromhex(arqc),
+            payload,
+            pan=pan,
+            atc=atc,
+        )
 
 
 class CardPersonalizer:
@@ -124,14 +169,34 @@ class EmulatorMerchantTerminal(MerchantTerminal):
         track2 = card_artifacts.get("track2", "")
         pan = card_artifacts.get("pan", "0000000000000000")
         txn_id = hashlib.sha1(f"{pan}:{amount}".encode()).hexdigest()[:12].upper()
+        atc = int(card_artifacts.get("atc", 1) or 1)
+        currency = "USD"
+        terminal_country = "840"
+        terminal_id = os.getenv("GREENWIRE_EMULATED_TERMINAL", "POS-EMU-01")
+        cryptogram_payload = build_cryptogram_payload(
+            pan=pan,
+            track2=track2,
+            amount=amount,
+            currency=currency,
+            terminal_country=terminal_country,
+            transaction_id=txn_id,
+            atc=atc,
+        )
         return {
             "transaction_id": txn_id,
             "amount": amount,
-            "currency": "USD",
+            "currency": currency,
             "track2": track2,
             "pan": pan,
-            "terminal_country": "840",
+            "merchant_id": "MERCHANT-0001",
+            "terminal_id": terminal_id,
+            "terminal_country": terminal_country,
             "stan": hashlib.sha1(txn_id.encode()).hexdigest()[:6].upper(),
+            "atc": atc,
+            "authorization_response_code": "00",
+            "processor_status": "approved",
+            "processing_mode": "normal",
+            "cryptogram_payload": cryptogram_payload.hex().upper(),
         }
 
 
@@ -412,6 +477,15 @@ class MobileWalletIntegrator:
     def provision_apple_wallet(self, *, artifacts: Dict[str, str], device_metadata: Dict[str, object]) -> MobileWalletResult:
         raise NotImplementedError
 
+    def provision_samsung_wallet(self, *, artifacts: Dict[str, str], device_metadata: Dict[str, object]) -> MobileWalletResult:
+        raise NotImplementedError
+
+    def provision_generic_nfc(self, *, artifacts: Dict[str, str], device_metadata: Dict[str, object]) -> MobileWalletResult:
+        raise NotImplementedError
+
+    def provision_transit_rfid(self, *, artifacts: Dict[str, str], device_metadata: Dict[str, object]) -> MobileWalletResult:
+        raise NotImplementedError
+
 
 class EmulatorMobileWalletIntegrator(MobileWalletIntegrator):
     def provision_google_wallet(self, *, artifacts: Dict[str, str], device_metadata: Dict[str, object]) -> MobileWalletResult:
@@ -439,6 +513,51 @@ class EmulatorMobileWalletIntegrator(MobileWalletIntegrator):
             token_reference=token,
             status="provisioned",
             assurance_level=device_metadata.get("assurance_level", "TAV2"),
+            metadata=metadata,
+        )
+
+    def provision_samsung_wallet(self, *, artifacts: Dict[str, str], device_metadata: Dict[str, object]) -> MobileWalletResult:
+        token = self._build_token("samsung", artifacts, device_metadata)
+        metadata = {
+            "device_account_id": device_metadata.get("device_account_id", "galaxy-emulator"),
+            "secure_element_id": device_metadata.get("secure_element_id", "SE-SAM-EMU"),
+            "wallet_profile": device_metadata.get("wallet_profile", "mst_nfc"),
+        }
+        return MobileWalletResult(
+            wallet_type="samsung",
+            token_reference=token,
+            status="provisioned",
+            assurance_level=device_metadata.get("assurance_level", "L3"),
+            metadata=metadata,
+        )
+
+    def provision_generic_nfc(self, *, artifacts: Dict[str, str], device_metadata: Dict[str, object]) -> MobileWalletResult:
+        token = self._build_token("generic_nfc", artifacts, device_metadata)
+        metadata = {
+            "uid": device_metadata.get("uid", "04A1B2C3D4"),
+            "tech": device_metadata.get("tech", "ISO14443-4"),
+            "ndef_profile": device_metadata.get("ndef_profile", "payment-card"),
+        }
+        return MobileWalletResult(
+            wallet_type="generic_nfc",
+            token_reference=token,
+            status="provisioned",
+            assurance_level=device_metadata.get("assurance_level", "LAB"),
+            metadata=metadata,
+        )
+
+    def provision_transit_rfid(self, *, artifacts: Dict[str, str], device_metadata: Dict[str, object]) -> MobileWalletResult:
+        token = self._build_token("transit_rfid", artifacts, device_metadata)
+        metadata = {
+            "transit_agency": device_metadata.get("transit_agency", "Metro Transit Lab"),
+            "reader_profile": device_metadata.get("reader_profile", "iso14443a-gate"),
+            "uid": device_metadata.get("uid", "04112233445566"),
+        }
+        return MobileWalletResult(
+            wallet_type="transit_rfid",
+            token_reference=token,
+            status="provisioned",
+            assurance_level=device_metadata.get("assurance_level", "TRANSIT"),
             metadata=metadata,
         )
 
