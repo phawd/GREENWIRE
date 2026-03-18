@@ -374,7 +374,7 @@ class StaticDistribution:
 
             inventory.append(
                 {
-                    "path": str(rel_path),
+                    "path": rel_path.as_posix(),
                     "size_bytes": path.stat().st_size,
                     "description": description,
                     "status": "present",
@@ -388,7 +388,7 @@ class StaticDistribution:
             rel_path = target.relative_to(self.root)
             inventory.append(
                 {
-                    "path": str(rel_path),
+                    "path": rel_path.as_posix(),
                     "size_bytes": 0,
                     "description": description,
                     "status": "missing",

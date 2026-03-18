@@ -27,7 +27,7 @@ class ServiceStatus(Enum):
     ERROR = "error"
 
 
-@dataclass(slots=True)
+@dataclass
 class ServiceMessage:
     """Envelope for messages exchanged between services."""
 
@@ -38,7 +38,7 @@ class ServiceMessage:
     timestamp: float = field(default_factory=lambda: time.time())
 
 
-@dataclass(slots=True)
+@dataclass
 class ServiceContext:
     """Shared utilities injected into each service instance."""
 

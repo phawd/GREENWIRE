@@ -24,7 +24,12 @@ import json
 import logging
 import os
 import sys
-import yaml
+try:
+    import yaml
+    YAML_AVAILABLE = True
+except ImportError:
+    yaml = None
+    YAML_AVAILABLE = False
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
@@ -93,7 +98,7 @@ class GreenwireCLI:
 
         # File handler for detailed logs
         log_file = Path("logs") / "greenwire.log"
-        log_file.parent.mkdir(exist_ok=True)
+        log_file.parent.mkdir(parents=True, exist_ok=True)
         file_handler = logging.FileHandler(log_file)
         file_format = logging.Formatter(
             '%(asctime)s [%(levelname)s] %(name)s:%(lineno)d - %(message)s'
@@ -123,7 +128,11 @@ class GreenwireCLI:
         if self.output_format == OutputFormat.JSON:
             print(json.dumps(asdict(result), indent=2))
         elif self.output_format == OutputFormat.YAML:
-            print(yaml.dump(asdict(result), default_flow_style=False))
+            if YAML_AVAILABLE:
+                print(yaml.dump(asdict(result), default_flow_style=False))
+            else:
+                self.logger.warning("PyYAML is not installed; falling back to JSON output")
+                print(json.dumps(asdict(result), indent=2))
         elif self.output_format == OutputFormat.TABLE and result.data:
             self._output_table(result.data)
         else:
@@ -206,8 +215,8 @@ Documentation:
 
         # Import and register new RFID testing command
         try:
-            from commands.rfid_testing import get_command
-            cmd_info = get_command()
+            from commands.rfid_testing import get_command as get_rfid_command
+            cmd_info = get_rfid_command()
             parser = subparsers.add_parser(cmd_info.get_name(), help=cmd_info.get_description(), add_help=False)
             parser.add_argument('sub_args', nargs=argparse.REMAINDER, help='Arguments for the command')
         except ImportError:
@@ -215,8 +224,8 @@ Documentation:
 
         # Import and register CAP management command
         try:
-            from commands.cap_management import get_command
-            cmd_info = get_command()
+            from commands.cap_management import get_command as get_cap_command
+            cmd_info = get_cap_command()
             parser = subparsers.add_parser(cmd_info.get_name(), help=cmd_info.get_description(), add_help=False)
             parser.add_argument('sub_args', nargs=argparse.REMAINDER, help='Arguments for the command')
         except ImportError:
@@ -224,25 +233,38 @@ Documentation:
 
         # Import and register issuer pipeline command
         try:
-            from commands.issuer_pipeline import get_command
-            cmd_info = get_command()
+            from commands.issuer_pipeline import get_command as get_pipeline_command
+            cmd_info = get_pipeline_command()
             parser = subparsers.add_parser(cmd_info.get_name(), help=cmd_info.get_description(), add_help=False)
             parser.add_argument('sub_args', nargs=argparse.REMAINDER, help='Arguments for the command')
         except ImportError:
             self.logger.warning("Issuer pipeline command not available")
 
         # Register existing dynamic commands
-        for name, cmd_info in self.commands.items(): # type: ignore
+        alias_names = {
+            alias
+            for info in self.commands.values()
+            if isinstance(info, dict)
+            for alias in info.get('aliases', [])
+        }
+        for name, cmd_info in self.commands.items():
+            if not isinstance(cmd_info, dict):
+                continue
+
             # Skip aliases (they point to the same command info)
-            if name in [alias for info in self.commands.values() for alias in info.get('aliases', [])]:
+            if name in alias_names:
                 continue
 
             cmd_parser = subparsers.add_parser(name, help=cmd_info['description'])
 
             # Add command-specific arguments
             for arg_spec in cmd_info.get('args', []):
-                arg_name = arg_spec.pop('name')
-                cmd_parser.add_argument(arg_name, **arg_spec)
+                if not isinstance(arg_spec, dict) or 'name' not in arg_spec:
+                    continue
+
+                arg_options = dict(arg_spec)
+                arg_name = arg_options.pop('name')
+                cmd_parser.add_argument(arg_name, **arg_options)
 
     def _register_builtin_commands(self, subparsers):
         """Register built-in CLI commands"""
@@ -427,15 +449,23 @@ Documentation:
         if args.list_target == 'commands':
             # List all available commands including new ones
             commands_data = []
+            alias_names = {
+                alias
+                for cmd_info in self.commands.values()
+                if isinstance(cmd_info, dict)
+                for alias in cmd_info.get('aliases', [])
+            }
 
             # Add dynamically registered commands
             for name, info in self.commands.items():
-                if name not in [alias for cmd_info in self.commands.values() for alias in cmd_info.get('aliases', [])]: # type: ignore
-                    commands_data.append({
-                        'name': name,
-                        'description': info['description'],
-                        'aliases': ', '.join(info.get('aliases', []))
-                    })
+                if not isinstance(info, dict) or name in alias_names:
+                    continue
+
+                commands_data.append({
+                    'name': name,
+                    'description': info['description'],
+                    'aliases': ', '.join(info.get('aliases', []))
+                })
 
             return CommandResult(
                 success=True,

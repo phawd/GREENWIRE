@@ -65,40 +65,65 @@ class GreenwireLogger:
             file_handler.setFormatter(file_formatter)
             self.logger.addHandler(file_handler)
     
-    def debug(self, msg: str, operation: Optional[str] = None):
+    def debug(self, msg: str, *args, operation: Optional[str] = None, **kwargs):
         """Log debug message."""
-        self._log(logging.DEBUG, msg, operation)
+        self._log(logging.DEBUG, msg, *args, operation=operation, **kwargs)
     
-    def info(self, msg: str, operation: Optional[str] = None):
+    def info(self, msg: str, *args, operation: Optional[str] = None, **kwargs):
         """Log info message."""
-        self._log(logging.INFO, msg, operation)
+        self._log(logging.INFO, msg, *args, operation=operation, **kwargs)
     
-    def warning(self, msg: str, operation: Optional[str] = None):
+    def warning(self, msg: str, *args, operation: Optional[str] = None, **kwargs):
         """Log warning message."""
-        self._log(logging.WARNING, msg, operation)
+        self._log(logging.WARNING, msg, *args, operation=operation, **kwargs)
     
-    def error(self, msg: str, operation: Optional[str] = None, exc_info: bool = False):
+    def error(self, msg: str, *args, operation: Optional[str] = None, exc_info: bool = False, **kwargs):
         """Log error message."""
-        self._log(logging.ERROR, msg, operation, exc_info=exc_info)
+        self._log(logging.ERROR, msg, *args, operation=operation, exc_info=exc_info, **kwargs)
     
-    def critical(self, msg: str, operation: Optional[str] = None, exc_info: bool = False):
+    def critical(self, msg: str, *args, operation: Optional[str] = None, exc_info: bool = False, **kwargs):
         """Log critical message."""
-        self._log(logging.CRITICAL, msg, operation, exc_info=exc_info)
+        self._log(logging.CRITICAL, msg, *args, operation=operation, exc_info=exc_info, **kwargs)
     
-    def _log(self, level: int, msg: str, operation: Optional[str] = None, exc_info: bool = False):
+    def _log(
+        self,
+        level: int,
+        msg: str,
+        *args,
+        operation: Optional[str] = None,
+        exc_info: bool = False,
+        **kwargs,
+    ):
         """Internal logging method."""
+        if operation is None and len(args) == 1 and isinstance(args[0], str) and "%" not in msg:
+            operation = args[0]
+            args = ()
+
         extra = {'operation': operation} if operation else {}
-        self.logger.log(level, msg, extra=extra, exc_info=exc_info)
+        self.logger.log(level, msg, *args, extra=extra, exc_info=exc_info, **kwargs)
 
-# Global logger instance
+# Global logger instances
 _logger = None
+_named_loggers = {}
 
-def get_logger() -> GreenwireLogger:
-    """Get the global logger instance."""
+def get_logger(
+    name: str = "greenwire",
+    log_file: Optional[str] = None,
+    level: int = logging.INFO,
+) -> GreenwireLogger:
+    """Get a shared logger instance by name."""
+
     global _logger
-    if _logger is None:
-        _logger = GreenwireLogger()
-    return _logger
+
+    if name == "greenwire" and log_file is None and level == logging.INFO:
+        if _logger is None:
+            _logger = GreenwireLogger(name=name, log_file=log_file, level=level)
+        return _logger
+
+    key = (name, log_file, level)
+    if key not in _named_loggers:
+        _named_loggers[key] = GreenwireLogger(name=name, log_file=log_file, level=level)
+    return _named_loggers[key]
 
 def setup_logging(verbose: bool = False, debug: bool = False, log_file: Optional[str] = None):
     """Setup global logging configuration."""
@@ -110,6 +135,7 @@ def setup_logging(verbose: bool = False, debug: bool = False, log_file: Optional
         log_file=log_file,
         level=level
     )
+    _named_loggers[("greenwire", log_file, level)] = _logger
     return _logger
 
 # Error handling decorators
