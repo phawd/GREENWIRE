@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  GREENWIRE – Ant build file
+  Compiles Java Card stub classes and the GREENWIRE wallet applet.
+-->
+<project name="GREENWIRE" default="compile" basedir=".">
+
+    <description>GREENWIRE Google Wallet NFC / EMV Applet</description>
+
+    <!-- Directories -->
+    <property name="src.dir"     value="src"/>
+    <property name="build.dir"   value="build"/>
+    <property name="classes.dir" value="${build.dir}/classes"/>
+    <property name="dist.dir"    value="dist"/>
+
+    <!-- Java source / target version (Java Card 3.0.5 targets Java 1.6+) -->
+    <property name="javac.source" value="1.8"/>
+    <property name="javac.target" value="1.8"/>
+
+    <!-- ================================================================ -->
+    <!--  init                                                             -->
+    <!-- ================================================================ -->
+    <target name="init">
+        <mkdir dir="${classes.dir}"/>
+        <mkdir dir="${dist.dir}"/>
+    </target>
+
+    <!-- ================================================================ -->
+    <!--  compile                                                          -->
+    <!-- ================================================================ -->
+    <target name="compile" depends="init" description="Compile all sources">
+        <javac srcdir="${src.dir}"
+               destdir="${classes.dir}"
+               source="${javac.source}"
+               target="${javac.target}"
+               includeantruntime="false"
+               encoding="UTF-8">
+            <compilerarg value="-Xlint:all"/>
+        </javac>
+    </target>
+
+    <!-- ================================================================ -->
+    <!--  jar                                                              -->
+    <!-- ================================================================ -->
+    <target name="jar" depends="compile" description="Package compiled classes">
+        <jar destfile="${dist.dir}/greenwire.jar"
+             basedir="${classes.dir}">
+            <manifest>
+                <attribute name="Implementation-Title"   value="GREENWIRE"/>
+                <attribute name="Implementation-Version" value="4.0"/>
+                <attribute name="Main-Class"             value="com.greenwire.wallet.GreenWireApplet"/>
+            </manifest>
+        </jar>
+    </target>
+
+    <!-- ================================================================ -->
+    <!--  clean                                                            -->
+    <!-- ================================================================ -->
+    <target name="clean" description="Remove build artefacts">
+        <delete dir="${build.dir}"/>
+        <delete dir="${dist.dir}"/>
+    </target>
+
+</project>
