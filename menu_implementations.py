@@ -18,7 +18,7 @@ import uuid
 import shutil
 import binascii
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple  # noqa: F401
 
 # Import adb_cmd helper from greenwire
@@ -453,7 +453,7 @@ def _record_card_event(channel: str, operation: str, status: str, summary: Dict[
     if not ACTIVE_CARD_SESSION:
         return
     entry = {
-        'timestamp': datetime.utcnow().isoformat(),
+        'timestamp': datetime.now(timezone.utc).isoformat(),
         'channel': channel,
         'operation': operation,
         'status': status,
@@ -600,7 +600,7 @@ def _save_profile_results(profile_name: str, results: List[Dict[str, Any]]) -> O
     if not results:
         return None
     output_dir = _ensure_output_dir('profile_logs')
-    timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+    timestamp = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
     safe_name = ''.join(ch.lower() if ch.isalnum() else '_' for ch in profile_name)
     file_path = output_dir / f"{safe_name}_{timestamp}.json"
     with file_path.open('w', encoding='utf-8') as fh:
@@ -612,7 +612,7 @@ def _save_profile_results(profile_name: str, results: List[Dict[str, Any]]) -> O
 
 def _persist_text_artifact(name: str, content: str) -> Path:
     output_dir = _ensure_output_dir('profile_logs')
-    timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+    timestamp = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
     safe_name = ''.join(ch.lower() if ch.isalnum() else '_' for ch in name)
     file_path = output_dir / f"{safe_name}_{timestamp}.log"
     with file_path.open('w', encoding='utf-8') as fh:
@@ -679,7 +679,7 @@ def _auto_record(name: str, summary: Dict[str, Any]) -> Path:
 def _automation_context(profile_key: str, description: Optional[str] = None):
     start_time = time.time()
     metadata: Dict[str, Any] = {'profile': profile_key, 'description': description}
-    metadata['started_at'] = datetime.utcnow().isoformat()
+    metadata['started_at'] = datetime.now(timezone.utc).isoformat()
     if ACTIVE_CARD_SESSION:
         card_data = ACTIVE_CARD_SESSION.get('card_data', {})
         metadata.update(
@@ -1987,7 +1987,7 @@ def enhanced_data_extraction_working():
         from enhanced_data_extraction import DataExtractionEngine, AttackType
     except ImportError as e:
         print(f"❌ Failed to import enhanced data extraction module: {e}")
-        print("Ensure enhanced_data_extraction.py is in the GREENWIRE directory")
+        print("Note: enhanced_data_extraction.py has been archived (see archive/root_scripts/).")
         input("\nPress Enter to continue...")
         return 'refresh'
     

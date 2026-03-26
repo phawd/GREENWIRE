@@ -1,0 +1,8 @@
+// GREENWIRE NFC Lab – root build.gradle
+// Android Gradle Plugin 8.1.0 requires Gradle 8.0+.
+// Run:  ./gradlew assembleDebug
+//       adb install -r app/build/outputs/apk/debug/app-debug.apk
+
+plugins {
+    id 'com.android.application' version '8.1.0' apply false
+}

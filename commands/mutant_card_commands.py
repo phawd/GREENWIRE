@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, Tuple
 
@@ -44,7 +44,7 @@ def _build_mutant_card(args: argparse.Namespace) -> Dict[str, Any]:
             source="mutant-card:auto",
             reserve=not getattr(args, "dry_run", False),
         )
-    expiry = args.expiry or (datetime.utcnow() + timedelta(days=365 * 3)).strftime("%m/%y")
+    expiry = args.expiry or (datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=365 * 3)).strftime("%m/%y")
     cvv = args.cvv or generate_cvv(args.card_type)
     pin = str(getattr(args, "pin", None) or config_manager.default_card_pin() or "6666")
     floor_limit = int(args.floor_limit if args.floor_limit is not None else 50)
@@ -54,7 +54,7 @@ def _build_mutant_card(args: argparse.Namespace) -> Dict[str, Any]:
 
     return {
         "kind": "mutant_test_card",
-        "created_at": datetime.utcnow().isoformat() + "Z",
+        "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
         "card_type": args.card_type,
         "issuer": args.issuer or identity["issuer_name"],
         "cardholder_name": args.name or identity["cardholder_name"],
@@ -193,7 +193,7 @@ def _append_processing_log(card_data: Dict[str, Any], mode: str, result: Dict[st
             "format": "gwlog-v1",
             "blob": seal_log_payload(
                 {
-                    "timestamp": datetime.utcnow().isoformat() + "Z",
+                    "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
                     "channel": mode,
                     "operation": "mutant_card_run",
                     "status": result.get("terminal_status") or result.get("atm_status") or "completed",

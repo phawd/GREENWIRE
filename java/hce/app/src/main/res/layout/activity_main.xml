@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    GREENWIRE NFC Lab — Main Activity Layout
+    =========================================
+    A vertically scrollable control panel.
+
+    Top area: relay status + active mode badge
+    Middle: 2-column grid of lab mode buttons (8 total)
+    Bottom: Settings section (relay host/port, DPAN, facility code)
+             + scrollable APDU log tail (last 10 entries)
+
+    Designed to be readable on both phone and tablet form factors.
+    No material components required beyond AppCompat themes.
+-->
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0D1117"
+    tools:context=".MainActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <!-- ── Status bar ─────────────────────────────────────────── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="#161B22"
+            android:padding="10dp"
+            android:layout_marginBottom="10dp">
+
+            <TextView
+                android:id="@+id/tvRelayStatus"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/status_relay_disconnected"
+                android:textColor="#FF5555"
+                android:textSize="13sp"
+                android:fontFamily="monospace" />
+
+            <TextView
+                android:id="@+id/tvActiveMode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Mode: IDLE"
+                android:textColor="#8BE9FD"
+                android:textSize="13sp"
+                android:fontFamily="monospace" />
+        </LinearLayout>
+
+        <!-- ── Mode button grid (2 columns × 4 rows) ─────────────── -->
+        <GridLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:columnCount="2"
+            android:rowCount="4"
+            android:layout_marginBottom="12dp">
+
+            <!-- Row 1 -->
+            <Button
+                android:id="@+id/btnPaymentHce"
+                android:layout_width="0dp"
+                android:layout_height="64dp"
+                android:layout_columnWeight="1"
+                android:layout_margin="4dp"
+                android:text="@string/btn_payment_hce"
+                android:backgroundTint="#238636"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp" />
+
+            <Button
+                android:id="@+id/btnTransit"
+                android:layout_width="0dp"
+                android:layout_height="64dp"
+                android:layout_columnWeight="1"
+                android:layout_margin="4dp"
+                android:text="@string/btn_transit"
+                android:backgroundTint="#1F6FEB"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp" />
+
+            <!-- Row 2 -->
+            <Button
+                android:id="@+id/btnAccessCard"
+                android:layout_width="0dp"
+                android:layout_height="64dp"
+                android:layout_columnWeight="1"
+                android:layout_margin="4dp"
+                android:text="@string/btn_access_card"
+                android:backgroundTint="#8957E5"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp" />
+
+            <Button
+                android:id="@+id/btnRelayMode"
+                android:layout_width="0dp"
+                android:layout_height="64dp"
+                android:layout_columnWeight="1"
+                android:layout_margin="4dp"
+                android:text="@string/btn_relay_mode"
+                android:backgroundTint="#388BFD"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp" />
+
+            <!-- Row 3 -->
+            <Button
+                android:id="@+id/btnNfcScan"
+                android:layout_width="0dp"
+                android:layout_height="64dp"
+                android:layout_columnWeight="1"
+                android:layout_margin="4dp"
+                android:text="@string/btn_nfc_scan"
+                android:backgroundTint="#3FB950"
+                android:textColor="#000000"
+                android:textSize="13sp" />
+
+            <Button
+                android:id="@+id/btnFuzz"
+                android:layout_width="0dp"
+                android:layout_height="64dp"
+                android:layout_columnWeight="1"
+                android:layout_margin="4dp"
+                android:text="@string/btn_fuzz"
+                android:backgroundTint="#D29922"
+                android:textColor="#000000"
+                android:textSize="13sp" />
+
+            <!-- Row 4 -->
+            <Button
+                android:id="@+id/btnClone"
+                android:layout_width="0dp"
+                android:layout_height="64dp"
+                android:layout_columnWeight="1"
+                android:layout_margin="4dp"
+                android:text="@string/btn_clone"
+                android:backgroundTint="#A371F7"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp" />
+
+            <Button
+                android:id="@+id/btnReset"
+                android:layout_width="0dp"
+                android:layout_height="64dp"
+                android:layout_columnWeight="1"
+                android:layout_margin="4dp"
+                android:text="@string/btn_reset"
+                android:backgroundTint="#DA3633"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp" />
+
+        </GridLayout>
+
+        <!-- ── Settings panel ────────────────────────────────────── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#161B22"
+            android:padding="10dp"
+            android:layout_marginBottom="10dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_title"
+                android:textColor="#C9D1D9"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="6dp" />
+
+            <!-- Relay host -->
+            <EditText
+                android:id="@+id/etRelayHost"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/label_relay_host"
+                android:inputType="text"
+                android:textColor="#C9D1D9"
+                android:textColorHint="#6E7681"
+                android:background="#0D1117"
+                android:padding="8dp"
+                android:fontFamily="monospace"
+                android:textSize="13sp"
+                android:layout_marginBottom="4dp" />
+
+            <!-- Relay port -->
+            <EditText
+                android:id="@+id/etRelayPort"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/label_relay_port"
+                android:inputType="number"
+                android:textColor="#C9D1D9"
+                android:textColorHint="#6E7681"
+                android:background="#0D1117"
+                android:padding="8dp"
+                android:fontFamily="monospace"
+                android:textSize="13sp"
+                android:layout_marginBottom="4dp" />
+
+            <!-- WiFi relay toggle -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="4dp">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/label_use_wifi"
+                    android:textColor="#C9D1D9"
+                    android:textSize="13sp" />
+                <CheckBox
+                    android:id="@+id/cbUseWifi"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:buttonTint="#388BFD" />
+            </LinearLayout>
+
+            <!-- DPAN -->
+            <EditText
+                android:id="@+id/etDpan"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/label_dpan"
+                android:inputType="number"
+                android:textColor="#C9D1D9"
+                android:textColorHint="#6E7681"
+                android:background="#0D1117"
+                android:padding="8dp"
+                android:fontFamily="monospace"
+                android:textSize="13sp"
+                android:layout_marginBottom="4dp" />
+
+            <!-- Expiry -->
+            <EditText
+                android:id="@+id/etExpiry"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/label_expiry"
+                android:inputType="number"
+                android:textColor="#C9D1D9"
+                android:textColorHint="#6E7681"
+                android:background="#0D1117"
+                android:padding="8dp"
+                android:fontFamily="monospace"
+                android:textSize="13sp"
+                android:layout_marginBottom="4dp" />
+
+            <!-- Facility code -->
+            <EditText
+                android:id="@+id/etFacilityCode"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/label_facility_code"
+                android:inputType="number"
+                android:textColor="#C9D1D9"
+                android:textColorHint="#6E7681"
+                android:background="#0D1117"
+                android:padding="8dp"
+                android:fontFamily="monospace"
+                android:textSize="13sp"
+                android:layout_marginBottom="4dp" />
+
+            <!-- Card number (access card) -->
+            <EditText
+                android:id="@+id/etCardNumber"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/label_card_number"
+                android:inputType="number"
+                android:textColor="#C9D1D9"
+                android:textColorHint="#6E7681"
+                android:background="#0D1117"
+                android:padding="8dp"
+                android:fontFamily="monospace"
+                android:textSize="13sp" />
+
+        </LinearLayout>
+
+        <!-- ── APDU log tail ──────────────────────────────────────── -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#161B22"
+            android:padding="10dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/section_log"
+                android:textColor="#C9D1D9"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="6dp" />
+
+            <TextView
+                android:id="@+id/tvApduLog"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/log_empty"
+                android:textColor="#8B949E"
+                android:fontFamily="monospace"
+                android:textSize="11sp"
+                android:lineSpacingExtra="2dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

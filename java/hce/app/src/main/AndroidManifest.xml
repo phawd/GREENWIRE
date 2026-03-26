@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    GREENWIRE NFC Lab – Android Manifest
+    =====================================
+    Declares all HCE services, activities, permissions and features required
+    for the complete NFC laboratory toolkit.
+
+    HCE services registered:
+      • GreenwireHCEService   – Payment relay (Visa/MC/Amex/Discover/JCB/UnionPay + PPSE)
+      • GooglePayRelayService – Google Pay wallet AID + VTS/MDES token playback
+      • TransitHCEService     – Transit cards (Oyster, Suica, Clipper, ORCA, Opal)
+      • AccessCardHCEService  – HID Prox / ISO 14443 access card emulation
+
+    Activities:
+      • MainActivity         – Lab control panel (mode selector + log tail)
+      • NFCDispatchActivity  – Foreground NFC tag reader for all tech types
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.greenwire.hce">
+
+    <!-- ── Permissions ──────────────────────────────────────────────── -->
+
+    <!-- NFC hardware access — required for HCE and tag reading -->
+    <uses-permission android:name="android.permission.NFC" />
+
+    <!-- TCP relay to GREENWIRE Python host via USB-ADB forward or WiFi -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Write APDU logs to /sdcard/greenwire/apdu_log_*.jsonl (pre-API29) -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+
+    <!-- Android 11+ all-files access for /sdcard/greenwire/ logs -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+
+    <!-- Haptic feedback on successful relay tap -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- System overlay window used by RootedNFCHelper wallet intercept -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!-- Keep CPU alive during active relay session (tag present) -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Auto-start relay on device boot -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- ── Hardware features ─────────────────────────────────────────── -->
+    <uses-feature android:name="android.hardware.nfc"     android:required="true" />
+    <uses-feature android:name="android.hardware.nfc.hce" android:required="true" />
+
+    <!-- ── Application ──────────────────────────────────────────────── -->
+    <application
+        android:name=".GreenwireApp"
+        android:allowBackup="false"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.AppCompat.DayNight.DarkActionBar">
+
+        <!-- ── Activities ─────────────────────────────────────────── -->
+
+        <!--
+            MainActivity: the lab control panel.
+            SingleTask so that NFC intents forwarded from NFCDispatchActivity
+            do not create a second instance.
+        -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+            NFCDispatchActivity: foreground NFC tag handler.
+            Must be in the foreground for NfcAdapter.enableForegroundDispatch() to
+            intercept tags before the system routes them elsewhere.
+
+            Handles all three NFC dispatch priorities:
+              1. NDEF_DISCOVERED  – highest priority, triggered by NDEF-formatted tags
+              2. TECH_DISCOVERED  – triggered by tech type match (see nfc_tech_filter.xml)
+              3. TAG_DISCOVERED   – fallback, catches any remaining tag
+
+            Ref: Android NFC documentation – "Tag Dispatch System"
+        -->
+        <activity
+            android:name=".NFCDispatchActivity"
+            android:exported="true"
+            android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.nfc.action.TECH_DISCOVERED" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <meta-data
+                android:name="android.nfc.action.TECH_DISCOVERED"
+                android:resource="@xml/nfc_tech_filter" />
+            <intent-filter>
+                <action android:name="android.nfc.action.TAG_DISCOVERED" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- ── HCE Services ───────────────────────────────────────── -->
+
+        <!--
+            GreenwireHCEService: Payment card emulation.
+            Registers all major payment AIDs (Visa, MC, Amex, Discover, JCB, UnionPay)
+            plus the PPSE discovery AID.
+
+            CATEGORY_PAYMENT allows this service to be selected as the device's
+            default payment application (requires user confirmation in Settings →
+            NFC → Tap & Pay).
+
+            Spec ref: EMVCo Contactless Specifications Book C-2, Section 3.3
+                      ISO/IEC 14443 Part 4
+        -->
+        <service
+            android:name=".GreenwireHCEService"
+            android:exported="true"
+            android:permission="android.permission.BIND_NFC_SERVICE">
+            <intent-filter>
+                <action android:name="android.nfc.cardemulation.action.HOST_APDU_SERVICE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <meta-data
+                android:name="android.nfc.cardemulation.host_apdu_service"
+                android:resource="@xml/apduservice_payment" />
+        </service>
+
+        <!--
+            GooglePayRelayService: Google Wallet / VTS / MDES token emulation.
+            Registers the Google Pay wallet AID A000000004101000 and the PPSE.
+            Used for token replay and relay-through-Google-Pay research.
+
+            Spec ref: Visa Token Service (VTS) Specification
+                      Mastercard Digital Enablement Service (MDES) Tokenization Spec
+        -->
+        <service
+            android:name=".GooglePayRelayService"
+            android:exported="true"
+            android:permission="android.permission.BIND_NFC_SERVICE">
+            <intent-filter>
+                <action android:name="android.nfc.cardemulation.action.HOST_APDU_SERVICE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <meta-data
+                android:name="android.nfc.cardemulation.host_apdu_service"
+                android:resource="@xml/apduservice_googlepay" />
+        </service>
+
+        <!--
+            TransitHCEService: transit card emulation.
+            Registers Oyster, Suica, Clipper, ORCA, and Opal AIDs.
+
+            Spec ref: ISO/IEC 7816-4 (APDU structure)
+                      Felica (JIS X 6319-4) for Suica
+                      ITSO EN 15320 for Oyster
+        -->
+        <service
+            android:name=".TransitHCEService"
+            android:exported="true"
+            android:permission="android.permission.BIND_NFC_SERVICE">
+            <intent-filter>
+                <action android:name="android.nfc.cardemulation.action.HOST_APDU_SERVICE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <meta-data
+                android:name="android.nfc.cardemulation.host_apdu_service"
+                android:resource="@xml/apduservice_transit" />
+        </service>
+
+        <!--
+            AccessCardHCEService: physical access card emulation.
+            Registers a custom AID for HID Prox / generic ISO 14443 lab testing.
+
+            Spec ref: ISO/IEC 14443 Parts 1–4
+                      HID Global iCLASS / Prox format specifications
+        -->
+        <service
+            android:name=".AccessCardHCEService"
+            android:exported="true"
+            android:permission="android.permission.BIND_NFC_SERVICE">
+            <intent-filter>
+                <action android:name="android.nfc.cardemulation.action.HOST_APDU_SERVICE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <meta-data
+                android:name="android.nfc.cardemulation.host_apdu_service"
+                android:resource="@xml/apduservice_access" />
+        </service>
+
+    </application>
+
+</manifest>

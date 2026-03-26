@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    APDU Service Descriptor — Transit HCE (TransitHCEService)
+    ===========================================================
+    Registers AIDs for transit card emulation covering major world transit systems.
+
+    AIDs listed:
+      • A0000000428001 — Oyster (Transport for London, ITSO EN 15320)
+      • A0000003180000 — Suica / PASMO (JR East, Japan; based on FeliCa/ISO 14443)
+      • A0000001032010 — Clipper (San Francisco Bay Area)
+      • A0000004040000 — ORCA (Puget Sound, Seattle)
+      • A0000005035010 — Opal (Transport for NSW, Australia)
+      • A0000000860001 — Generic ITSO ticket AID (UK rail/bus)
+
+    CATEGORY_OTHER: transit cards do not require the default Tap & Pay role;
+    they are selected by AID prefix matching from the transit reader.
+
+    Spec ref: ITSO EN 15320 (UK transport smart cards)
+              EMVCo Book C-2 Section 3 (AID selection)
+              ISO/IEC 7816-4 Section 11.3.5
+-->
+<host-apdu-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/service_desc_transit"
+    android:requireDeviceUnlock="false">
+
+    <!-- Oyster Card — Transport for London; ITSO compliant AID A0000000428001 -->
+    <aid-group
+        android:description="@string/aid_desc_oyster"
+        android:category="other">
+        <aid-filter android:name="A0000000428001" />
+    </aid-group>
+
+    <!-- Suica / PASMO — JR East Japan transit system; ISO 14443 Type A -->
+    <aid-group
+        android:description="@string/aid_desc_suica"
+        android:category="other">
+        <aid-filter android:name="A0000003180000" />
+    </aid-group>
+
+    <!-- Clipper — Bay Area Rapid Transit (BART) and San Francisco Muni -->
+    <aid-group
+        android:description="@string/aid_desc_clipper"
+        android:category="other">
+        <aid-filter android:name="A0000001032010" />
+    </aid-group>
+
+    <!-- ORCA — One Regional Card for All (Seattle / Puget Sound region) -->
+    <aid-group
+        android:description="@string/aid_desc_orca"
+        android:category="other">
+        <aid-filter android:name="A0000004040000" />
+    </aid-group>
+
+    <!-- Opal — Transport for NSW (Sydney, Australia) -->
+    <aid-group
+        android:description="@string/aid_desc_opal"
+        android:category="other">
+        <aid-filter android:name="A0000005035010" />
+    </aid-group>
+
+    <!-- ITSO Generic — UK rail / National Express etc. -->
+    <aid-group
+        android:description="@string/aid_desc_itso"
+        android:category="other">
+        <aid-filter android:name="A0000000860001" />
+    </aid-group>
+
+</host-apdu-service>

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    APDU Service Descriptor — Google Pay Relay HCE (GooglePayRelayService)
+    ========================================================================
+    Registers the Google Pay wallet AID and the PPSE for VTS/MDES token
+    playback research. When GREENWIRE is the active Tap & Pay app and a
+    payment reader taps the device, this service handles the EMV handshake
+    using a stored or relayed token.
+
+    AIDs:
+      • A000000004101000 — Google Pay wallet AID (Visa payment token)
+      • 325041592E5359532E4444463031 — PPSE (2PAY.SYS.DDF01)
+
+    Note: A000000004 is the registered Google/Android AID prefix.
+
+    Spec ref: Visa Token Service (VTS) Tokenization Specification v2.3
+              Mastercard Digital Enablement Service (MDES) Specification
+              Google Pay API documentation
+-->
+<host-apdu-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/service_desc_googlepay"
+    android:requireDeviceUnlock="false">
+
+    <!-- PPSE discovery AID — terminal always selects this first -->
+    <aid-group
+        android:description="@string/aid_desc_ppse"
+        android:category="payment">
+        <aid-filter android:name="325041592E5359532E4444463031" />
+    </aid-group>
+
+    <!-- Google Pay wallet AID A000000004101000 -->
+    <!-- Android registered AID prefix: A000000004 -->
+    <aid-group
+        android:description="@string/aid_desc_googlepay"
+        android:category="payment">
+        <aid-filter android:name="A000000004101000" />
+    </aid-group>
+
+</host-apdu-service>

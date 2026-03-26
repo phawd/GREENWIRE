@@ -14,7 +14,7 @@ import subprocess
 import sys
 import threading  # noqa: F401
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -149,7 +149,7 @@ class GreenwirePyAPDUFuzzer:
 
     def _start_new_session(self, target_card: str, iterations: int, fuzz_level: int) -> None:
         self.session_data = self._create_session_template()
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         session_id = f"apdu_fuzz_{timestamp}"
         self.session_data["session_id"] = session_id
         self.session_data["target_card"] = target_card

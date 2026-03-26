@@ -18,7 +18,7 @@ Features:
 
 import hashlib, json, os, requests, sqlite3, sys, threading, time  # noqa: F401
 from typing import Any, Dict, List, Optional, Tuple, Union  # noqa: F401
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path  # noqa: F401
 from urllib.parse import urlparse  # noqa: F401
 
@@ -479,9 +479,9 @@ class CryptoKeyManager:
             ).serial_number(
                 x509.random_serial_number()
             ).not_valid_before(
-                datetime.utcnow()
+                datetime.now(timezone.utc)
             ).not_valid_after(
-                datetime.utcnow() + timedelta(days=365)
+                datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=365)
             ).sign(private_key, hashes.SHA256(), default_backend())
             
             return cert.public_bytes(serialization.Encoding.PEM).decode('utf-8')

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    APDU Service Descriptor — Payment HCE (GreenwireHCEService)
+    =============================================================
+    Registers all major payment network AIDs so that GREENWIRE is dispatched
+    when a contactless payment reader performs a SELECT by DF Name command.
+
+    AIDs listed here correspond to:
+      • Visa Credit/Debit:   A0000000031010  (EMVCo registered AID)
+      • Visa Electron:       A0000000032010
+      • Mastercard Credit:   A0000000041010
+      • Mastercard Maestro:  A0000000043060
+      • American Express:    A00000002501
+      • Discover/Diners:     A0000001523010
+      • JCB:                 A0000000651010
+      • UnionPay:            A000000333010101
+      • PPSE discovery:      325041592E5359532E4444463031  ("2PAY.SYS.DDF01")
+
+    CATEGORY_PAYMENT: this service competes with the default wallet (Google Pay,
+    Samsung Pay) for payment taps. The user must select GREENWIRE as the default
+    Tap & Pay application in Settings → Connected devices → NFC → Tap & Pay.
+
+    requireDeviceUnlock="false": allows tapping while screen is off / locked.
+    This is intentional for relay testing where the lock state is irrelevant.
+
+    Spec ref: EMVCo Contactless Specification for Payment Systems Book C-2
+              ISO/IEC 7816-4 Section 11.3.5 (SELECT by DF Name)
+-->
+<host-apdu-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/service_desc_payment"
+    android:requireDeviceUnlock="false">
+
+    <!-- PPSE: Payment System Environment — reader sends this first to discover AIDs -->
+    <!-- AID "2PAY.SYS.DDF01" encoded as ASCII hex = 325041592E5359532E4444463031 -->
+    <aid-group
+        android:description="@string/aid_desc_ppse"
+        android:category="payment">
+        <aid-filter android:name="325041592E5359532E4444463031" />
+    </aid-group>
+
+    <!-- Visa International — Credit/Debit (A0000000031010) and Electron (A0000000032010) -->
+    <!-- Spec: EMVCo Book C-3 (Visa Contactless Payment Specification) -->
+    <aid-group
+        android:description="@string/aid_desc_visa"
+        android:category="payment">
+        <aid-filter android:name="A0000000031010" />
+        <aid-filter android:name="A0000000032010" />
+    </aid-group>
+
+    <!-- Mastercard — Credit/Debit (A0000000041010) and Maestro (A0000000043060) -->
+    <!-- Spec: M/Chip Contactless Specifications for Payment Systems -->
+    <aid-group
+        android:description="@string/aid_desc_mc"
+        android:category="payment">
+        <aid-filter android:name="A0000000041010" />
+        <aid-filter android:name="A0000000043060" />
+    </aid-group>
+
+    <!-- American Express — A00000002501 -->
+    <!-- Spec: American Express Contactless Specifications -->
+    <aid-group
+        android:description="@string/aid_desc_amex"
+        android:category="payment">
+        <aid-filter android:name="A00000002501" />
+    </aid-group>
+
+    <!-- Discover / Diners Club — A0000001523010 -->
+    <!-- Spec: Discover D-PAS Contactless Specifications -->
+    <aid-group
+        android:description="@string/aid_desc_discover"
+        android:category="payment">
+        <aid-filter android:name="A0000001523010" />
+    </aid-group>
+
+    <!-- JCB — A0000000651010 -->
+    <!-- Spec: JCB J/Speedy Contactless Specification -->
+    <aid-group
+        android:description="@string/aid_desc_jcb"
+        android:category="payment">
+        <aid-filter android:name="A0000000651010" />
+    </aid-group>
+
+    <!-- UnionPay — A000000333010101 -->
+    <!-- Spec: China UnionPay Contactless Specifications (QUICS) -->
+    <aid-group
+        android:description="@string/aid_desc_unionpay"
+        android:category="payment">
+        <aid-filter android:name="A000000333010101" />
+    </aid-group>
+
+</host-apdu-service>

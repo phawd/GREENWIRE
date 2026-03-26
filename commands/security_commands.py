@@ -9,7 +9,7 @@ import argparse
 import json
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -24,7 +24,7 @@ def security_scan(args: argparse.Namespace) -> CommandResult:
     
     scan_results = {
         'scan_id': f"scan_{int(time.time())}",
-        'started_at': datetime.utcnow().isoformat() + "Z",
+        'started_at': datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
         'target': args.target or 'auto-detect',
         'vulnerabilities': []
     }
@@ -49,7 +49,7 @@ def security_scan(args: argparse.Namespace) -> CommandResult:
         ]
         scan_results['vulnerabilities'] = vulnerabilities
     
-    scan_results['completed_at'] = datetime.utcnow().isoformat() + "Z"
+    scan_results['completed_at'] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
     scan_results['vulnerability_count'] = len(scan_results['vulnerabilities'])
     
     # Save results if requested
@@ -92,7 +92,7 @@ def enhanced_data_extraction(args: argparse.Namespace) -> CommandResult:
     
     extraction_results = {
         'session_id': f"extract_{int(time.time())}",
-        'started_at': datetime.utcnow().isoformat() + "Z",
+        'started_at': datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
         'attack_types': attack_types,
         'results': {}
     }
@@ -173,7 +173,7 @@ def enhanced_data_extraction(args: argparse.Namespace) -> CommandResult:
                 'note': "Enhanced data extraction system not available - using simulation"
             }
     
-    extraction_results['completed_at'] = datetime.utcnow().isoformat() + "Z"
+    extraction_results['completed_at'] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
     
     # Save results
     if args.output:
@@ -203,7 +203,7 @@ def fuzzing_comprehensive(args: argparse.Namespace) -> CommandResult:
     fuzz_results = {
         'session_id': f"fuzz_{int(time.time())}",
         'config': fuzz_config,
-        'started_at': datetime.utcnow().isoformat() + "Z",
+        'started_at': datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
         'crashes': [],
         'anomalies': [],
         'statistics': {}
@@ -238,7 +238,7 @@ def fuzzing_comprehensive(args: argparse.Namespace) -> CommandResult:
             'coverage_percentage': random.randint(60, 95)
         }
     
-    fuzz_results['completed_at'] = datetime.utcnow().isoformat() + "Z"
+    fuzz_results['completed_at'] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
     
     # Save results
     if args.output:
@@ -261,7 +261,7 @@ def penetration_test(args: argparse.Namespace) -> CommandResult:
         'test_id': f"pentest_{int(time.time())}",
         'target': args.target,
         'test_suite': args.suite,
-        'started_at': datetime.utcnow().isoformat() + "Z",
+        'started_at': datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
         'tests_executed': [],
         'findings': []
     }
@@ -294,7 +294,7 @@ def penetration_test(args: argparse.Namespace) -> CommandResult:
             
             pentest_results['tests_executed'].append(test_result)
     
-    pentest_results['completed_at'] = datetime.utcnow().isoformat() + "Z"
+    pentest_results['completed_at'] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
     
     # Save results
     if args.output:

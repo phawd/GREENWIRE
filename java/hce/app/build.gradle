@@ -1,0 +1,49 @@
+// GREENWIRE NFC Lab – app/build.gradle
+// Targets Android 14 (API 34), minimum Android 5.0 (API 21).
+// All Java source compiled with Java 11 language level.
+// Dependencies are kept minimal: Gson for JSON, AppCompat for theming,
+// ConstraintLayout for activity_main, lifecycle-service for background services.
+
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.greenwire.hce'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.greenwire.hce"
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName "1.0-GREENWIRE"
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    buildTypes {
+        debug {
+            debuggable true
+        }
+        release {
+            minifyEnabled false
+        }
+    }
+
+    // Suppress lint errors that would otherwise block APK generation
+    // for lab/research builds.
+    lint {
+        abortOnError false
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'androidx.lifecycle:lifecycle-service:2.7.0'
+}

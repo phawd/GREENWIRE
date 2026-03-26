@@ -52,7 +52,7 @@ import sys
 import threading
 import time
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -306,7 +306,7 @@ class CryptographicFuzzer:
             "duration_ms": timing_result.get("duration_ms"),
             "duration_ns": timing_result.get("duration_ns"),
             "payload_size": timing_result.get("payload_size"),
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
         }
         if context:
             event["context"] = context
@@ -317,7 +317,7 @@ class CryptographicFuzzer:
         response_entry = {
             **oracle_response,
             "attack_vector": attack_vector,
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
         }
         self.fuzzing_session.setdefault("oracle_responses", []).append(response_entry)
 

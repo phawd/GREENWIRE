@@ -1,11 +1,11 @@
 # Full Distribution Audit
 
-Generated: `2026-03-18T17:05:59.763718Z`
+Generated: `2026-03-26T18:07:53.682Z`
 
 ## Scope
 
 - docs files read first: `74`
-- full repository files read: `2333`
+- full repository files read: `3288`
 
 ## Results
 
@@ -16,7 +16,7 @@ Generated: `2026-03-18T17:05:59.763718Z`
 
 ## External Checks
 
-- markdown path check exit code: `0`
+- markdown path check exit code: `1`
 - consistency audit exit code: `0`
 
 ## Notes

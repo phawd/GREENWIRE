@@ -1,0 +1,54 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.0rc2, pytest-8.4.2, pluggy-1.6.0
+rootdir: F:\repo\GREENWIRE
+configfile: pyproject.toml
+collected 157 items
+
+tests\test_card_read_commands.py ....                                    [  2%]
+tests\test_check_markdown_paths.py ...                                   [  4%]
+tests\test_cli_coverage_matrix.py .                                      [  5%]
+tests\test_configuration_manager_pin_defaults.py ..                      [  6%]
+tests\test_emv_ca_locator.py ..                                          [  7%]
+tests\test_emv_kernel_registry.py ....                                   [ 10%]
+tests\test_emv_reference_vectors.py ..                                   [ 11%]
+tests\test_globalplatform_reference.py ....                              [ 14%]
+tests\test_gp_jar_resolution.py ..                                       [ 15%]
+tests\test_gp_session_command.py ....                                    [ 17%]
+tests\test_issuance_crypto_readiness.py ...                              [ 19%]
+tests\test_issuance_policy.py ............                               [ 27%]
+tests\test_key_generators.py ........................................... [ 54%]
+..............................                                           [ 73%]
+tests\test_mutant_card_commands.py F
+
+================================== FAILURES ===================================
+__________________ test_mutant_card_create_and_run_merchant ___________________
+tests\test_mutant_card_commands.py:54: in test_mutant_card_create_and_run_merchant
+    assert run_result.success is True
+E   AssertionError: assert False is True
+E    +  where False = CommandResult(success=False, message='Mutant card workflow failed: PyCryptodome is required for 3DES MAC (install pycryptodome)', data=None, exit_code=1, timestamp='2026-03-26T16:27:05.505Z', command=None, duration_ms=None).success
+---------------------------- Captured stdout call -----------------------------
+[HSM/ATM Integration] Initialized
+============================== warnings summary ===============================
+<frozen importlib._bootstrap>:491
+  <frozen importlib._bootstrap>:491: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:491
+  <frozen importlib._bootstrap>:491: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+tests/test_key_generators.py: 12 warnings
+  F:\repo\GREENWIRE\core\key_generators.py:116: CryptographyDeprecationWarning: TripleDES has been moved to cryptography.hazmat.decrepit.ciphers.algorithms.TripleDES and will be removed from cryptography.hazmat.primitives.ciphers.algorithms in 48.0.0.
+    cipher = Cipher(algorithms.TripleDES(key), modes.ECB(), backend=default_backend())
+
+tests/test_key_generators.py::TestKeyGenerators::test_arqc_length
+tests/test_key_generators.py::TestKeyGenerators::test_emv_session_key_lengths
+tests/test_key_generators.py::TestKeyGenerators::test_emv_different_atc_different_arqc
+tests/test_key_generators.py::TestKeyGenerators::test_emv_icc_mk_16_bytes
+tests/test_key_generators.py::TestKeyGenerators::test_hce_arqc_length
+  F:\\repo\\GREENWIRE\\core\\key_generators.py:676: CryptographyDeprecationWarning: TripleDES has been moved to cryptography.hazmat.decrepit.ciphers.algorithms.TripleDES and will be removed from cryptography.hazmat.primitives.ciphers.algorithms in 48.0.0.\n    algorithms.TripleDES(k_left * 3),   # expand 8B\u219224B for API
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_mutant_card_commands.py::test_mutant_card_create_and_run_merchant
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+================= 1 failed, 116 passed, 19 warnings in 26.71s =================
+<sys>:0: DeprecationWarning: builtin type swigvarlink has no __module__ attribute

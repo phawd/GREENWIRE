@@ -1,0 +1,272 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.0rc2, pytest-8.4.2, pluggy-1.6.0 -- C:\Users\cross\AppData\Local\Python\pythoncore-3.14-64\python.exe
+cachedir: .pytest_cache
+rootdir: F:\repo\GREENWIRE
+configfile: pyproject.toml
+collecting ... collected 157 items
+
+tests/test_card_read_commands.py::test_card_read_masks_sensitive_fields_and_decodes_logs PASSED [  0%]
+tests/test_card_read_commands.py::test_card_read_full_returns_sanitized_payload PASSED [  1%]
+tests/test_card_read_commands.py::test_card_history_collects_multiple_sources_with_limit PASSED [  1%]
+tests/test_card_read_commands.py::test_card_history_reports_missing_file PASSED [  2%]
+tests/test_check_markdown_paths.py::test_checker_accepts_valid_markdown_links_and_static_paths PASSED [  3%]
+tests/test_check_markdown_paths.py::test_checker_reports_broken_markdown_links PASSED [  3%]
+tests/test_check_markdown_paths.py::test_checker_reports_missing_static_refs PASSED [  4%]
+tests/test_cli_coverage_matrix.py::test_help_covers_all_registered_commands PASSED [  5%]
+tests/test_configuration_manager_pin_defaults.py::test_configuration_manager_defaults_card_pin_to_6666 PASSED [  5%]
+tests/test_configuration_manager_pin_defaults.py::test_configuration_manager_reads_default_pin_from_greenwire_conf PASSED [  6%]
+tests/test_emv_ca_locator.py::test_find_emv_certificate_assets_discovers_recursive_material PASSED [  7%]
+tests/test_emv_ca_locator.py::test_build_emv_certificate_inventory_returns_count PASSED [  7%]
+tests/test_emv_kernel_registry.py::test_scheme_to_kernel_mapping_uses_public_profiles PASSED [  8%]
+tests/test_emv_kernel_registry.py::test_aid_to_kernel_mapping_prefers_matching_rid PASSED [  8%]
+tests/test_emv_kernel_registry.py::test_kernel_seed_corpus_is_scheme_focused PASSED [  9%]
+tests/test_emv_kernel_registry.py::test_ai_vuln_session_reports_kernel_profile PASSED [ 10%]
+tests/test_emv_reference_vectors.py::test_reference_vector_loader_reads_emv_directory PASSED [ 10%]
+tests/test_emv_reference_vectors.py::test_production_crypto_engine_uses_emv_reference_cryptograms PASSED [ 11%]
+tests/test_globalplatform_reference.py::test_globalplatform_reference_profiles_expose_public_lab_keys PASSED [ 12%]
+tests/test_globalplatform_reference.py::test_common_test_keys_prioritize_gp_defaults PASSED [ 12%]
+tests/test_globalplatform_reference.py::test_globalplatform_card_profile_uses_stable_test_keys PASSED [ 13%]
+tests/test_globalplatform_reference.py::test_oracle_download_scraper_extracts_current_file_links PASSED [ 14%]
+tests/test_gp_jar_resolution.py::test_gp_jar_candidates_are_repo_relative PASSED [ 14%]
+tests/test_gp_jar_resolution.py::test_resolve_gp_jar_prefers_static_java PASSED [ 15%]
+tests/test_gp_session_command.py::test_gp_session_builds_both_scp_plans PASSED [ 15%]
+tests/test_gp_session_command.py::test_gp_session_includes_install_and_personalization_steps PASSED [ 16%]
+tests/test_gp_session_command.py::test_gp_session_production_plan_requires_explicit_keys PASSED [ 17%]
+tests/test_gp_session_command.py::test_gp_session_rejects_test_mode_without_test_command PASSED [ 17%]
+tests/test_issuance_crypto_readiness.py::test_validate_issuance_crypto_readiness_passes_with_valid_dependencies PASSED [ 18%]
+tests/test_issuance_crypto_readiness.py::test_validate_issuance_crypto_readiness_flags_missing_ca PASSED [ 19%]
+tests/test_issuance_crypto_readiness.py::test_validate_issuance_crypto_readiness_can_include_atm_checks PASSED [ 19%]
+tests/test_issuance_policy.py::test_card_create_rejects_test_key_profile_without_test_function PASSED [ 20%]
+tests/test_issuance_policy.py::test_card_create_rejects_test_key_profile_even_with_explicit_test_function PASSED [ 21%]
+tests/test_issuance_policy.py::test_card_create_allows_production_profile_with_explicit_test_function PASSED [ 21%]
+tests/test_issuance_policy.py::test_card_create_defaults_pin_to_6666 PASSED [ 22%]
+tests/test_issuance_policy.py::test_card_create_uses_configured_pin PASSED [ 22%]
+tests/test_issuance_policy.py::test_card_create_allows_explicit_duplicate_pan PASSED [ 23%]
+tests/test_issuance_policy.py::test_card_create_defaults_nfc_and_rfid_enabled PASSED [ 24%]
+tests/test_issuance_policy.py::test_card_create_allows_cli_override_for_nfc_and_rfid PASSED [ 24%]
+tests/test_issuance_policy.py::test_issuer_pipeline_rejects_test_key_profile_without_test_function PASSED [ 25%]
+tests/test_issuance_policy.py::test_issuer_pipeline_rejects_test_key_profile_with_test_function PASSED [ 26%]
+tests/test_issuance_policy.py::test_issuer_pipeline_rejects_invalid_merchant_required_values PASSED [ 26%]
+tests/test_issuance_policy.py::test_issuer_interface_flags_default_and_cli_override PASSED [ 27%]
+tests/test_key_generators.py::TestLuhnAlgorithm::test_well_known_visa_test_pan PASSED [ 28%]
+tests/test_key_generators.py::TestLuhnAlgorithm::test_well_known_mc_test_pan PASSED [ 28%]
+tests/test_key_generators.py::TestLuhnAlgorithm::test_amex_test_pan PASSED [ 29%]
+tests/test_key_generators.py::TestLuhnAlgorithm::test_luhn_fail_on_altered_digit PASSED [ 29%]
+tests/test_key_generators.py::TestLuhnAlgorithm::test_luhn_append_produces_valid_pan PASSED [ 30%]
+tests/test_key_generators.py::TestLuhnAlgorithm::test_all_zeros_edge_case PASSED [ 31%]
+tests/test_key_generators.py::TestLuhnAlgorithm::test_single_digit_invalid PASSED [ 31%]
+tests/test_key_generators.py::TestLuhnAlgorithm::test_strips_spaces_and_hyphens[4111 1111 1111 1111-True] PASSED [ 32%]
+tests/test_key_generators.py::TestLuhnAlgorithm::test_strips_spaces_and_hyphens[4111-1111-1111-1111-True] PASSED [ 33%]
+tests/test_key_generators.py::TestLuhnAlgorithm::test_strips_spaces_and_hyphens[4111 1111 1111 1112-False] PASSED [ 33%]
+tests/test_key_generators.py::TestBINLookup::test_visa_generic_4prefix PASSED [ 34%]
+tests/test_key_generators.py::TestBINLookup::test_known_visa_test_pan PASSED [ 35%]
+tests/test_key_generators.py::TestBINLookup::test_mastercard_5series PASSED [ 35%]
+tests/test_key_generators.py::TestBINLookup::test_mastercard_2series PASSED [ 36%]
+tests/test_key_generators.py::TestBINLookup::test_amex_34prefix PASSED   [ 36%]
+tests/test_key_generators.py::TestBINLookup::test_amex_37prefix PASSED   [ 37%]
+tests/test_key_generators.py::TestBINLookup::test_discover_6011 PASSED   [ 38%]
+tests/test_key_generators.py::TestBINLookup::test_unknown_bin PASSED     [ 38%]
+tests/test_key_generators.py::TestBINLookup::test_bin8_priority_over_bin6 PASSED [ 39%]
+tests/test_key_generators.py::TestValidatePan::test_full_visa_profile PASSED [ 40%]
+tests/test_key_generators.py::TestValidatePan::test_expired_card_flagged PASSED [ 40%]
+tests/test_key_generators.py::TestValidatePan::test_future_expiry_ok PASSED [ 41%]
+tests/test_key_generators.py::TestValidatePan::test_cvv_wrong_length_for_scheme PASSED [ 42%]
+tests/test_key_generators.py::TestValidatePan::test_test_pan_flagged PASSED [ 42%]
+tests/test_key_generators.py::TestValidatePan::test_token_pan_flagged PASSED [ 43%]
+tests/test_key_generators.py::TestValidatePan::test_batch_validate PASSED [ 43%]
+tests/test_key_generators.py::TestValidatePan::test_service_code_decode[101-international] PASSED [ 44%]
+tests/test_key_generators.py::TestValidatePan::test_service_code_decode[201-international] PASSED [ 45%]
+tests/test_key_generators.py::TestValidatePan::test_service_code_decode[120-interchange] PASSED [ 45%]
+tests/test_key_generators.py::TestValidatePan::test_service_code_decode[220-interchange] PASSED [ 46%]
+tests/test_key_generators.py::TestPANRegistry::test_register_and_lookup PASSED [ 47%]
+tests/test_key_generators.py::TestPANRegistry::test_no_duplicate PASSED  [ 47%]
+tests/test_key_generators.py::TestPANRegistry::test_acquire_unique PASSED [ 48%]
+tests/test_key_generators.py::TestPANRegistry::test_normalize_strips_spaces PASSED [ 49%]
+tests/test_key_generators.py::TestSyntheticIdentity::test_generate_pan_luhn_valid[visa] PASSED [ 49%]
+tests/test_key_generators.py::TestSyntheticIdentity::test_generate_pan_luhn_valid[mastercard] PASSED [ 50%]
+tests/test_key_generators.py::TestSyntheticIdentity::test_generate_pan_luhn_valid[amex] PASSED [ 50%]
+tests/test_key_generators.py::TestSyntheticIdentity::test_generate_pan_luhn_valid[discover] PASSED [ 51%]
+tests/test_key_generators.py::TestSyntheticIdentity::test_generate_pan_correct_prefix[visa] PASSED [ 52%]
+tests/test_key_generators.py::TestSyntheticIdentity::test_generate_pan_correct_prefix[mastercard] PASSED [ 52%]
+tests/test_key_generators.py::TestSyntheticIdentity::test_generate_pan_correct_prefix[amex] PASSED [ 53%]
+tests/test_key_generators.py::TestSyntheticIdentity::test_generate_pan_correct_prefix[discover] PASSED [ 54%]
+tests/test_key_generators.py::TestSyntheticIdentity::test_calculate_luhn_checksum_known PASSED [ 54%]
+tests/test_key_generators.py::TestSyntheticIdentity::test_validate_luhn_matches_card_validator PASSED [ 55%]
+tests/test_key_generators.py::TestKeyGenerators::test_gp_static_diversification_deterministic PASSED [ 56%]
+tests/test_key_generators.py::TestKeyGenerators::test_gp_static_diversification_key_lengths PASSED [ 56%]
+tests/test_key_generators.py::TestKeyGenerators::test_gp_static_different_serials_produce_different_keys PASSED [ 57%]
+tests/test_key_generators.py::TestKeyGenerators::test_gp_keyset_display_returns_hex_strings PASSED [ 57%]
+tests/test_key_generators.py::TestKeyGenerators::test_scp03_key_lengths PASSED [ 58%]
+tests/test_key_generators.py::TestKeyGenerators::test_scp03_different_challenges_different_keys PASSED [ 59%]
+tests/test_key_generators.py::TestKeyGenerators::test_scp03_deterministic_with_same_challenges PASSED [ 59%]
+tests/test_key_generators.py::TestKeyGenerators::test_arqc_length PASSED [ 60%]
+tests/test_key_generators.py::TestKeyGenerators::test_emv_session_key_lengths PASSED [ 61%]
+tests/test_key_generators.py::TestKeyGenerators::test_emv_different_atc_different_arqc PASSED [ 61%]
+tests/test_key_generators.py::TestKeyGenerators::test_emv_icc_mk_16_bytes PASSED [ 62%]
+tests/test_key_generators.py::TestKeyGenerators::test_hce_generator_luhn_valid_dpan PASSED [ 63%]
+tests/test_key_generators.py::TestKeyGenerators::test_luk_batch_size PASSED [ 63%]
+tests/test_key_generators.py::TestKeyGenerators::test_hce_luk_entries_have_atc_and_luk PASSED [ 64%]
+tests/test_key_generators.py::TestKeyGenerators::test_hce_arqc_length PASSED [ 64%]
+tests/test_key_generators.py::TestCardValidatorIntegration::test_all_test_vectors_pass_luhn PASSED [ 65%]
+tests/test_key_generators.py::TestCardValidatorIntegration::test_validate_pan_no_errors_for_test_pans[4111111111111111] PASSED [ 66%]
+tests/test_key_generators.py::TestCardValidatorIntegration::test_validate_pan_no_errors_for_test_pans[5500005555555559] PASSED [ 66%]
+tests/test_key_generators.py::TestCardValidatorIntegration::test_validate_pan_no_errors_for_test_pans[378282246310005] PASSED [ 67%]
+tests/test_key_generators.py::TestCardValidatorIntegration::test_validate_pan_no_errors_for_test_pans[6011111111111117] PASSED [ 68%]
+tests/test_key_generators.py::TestCardValidatorIntegration::test_service_codes_all_decode[101] PASSED [ 68%]
+tests/test_key_generators.py::TestCardValidatorIntegration::test_service_codes_all_decode[201] PASSED [ 69%]
+tests/test_key_generators.py::TestCardValidatorIntegration::test_service_codes_all_decode[120] PASSED [ 70%]
+tests/test_key_generators.py::TestCardValidatorIntegration::test_service_codes_all_decode[220] PASSED [ 70%]
+tests/test_key_generators.py::TestCardValidatorIntegration::test_service_codes_all_decode[999] PASSED [ 71%]
+tests/test_key_generators.py::TestCardValidatorIntegration::test_service_codes_all_decode[510] PASSED [ 71%]
+tests/test_key_generators.py::TestCardValidatorIntegration::test_batch_order_preserved PASSED [ 72%]
+tests/test_key_generators.py::TestCardValidatorIntegration::test_card_profile_is_test_pan_for_canonical_visa PASSED [ 73%]
+tests/test_key_generators.py::TestCardValidatorIntegration::test_card_profile_ok_property_reflects_all_checks PASSED [ 73%]
+tests/test_mutant_card_commands.py::test_mutant_card_create_and_run_merchant FAILED [ 74%]
+tests/test_mutant_card_commands.py::test_mutant_card_create_run_atm FAILED [ 75%]
+tests/test_native_wireless_support.py::test_normalize_host_platform_handles_windows_and_linux PASSED [ 75%]
+tests/test_native_wireless_support.py::test_is_acr_reader_matches_acs_hardware PASSED [ 76%]
+tests/test_native_wireless_support.py::test_build_wireless_support_matrix_reports_android_ios_and_acr PASSED [ 77%]
+tests/test_native_wireless_support.py::test_select_wireless_backend_prefers_ios_for_apple_when_available PASSED [ 77%]
+tests/test_native_wireless_support.py::test_select_wireless_backend_honors_requested_acr_transport PASSED [ 78%]
+tests/test_operator_log_codec.py::test_operator_log_codec_roundtrip PASSED [ 78%]
+tests/test_pan_registry.py::test_register_pan_and_detect_registration PASSED [ 79%]
+tests/test_pan_registry.py::test_acquire_unique_pan_skips_existing_values PASSED [ 80%]
+tests/test_pipeline_cryptogram_binding.py::test_cryptogram_payload_binds_pan_and_transaction_context PASSED [ 80%]
+tests/test_pipeline_cryptogram_binding.py::test_hsm_backend_generates_and_verifies_pan_bound_arqc FAILED [ 81%]
+tests/test_script_smoke.py::test_greenwire_legacy_version_flag_smoke FAILED [ 82%]
+tests/test_script_smoke.py::test_greenwire_modern_list_commands_smoke PASSED [ 82%]
+tests/test_script_smoke.py::test_greenwire_modern_gp_session_profiles_smoke PASSED [ 83%]
+tests/test_script_smoke.py::test_greenwire_modern_wireless_kernel_examples_smoke PASSED [ 84%]
+tests/test_script_smoke.py::test_greenwire_modern_mutant_card_dry_run_smoke PASSED [ 84%]
+tests/test_script_smoke.py::test_greenwire_modern_card_issue_smoke FAILED [ 85%]
+tests/test_script_smoke.py::test_verify_java_static_setup_smoke FAILED   [ 85%]
+tests/test_script_smoke.py::test_emv_nfc_verify_json_smoke FAILED        [ 86%]
+tests/test_script_smoke.py::test_repo_consistency_audit_smoke PASSED     [ 87%]
+tests/test_script_smoke.py::test_full_distribution_audit_smoke PASSED    [ 87%]
+tests/test_smart_vulnerability_card.py::test_mutation_plan_is_logged_to_card_records PASSED [ 88%]
+tests/test_smart_vulnerability_card.py::test_mutation_plan_contains_floor_cvm_and_injections PASSED [ 89%]
+tests/test_static_distribution.py::test_prepare_python_bundle PASSED     [ 89%]
+tests/test_static_distribution.py::test_generate_report_includes_cap_metadata PASSED [ 90%]
+tests/test_static_distribution.py::test_cap_metadata_parser_flags_missing_sections PASSED [ 91%]
+tests/test_static_distribution.py::test_cli_check_reports_json PASSED    [ 91%]
+tests/test_static_distribution.py::test_inventory_command_writes_markdown PASSED [ 92%]
+tests/test_synthetic_identity.py::test_generate_identity_uses_plausible_visa_defaults PASSED [ 92%]
+tests/test_synthetic_identity.py::test_generate_identity_uses_amex_length_and_luhn PASSED [ 93%]
+tests/test_synthetic_identity.py::test_generate_cardholder_name_normalizes_user_input PASSED [ 94%]
+tests/test_synthetic_identity.py::test_card_create_uses_synthetic_identity_defaults FAILED [ 94%]
+tests/test_synthetic_identity.py::test_card_create_preserves_scheme_default_length_for_amex FAILED [ 95%]
+tests/test_wallet_commands.py::test_wallet_provision_returns_mobile_and_rfid_targets PASSED [ 96%]
+tests/test_wallet_commands.py::test_wallet_provision_supports_explicit_transport_selection PASSED [ 96%]
+tests/test_wallet_commands.py::test_mobile_wallet_integrator_supports_extended_targets PASSED [ 97%]
+tests/test_wireless_kernel_command.py::test_wireless_kernel_examples_command PASSED [ 98%]
+tests/test_wireless_kernel_command.py::test_wireless_kernel_simulate_command PASSED [ 98%]
+tests/test_wireless_kernel_profiles.py::test_infer_wireless_kernel_uses_transit_for_rfid PASSED [ 99%]
+tests/test_wireless_kernel_profiles.py::test_simulate_wireless_decision_requires_cvm_above_floor PASSED [100%]
+
+================================== FAILURES ===================================
+__________________ test_mutant_card_create_and_run_merchant ___________________
+tests\test_mutant_card_commands.py:54: in test_mutant_card_create_and_run_merchant
+    assert run_result.success is True
+E   assert False is True
+E    +  where False = CommandResult(success=False, message="Mutant card workflow failed: name 'DES3' is not defined", data=None, exit_code=1, timestamp='2026-03-26T16:28:23.245Z', command=None, duration_ms=None).success
+---------------------------- Captured stdout call -----------------------------
+[HSM/ATM Integration] Initialized
+_______________________ test_mutant_card_create_run_atm _______________________
+tests\test_mutant_card_commands.py:75: in test_mutant_card_create_run_atm
+    assert result.success is True
+E   assert False is True
+E    +  where False = CommandResult(success=False, message="Mutant card workflow failed: name 'DES3' is not defined", data=None, exit_code=1, timestamp='2026-03-26T16:28:23.518Z', command=None, duration_ms=None).success
+---------------------------- Captured stdout call -----------------------------
+[HSM/ATM Integration] Initialized
+___________ test_hsm_backend_generates_and_verifies_pan_bound_arqc ____________
+tests\test_pipeline_cryptogram_binding.py:39: in test_hsm_backend_generates_and_verifies_pan_bound_arqc
+    arqc = backend.generate_arqc(pan="4003123412341234", atc=7, payload=payload)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+core\pipeline_providers.py:107: in generate_arqc
+    return self._service.generate_arqc(self._master_key_label, pan, atc, payload)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+core\hsm_service.py:253: in generate_arqc
+    return self._emulator.generate_arqc(master_key_label, pan, atc, data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hsm\thales_emulator.py:155: in generate_arqc
+    mac = self._compute_3des_mac_from_key(session_key, data)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+hsm\thales_emulator.py:100: in _compute_3des_mac_from_key
+    if DES3 is None:
+       ^^^^
+E   NameError: name 'DES3' is not defined
+---------------------------- Captured stdout call -----------------------------
+[HSM/ATM Integration] Initialized
+__________________ test_greenwire_legacy_version_flag_smoke ___________________
+tests\test_script_smoke.py:30: in test_greenwire_legacy_version_flag_smoke
+    assert result.returncode == 0
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['C:\\Users\\cross\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe', 'greenwire.py', '--version'], returncode=1, stdout='\x1b[32mINFO    \x1b[0m [NFC_INIT] UnifiedNFCManager initialized\n[WARN] pycryptodome not available, using mocked cryptographic operations\n', stderr='2026-03-26 11:28:24,276 - INFO - UnifiedNFCManager initialized\nTraceback (most recent call last):\n  File "F:\\repo\\GREENWIRE\\greenwire.py", line 45, in <module>\n    from core.ui.menu_actions import (\n    ...<8 lines>...\n    )\n  File "F:\\repo\\GREENWIRE\\core\\ui\\menu_actions.py", line 9, in <module>\n    from tool_audit import aggregate, human\nModuleNotFoundError: No module named \'tool_audit\'\n').returncode
+___________________ test_greenwire_modern_card_issue_smoke ____________________
+tests\test_script_smoke.py:71: in test_greenwire_modern_card_issue_smoke
+    assert result.returncode == 0
+E   assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['C:\\Users\\cross\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe', 'greenwire_modern.py', 'card-issue', '--', '--pan', '4111111111111111', '--timeout', '10', '--format', 'json'], returncode=1, stdout='\x1b[32mINFO    \x1b[0m [NFC_INIT] UnifiedNFCManager initialized\n[WARN] pycryptodome not available, using mocked cryptographic operations\n[HSM/ATM Integration] Initialized\n{\n  "success": false,\n  "message": "Issuer pipeline validation failed",\n  "data": {\n    "errors": [\n      "Merchant ARQC generation/verification self-test failed: name \'DES3\' is not defined"\n    ]\n  },\n  "exit_code": 1,\n  "timestamp": "2026-03-26T16:28:28.612Z",\n  "command": "--format json card-issue -- --pan 4111111111111111 --timeout 10",\n  "duration_ms": 174\n}\n', stderr='2026-03-26 11:28:28,338 - INFO - UnifiedNFCManager initialized\n').returncode
+_____________________ test_verify_java_static_setup_smoke _____________________
+tests\test_script_smoke.py:77: in test_verify_java_static_setup_smoke
+    assert result.returncode == 0
+E   AssertionError: assert 1 == 0
+E    +  where 1 = CompletedProcess(args=['C:\\Users\\cross\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe', 'tools/verify_java_static_setup.py'], returncode=1, stdout='\x1b[32mINFO    \x1b[0m [NFC_INIT] UnifiedNFCManager initialized\n\U0001f4e6 GREENWIRE static Java audit\nRoot: F:\\repo\\GREENWIRE\n\nMandatory items:\n  \u274c lib/GlobalPlatformPro.jar\n     \u2192 missing: GlobalPlatformPro jar (martinpaljak releases)\n  \u2705 static/java/gp.jar\n  \u2705 static/java/ant-javacard.jar\n\nOptional (recommended for full offline cap conversion):\n  \u274c sdk\\javacard\\lib\\api_classic-3.0.5.jar\n     \u2192 suggestion: JavaCard API (e.g., api_classic.jar or versioned variant)\n  \u274c sdk\\javacard\\lib\\tools.jar\n     \u2192 suggestion: JavaCard converter tools.jar (SDK)\n\njava in PATH: C:\\Program Files\\Eclipse Adoptium\\jdk-25.0.2.10-hotspot\\bin\\java.EXE\n\n\u26a0\ufe0f  Static Java toolchain incomplete. Populate missing files and rerun.\n', stderr='2026-03-26 11:28:29,254 - INFO - UnifiedNFCManager initialized\n').returncode
+_______________________ test_emv_nfc_verify_json_smoke ________________________
+tests\test_script_smoke.py:83: in test_emv_nfc_verify_json_smoke
+    assert result.returncode == 0
+E   assert 2 == 0
+E    +  where 2 = CompletedProcess(args=['C:\\Users\\cross\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe', 'emv_nfc_verify.py', '--json'], returncode=2, stdout='', stderr="C:\\Users\\cross\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe: can't open file 'F:\\\\repo\\\\GREENWIRE\\\\emv_nfc_verify.py': [Errno 2] No such file or directory\n").returncode
+______________ test_card_create_uses_synthetic_identity_defaults ______________
+tests\test_synthetic_identity.py:46: in test_card_create_uses_synthetic_identity_defaults
+    assert result.success is True
+E   assert False is True
+E    +  where False = CommandResult(success=False, message='Card creation validation failed', data={'errors': ["Merchant ARQC generation/verification self-test failed: name 'DES3' is not defined"]}, exit_code=2, timestamp='2026-03-26T16:29:52.123Z', command=None, duration_ms=None).success
+---------------------------- Captured stdout call -----------------------------
+[HSM/ATM Integration] Initialized
+__________ test_card_create_preserves_scheme_default_length_for_amex __________
+tests\test_synthetic_identity.py:59: in test_card_create_preserves_scheme_default_length_for_amex
+    assert result.success is True
+E   assert False is True
+E    +  where False = CommandResult(success=False, message='Card creation validation failed', data={'errors': ["Merchant ARQC generation/verification self-test failed: name 'DES3' is not defined"]}, exit_code=2, timestamp='2026-03-26T16:29:52.157Z', command=None, duration_ms=None).success
+---------------------------- Captured stdout call -----------------------------
+[HSM/ATM Integration] Initialized
+============================== warnings summary ===============================
+<frozen importlib._bootstrap>:491
+  <frozen importlib._bootstrap>:491: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:491
+  <frozen importlib._bootstrap>:491: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+tests/test_key_generators.py: 12 warnings
+  F:\repo\GREENWIRE\core\key_generators.py:116: CryptographyDeprecationWarning: TripleDES has been moved to cryptography.hazmat.decrepit.ciphers.algorithms.TripleDES and will be removed from cryptography.hazmat.primitives.ciphers.algorithms in 48.0.0.
+    cipher = Cipher(algorithms.TripleDES(key), modes.ECB(), backend=default_backend())
+
+tests/test_key_generators.py::TestKeyGenerators::test_arqc_length
+tests/test_key_generators.py::TestKeyGenerators::test_emv_session_key_lengths
+tests/test_key_generators.py::TestKeyGenerators::test_emv_different_atc_different_arqc
+tests/test_key_generators.py::TestKeyGenerators::test_emv_icc_mk_16_bytes
+tests/test_key_generators.py::TestKeyGenerators::test_hce_arqc_length
+  F:\\repo\\GREENWIRE\\core\\key_generators.py:676: CryptographyDeprecationWarning: TripleDES has been moved to cryptography.hazmat.decrepit.ciphers.algorithms.TripleDES and will be removed from cryptography.hazmat.primitives.ciphers.algorithms in 48.0.0.\n    algorithms.TripleDES(k_left * 3),   # expand 8B\u219224B for API
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/test_mutant_card_commands.py::test_mutant_card_create_and_run_merchant - assert False is True
+ +  where False = CommandResult(success=False, message="Mutant card workflow failed: name 'DES3' is not defined", data=None, exit_code=1, timestamp='2026-03-26T16:28:23.245Z', command=None, duration_ms=None).success
+FAILED tests/test_mutant_card_commands.py::test_mutant_card_create_run_atm - assert False is True
+ +  where False = CommandResult(success=False, message="Mutant card workflow failed: name 'DES3' is not defined", data=None, exit_code=1, timestamp='2026-03-26T16:28:23.518Z', command=None, duration_ms=None).success
+FAILED tests/test_pipeline_cryptogram_binding.py::test_hsm_backend_generates_and_verifies_pan_bound_arqc - NameError: name 'DES3' is not defined
+FAILED tests/test_script_smoke.py::test_greenwire_legacy_version_flag_smoke - assert 1 == 0
+ +  where 1 = CompletedProcess(args=['C:\\Users\\cross\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe', 'greenwire.py', '--version'], returncode=1, stdout='\x1b[32mINFO    \x1b[0m [NFC_INIT] UnifiedNFCManager initialized\n[WARN] pycryptodome not available, using mocked cryptographic operations\n', stderr='2026-03-26 11:28:24,276 - INFO - UnifiedNFCManager initialized\nTraceback (most recent call last):\n  File "F:\\repo\\GREENWIRE\\greenwire.py", line 45, in <module>\n    from core.ui.menu_actions import (\n    ...<8 lines>...\n    )\n  File "F:\\repo\\GREENWIRE\\core\\ui\\menu_actions.py", line 9, in <module>\n    from tool_audit import aggregate, human\nModuleNotFoundError: No module named \'tool_audit\'\n').returncode
+FAILED tests/test_script_smoke.py::test_greenwire_modern_card_issue_smoke - assert 1 == 0
+ +  where 1 = CompletedProcess(args=['C:\\Users\\cross\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe', 'greenwire_modern.py', 'card-issue', '--', '--pan', '4111111111111111', '--timeout', '10', '--format', 'json'], returncode=1, stdout='\x1b[32mINFO    \x1b[0m [NFC_INIT] UnifiedNFCManager initialized\n[WARN] pycryptodome not available, using mocked cryptographic operations\n[HSM/ATM Integration] Initialized\n{\n  "success": false,\n  "message": "Issuer pipeline validation failed",\n  "data": {\n    "errors": [\n      "Merchant ARQC generation/verification self-test failed: name \'DES3\' is not defined"\n    ]\n  },\n  "exit_code": 1,\n  "timestamp": "2026-03-26T16:28:28.612Z",\n  "command": "--format json card-issue -- --pan 4111111111111111 --timeout 10",\n  "duration_ms": 174\n}\n', stderr='2026-03-26 11:28:28,338 - INFO - UnifiedNFCManager initialized\n').returncode
+FAILED tests/test_script_smoke.py::test_verify_java_static_setup_smoke - AssertionError: assert 1 == 0
+ +  where 1 = CompletedProcess(args=['C:\\Users\\cross\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe', 'tools/verify_java_static_setup.py'], returncode=1, stdout='\x1b[32mINFO    \x1b[0m [NFC_INIT] UnifiedNFCManager initialized\n\U0001f4e6 GREENWIRE static Java audit\nRoot: F:\\repo\\GREENWIRE\n\nMandatory items:\n  \u274c lib/GlobalPlatformPro.jar\n     \u2192 missing: GlobalPlatformPro jar (martinpaljak releases)\n  \u2705 static/java/gp.jar\n  \u2705 static/java/ant-javacard.jar\n\nOptional (recommended for full offline cap conversion):\n  \u274c sdk\\javacard\\lib\\api_classic-3.0.5.jar\n     \u2192 suggestion: JavaCard API (e.g., api_classic.jar or versioned variant)\n  \u274c sdk\\javacard\\lib\\tools.jar\n     \u2192 suggestion: JavaCard converter tools.jar (SDK)\n\njava in PATH: C:\\Program Files\\Eclipse Adoptium\\jdk-25.0.2.10-hotspot\\bin\\java.EXE\n\n\u26a0\ufe0f  Static Java toolchain incomplete. Populate missing files and rerun.\n', stderr='2026-03-26 11:28:29,254 - INFO - UnifiedNFCManager initialized\n').returncode
+FAILED tests/test_script_smoke.py::test_emv_nfc_verify_json_smoke - assert 2 == 0
+ +  where 2 = CompletedProcess(args=['C:\\Users\\cross\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe', 'emv_nfc_verify.py', '--json'], returncode=2, stdout='', stderr="C:\\Users\\cross\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe: can't open file 'F:\\\\repo\\\\GREENWIRE\\\\emv_nfc_verify.py': [Errno 2] No such file or directory\n").returncode
+FAILED tests/test_synthetic_identity.py::test_card_create_uses_synthetic_identity_defaults - assert False is True
+ +  where False = CommandResult(success=False, message='Card creation validation failed', data={'errors': ["Merchant ARQC generation/verification self-test failed: name 'DES3' is not defined"]}, exit_code=2, timestamp='2026-03-26T16:29:52.123Z', command=None, duration_ms=None).success
+FAILED tests/test_synthetic_identity.py::test_card_create_preserves_scheme_default_length_for_amex - assert False is True
+ +  where False = CommandResult(success=False, message='Card creation validation failed', data={'errors': ["Merchant ARQC generation/verification self-test failed: name 'DES3' is not defined"]}, exit_code=2, timestamp='2026-03-26T16:29:52.157Z', command=None, duration_ms=None).success
+=========== 9 failed, 148 passed, 19 warnings in 115.21s (0:01:55) ============
+<sys>:0: DeprecationWarning: builtin type swigvarlink has no __module__ attribute

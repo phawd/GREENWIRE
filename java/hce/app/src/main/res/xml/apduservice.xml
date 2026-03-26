@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    AID groups registered for GREENWIRE HCE.
+
+    CATEGORY_PAYMENT — competes with Google Wallet / Samsung Pay for payment taps.
+    When this app is NOT the default wallet, it only handles taps when in the
+    foreground (ForegroundDispatch) OR when the default wallet does not claim the AID.
+
+    For lab use with a dedicated reader, CATEGORY_OTHER is sufficient and avoids
+    any system dialog on non-rooted devices.
+-->
+<host-apdu-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/servicedesc"
+    android:requireDeviceUnlock="false"
+    android:apduServiceBanner="@drawable/banner">
+
+    <!-- Visa -->
+    <aid-group android:description="@string/aiddesc_visa"
+               android:category="payment">
+        <aid-filter android:name="A0000000031010" />
+        <aid-filter android:name="A0000000032010" />
+    </aid-group>
+
+    <!-- Mastercard -->
+    <aid-group android:description="@string/aiddesc_mc"
+               android:category="payment">
+        <aid-filter android:name="A0000000041010" />
+        <aid-filter android:name="A0000000043060" />
+    </aid-group>
+
+    <!-- PPSE — Payment System Environment discovery -->
+    <aid-group android:description="@string/aiddesc_ppse"
+               android:category="other">
+        <aid-filter android:name="325041592E5359532E4444463031" />
+    </aid-group>
+
+    <!-- GREENWIRE lab AID (custom) -->
+    <aid-group android:description="@string/aiddesc_lab"
+               android:category="other">
+        <aid-filter android:name="A000000623014752454E5700" />
+    </aid-group>
+
+</host-apdu-service>

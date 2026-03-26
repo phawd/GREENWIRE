@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    NFC Technology Filter — used by NFCDispatchActivity for TECH_DISCOVERED dispatch.
+
+    Each <tech-list> element is logically ANDed (tag must support ALL techs in the list).
+    Multiple <tech-list> elements are logically ORed (match any list).
+
+    We declare each tech type individually so that ANY supported NFC technology
+    routes to NFCDispatchActivity: IsoDep (EMV/14443-4), MifareClassic,
+    MifareUltralight, NDEF, NfcA, NfcB (ISO 14443 Type B), NfcF (FeliCa),
+    NfcV (ISO 15693 / vicinity cards), NdefFormatable.
+
+    Ref: Android NFC documentation – "Filtering for NFC intents"
+         ISO/IEC 14443 Parts 1–4
+         ISO/IEC 15693 (NfcV)
+         JIS X 6319-4 (NfcF / FeliCa)
+-->
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- ISO-DEP (ISO 14443-4) — used by EMV payment cards, access cards -->
+    <tech-list>
+        <tech>android.nfc.tech.IsoDep</tech>
+    </tech-list>
+
+    <!-- NFC-A (ISO 14443-3A) — Mifare Classic, Ultralight, many generic tags -->
+    <tech-list>
+        <tech>android.nfc.tech.NfcA</tech>
+    </tech-list>
+
+    <!-- NFC-B (ISO 14443-3B) — e-Passports, some access cards -->
+    <tech-list>
+        <tech>android.nfc.tech.NfcB</tech>
+    </tech-list>
+
+    <!-- NFC-F (JIS X 6319-4 / FeliCa) — Suica, PASMO, Edy transit cards -->
+    <tech-list>
+        <tech>android.nfc.tech.NfcF</tech>
+    </tech-list>
+
+    <!-- NFC-V (ISO 15693) — vicinity/long-range tags, some access badges -->
+    <tech-list>
+        <tech>android.nfc.tech.NfcV</tech>
+    </tech-list>
+
+    <!-- NDEF — pre-formatted NDEF tags (any underlying tech) -->
+    <tech-list>
+        <tech>android.nfc.tech.Ndef</tech>
+    </tech-list>
+
+    <!-- NdefFormatable — blank tags that can be formatted as NDEF -->
+    <tech-list>
+        <tech>android.nfc.tech.NdefFormatable</tech>
+    </tech-list>
+
+    <!-- Mifare Classic — 1K / 4K transit/access cards -->
+    <tech-list>
+        <tech>android.nfc.tech.MifareClassic</tech>
+    </tech-list>
+
+    <!-- Mifare Ultralight — C / EV1 / Nano low-cost tags -->
+    <tech-list>
+        <tech>android.nfc.tech.MifareUltralight</tech>
+    </tech-list>
+
+</resources>

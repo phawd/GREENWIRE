@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 import re
 from typing import Dict, List
 
@@ -41,7 +41,7 @@ def validate_card_identity(
     try:
         parsed_expiry = datetime.strptime(expiry, "%m/%y")
         # Compare against the first day of current month.
-        now = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        now = datetime.now(timezone.utc).replace(tzinfo=None).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         if parsed_expiry.replace(day=1) < now:
             errors.append("Expiry must be in the future")
     except ValueError:

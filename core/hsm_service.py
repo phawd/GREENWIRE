@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 import hashlib
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional
 
@@ -131,7 +131,7 @@ class HSMService:
                 key=key_hex.upper(),
                 length=len(key_bytes),
                 kcv=payload.get("kcv", self._compute_kcv(key_bytes)),
-                created=payload.get("created", datetime.utcnow().isoformat() + "Z"),
+                created=payload.get("created", datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"),
                 usage=payload.get("usage"),
                 integration_slot=payload.get("integration_slot"),
             )
@@ -336,7 +336,7 @@ class HSMService:
             key=key_hex,
             length=len(key_bytes),
             kcv=self._compute_kcv(key_bytes),
-            created=datetime.utcnow().isoformat() + "Z",
+            created=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
             usage=usage,
             integration_slot=integration_slot,
         )

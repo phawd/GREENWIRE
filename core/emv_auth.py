@@ -51,7 +51,7 @@ def build_self_signed_cert(private_key, subject_common_name: str = 'GREENWIRE EM
     The certificate is valid for 10 years and contains only the common name.
     """
     subject = issuer = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, subject_common_name)])
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(datetime.timezone.utc)
     builder = (
         x509.CertificateBuilder()
         .subject_name(subject)

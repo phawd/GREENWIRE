@@ -8,7 +8,7 @@ Commands for creating, managing, and manipulating payment cards.
 import argparse
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -115,7 +115,7 @@ def card_create(args: argparse.Namespace) -> CommandResult:
         'cvv': args.cvv or _generate_cvv(args.card_type),
         'pin': pin,
         'cardholder_name': cardholder_name,
-        'created_at': datetime.utcnow().isoformat() + "Z",
+        'created_at': datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
         'card_type': args.card_type,
         'issuer': issuer_name,
         'key_profile': key_profile,
@@ -302,7 +302,7 @@ def card_clone(args: argparse.Namespace) -> CommandResult:
     
     # Update metadata
     cloned_card['cloned_from'] = str(args.source)
-    cloned_card['cloned_at'] = datetime.utcnow().isoformat() + "Z"
+    cloned_card['cloned_at'] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
     
     # Save cloned card
     output_file = args.output or f"cloned_{cloned_card['pan'][-4:]}.json"

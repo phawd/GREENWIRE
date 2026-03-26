@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Dict, Optional
 
@@ -53,7 +53,7 @@ def register_pan(
     if normalized in registry and not allow_existing:
         return False
     registry[normalized] = {
-        "registered_at": datetime.utcnow().isoformat() + "Z",
+        "registered_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
         "source": source,
     }
     _save_registry(registry, path)

@@ -6,7 +6,6 @@ from pathlib import Path
 
 from core.hsm_service import HSMService
 from .menu_builder import MenuBuilder
-from tool_audit import aggregate, human
 
 # --- RFID & NFC Actions ---
 

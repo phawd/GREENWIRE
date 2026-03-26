@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import json
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Iterable, List, Tuple
 
@@ -181,7 +181,7 @@ def main() -> int:
     consistency_code, consistency_output = _run_command("tools/review_repo_consistency.py", [])
 
     summary = {
-        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
         "docs_files_total": len(docs_files),
         "repo_files_total": len(all_files),
         "docs_issue_count": len(docs_issues),

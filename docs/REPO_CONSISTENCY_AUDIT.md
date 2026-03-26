@@ -1,6 +1,6 @@
 # Repo Consistency Audit
 
-Generated: `2026-03-18T17:05:59.723871Z`
+Generated: `2026-03-26T18:07:53.636Z`
 
 ## Programmed Defaults
 
@@ -12,7 +12,7 @@ Generated: `2026-03-18T17:05:59.723871Z`
 
 ## Inventory
 
-- Markdown files reviewed: `59`
+- Markdown files reviewed: `66`
 - PDF files reviewed: `39`
 
 ## Mismatches
@@ -23,8 +23,8 @@ Generated: `2026-03-18T17:05:59.723871Z`
 
 ```json
 {
-  "generated_at": "2026-03-18T17:05:59.723871Z",
-  "markdown_count": 59,
+  "generated_at": "2026-03-26T18:07:53.636Z",
+  "markdown_count": 66,
   "pdf_count": 39,
   "mismatch_count": 0
 }

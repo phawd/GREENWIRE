@@ -30,7 +30,7 @@ try:
 except ImportError:
     yaml = None
     YAML_AVAILABLE = False
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 from dataclasses import dataclass, asdict
@@ -103,7 +103,7 @@ class CommandResult:
 
     def __post_init__(self):
         if self.timestamp is None:
-            self.timestamp = datetime.utcnow().isoformat() + "Z"
+            self.timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
 class GreenwireCLI:
     """Modern CLI framework for GREENWIRE"""

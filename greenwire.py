@@ -35,7 +35,7 @@ import threading
 import time
 import traceback
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Any, Dict, List
 
@@ -5066,7 +5066,7 @@ def run_realworld_card_generation(args):
 
     def _append_log(card_obj: Dict[str, Any], operation: str, result: Any) -> None:
         record = {
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'operation': operation,
             'result': result,
         }
@@ -6391,7 +6391,7 @@ def show_config_menu():
         print("\n📤 Export Configuration")
         from core.global_defaults import load_defaults
         cfg = load_defaults()
-        ts = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+        ts = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
         out_dir = input("Export directory (blank for current): ").strip() or '.'
         try:
             Path(out_dir).mkdir(parents=True, exist_ok=True)
@@ -9364,6 +9364,9 @@ def main(args: argparse.Namespace) -> None:
             if not critical_ok:
                 # Non-zero exit to signal CI failure
                 sys.exit(1)
+        except ImportError:
+            print("❌ audit-env: tool_audit module has been archived (see archive/root_scripts/tool_audit.py)")
+            sys.exit(2)
         except Exception as e:
             print(f"❌ audit-env error: {e}")
             sys.exit(2)
@@ -9371,7 +9374,11 @@ def main(args: argparse.Namespace) -> None:
         # Delegate to standalone script to avoid circular imports
         try:
             # Defer execution to dedicated module using python -m to avoid path issues
-            import emv_nfc_verify  # noqa: F401
+            try:
+                import emv_nfc_verify  # noqa: F401
+            except ImportError:
+                print("❌ verify-nfc-emv: emv_nfc_verify module has been archived (see archive/root_scripts/emv_nfc_verify.py)")
+                sys.exit(2)
             forward = [sys.executable, "-m", "emv_nfc_verify"]
             for flag in ["device", "aids", "cap_file", "gp_jar", "aid", "reader"]:
                 val = getattr(args, flag, None)

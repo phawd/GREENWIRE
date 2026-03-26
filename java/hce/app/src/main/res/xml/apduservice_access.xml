@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    APDU Service Descriptor — Access Card HCE (AccessCardHCEService)
+    =================================================================
+    Registers AIDs for physical access control card emulation.
+
+    AIDs listed:
+      • A0000003971002 — HID Global iCLASS (ISO 14443 layer)
+      • A000000620      — HID Prox / EM4100 simulation AID (lab defined)
+      • A0000008471100 — MIFARE DESFire EV1 Application (Proximity / PACS)
+      • A0000005272101 — Gallagher T11 (NZ/AU access control systems)
+      • A000000092      — Generic PACS (Physical Access Control System) AID
+
+    CATEGORY_OTHER: access cards are not payment cards; they are matched by
+    the specific AID sent by the access reader.
+
+    Spec ref: ISO/IEC 14443 Parts 1–4 (contactless PICC specification)
+              HID Global iCLASS Specification Rev 5.0
+              IEC 62056-21 (access card data format)
+-->
+<host-apdu-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/service_desc_access"
+    android:requireDeviceUnlock="false">
+
+    <!-- HID iCLASS — ISO 14443-4 layer of HID Global smart cards -->
+    <aid-group
+        android:description="@string/aid_desc_hid_iclass"
+        android:category="other">
+        <aid-filter android:name="A0000003971002" />
+    </aid-group>
+
+    <!-- HID Prox simulation — lab-defined AID for EM4100/HID125kHz emulation layer -->
+    <aid-group
+        android:description="@string/aid_desc_hid_prox"
+        android:category="other">
+        <aid-filter android:name="A000000620" />
+    </aid-group>
+
+    <!-- MIFARE DESFire PACS AID — used by many building access systems -->
+    <aid-group
+        android:description="@string/aid_desc_desfire_pacs"
+        android:category="other">
+        <aid-filter android:name="A0000008471100" />
+    </aid-group>
+
+    <!-- Gallagher T11 — Gallagher Security access control (New Zealand / Australia) -->
+    <aid-group
+        android:description="@string/aid_desc_gallagher"
+        android:category="other">
+        <aid-filter android:name="A0000005272101" />
+    </aid-group>
+
+    <!-- Generic PACS AID — catch-all for unrecognised access reader AIDs in lab -->
+    <aid-group
+        android:description="@string/aid_desc_generic_pacs"
+        android:category="other">
+        <aid-filter android:name="A000000092" />
+    </aid-group>
+
+</host-apdu-service>

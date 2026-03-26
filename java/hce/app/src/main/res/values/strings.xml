@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    GREENWIRE NFC Lab — String resources
+    All user-visible strings and service descriptions live here.
+    UTF-8 encoded throughout.
+-->
+<resources>
+    <!-- Application -->
+    <string name="app_name">GREENWIRE NFC Lab</string>
+
+    <!-- HCE service descriptions (shown in Tap &amp; Pay settings) -->
+    <string name="service_desc_payment">GREENWIRE Payment HCE (Visa/MC/Amex/Discover relay)</string>
+    <string name="service_desc_googlepay">GREENWIRE Google Pay Token Relay</string>
+    <string name="service_desc_transit">GREENWIRE Transit Card Emulator</string>
+    <string name="service_desc_access">GREENWIRE Access Card Emulator</string>
+
+    <!-- AID group descriptions -->
+    <string name="aid_desc_ppse">PPSE — 2PAY.SYS.DDF01 (payment discovery)</string>
+    <string name="aid_desc_visa">Visa Credit / Debit</string>
+    <string name="aid_desc_mc">Mastercard / Maestro</string>
+    <string name="aid_desc_amex">American Express</string>
+    <string name="aid_desc_discover">Discover / Diners Club</string>
+    <string name="aid_desc_jcb">JCB</string>
+    <string name="aid_desc_unionpay">UnionPay</string>
+    <string name="aid_desc_googlepay">Google Pay Wallet Token</string>
+    <string name="aid_desc_oyster">Oyster (TfL)</string>
+    <string name="aid_desc_suica">Suica / PASMO (JR East)</string>
+    <string name="aid_desc_clipper">Clipper (BART / SF Muni)</string>
+    <string name="aid_desc_orca">ORCA (Seattle / Puget Sound)</string>
+    <string name="aid_desc_opal">Opal (Transport for NSW)</string>
+    <string name="aid_desc_itso">ITSO Generic (UK rail/bus)</string>
+    <string name="aid_desc_hid_iclass">HID iCLASS (ISO 14443-4)</string>
+    <string name="aid_desc_hid_prox">HID Prox / EM4100 Simulation</string>
+    <string name="aid_desc_desfire_pacs">MIFARE DESFire PACS</string>
+    <string name="aid_desc_gallagher">Gallagher T11 (NZ/AU)</string>
+    <string name="aid_desc_generic_pacs">Generic PACS AID</string>
+
+    <!-- MainActivity buttons -->
+    <string name="btn_payment_hce">💳 Payment HCE</string>
+    <string name="btn_transit">🚇 Transit</string>
+    <string name="btn_access_card">🔑 Access Card</string>
+    <string name="btn_relay_mode">📡 Relay Mode</string>
+    <string name="btn_nfc_scan">🔍 NFC Scan</string>
+    <string name="btn_fuzz">💣 Fuzz</string>
+    <string name="btn_clone">🔄 Clone</string>
+    <string name="btn_reset">☠️ RESET</string>
+
+    <!-- Status labels -->
+    <string name="status_relay_connected">Relay: CONNECTED</string>
+    <string name="status_relay_disconnected">Relay: DISCONNECTED</string>
+    <string name="status_mode_prefix">Mode: </string>
+    <string name="status_idle">Idle — tap a mode button to begin</string>
+
+    <!-- Relay settings -->
+    <string name="label_relay_host">Relay host (IP or localhost)</string>
+    <string name="label_relay_port">Relay port</string>
+    <string name="label_use_wifi">Use WiFi relay</string>
+    <string name="label_dpan">Device PAN (DPAN)</string>
+    <string name="label_expiry">Expiry (MMYY)</string>
+    <string name="label_facility_code">Facility code (access card)</string>
+    <string name="label_card_number">Card number (access card)</string>
+
+    <!-- Dialogs -->
+    <string name="reset_confirm_title">☠️ NUCLEAR RESET</string>
+    <string name="reset_confirm_msg">This will delete ALL stored tokens, keys, NDEF data and logs.
+        Active relay sessions will be terminated.
+        The device ID will be regenerated.
+        This cannot be undone.\n\nProceed?</string>
+    <string name="reset_confirm_ok">RESET NOW</string>
+    <string name="reset_confirm_cancel">Cancel</string>
+    <string name="reset_toast_3">GREENWIRE RESET IN 3…</string>
+    <string name="reset_toast_2">GREENWIRE RESET IN 2…</string>
+    <string name="reset_toast_1">GREENWIRE RESET IN 1…</string>
+    <string name="reset_toast_done">✅ RESET COMPLETE</string>
+
+    <!-- Log section -->
+    <string name="section_log">Recent APDU traffic</string>
+    <string name="log_empty">(no traffic yet)</string>
+
+    <!-- Settings fragment title -->
+    <string name="settings_title">Relay &amp; Token Settings</string>
+</resources>

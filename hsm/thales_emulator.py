@@ -15,10 +15,32 @@ from __future__ import annotations
 import os
 from typing import Dict, Optional
 
+# Use the `cryptography` package (already a hard GREENWIRE dependency) so
+# that pycryptodome is never required.  TripleDES moved to the "decrepit"
+# sub-package in cryptography ≥ 43; fall back gracefully for older versions.
 try:
-    from Crypto.Cipher import DES3
-except Exception:  # pragma: no cover - runtime optional dependency
-    DES3 = None
+    from cryptography.hazmat.decrepit.ciphers.algorithms import TripleDES as _TripleDES
+except ImportError:  # cryptography < 43
+    from cryptography.hazmat.primitives.ciphers.algorithms import TripleDES as _TripleDES  # type: ignore[no-redef]
+
+from cryptography.hazmat.primitives.ciphers import Cipher, modes
+from cryptography.hazmat.backends import default_backend
+
+
+def _des3_cbc_encrypt(key: bytes, iv: bytes, data: bytes) -> bytes:
+    """3DES-CBC encrypt *data* (already padded to 8-byte boundary)."""
+    cipher = Cipher(_TripleDES(key), modes.CBC(iv), backend=default_backend())
+    enc = cipher.encryptor()
+    return enc.update(data) + enc.finalize()
+
+
+def _expand_key(key: bytes) -> bytes:
+    """Normalise a DES key to 24 bytes (EDE3 form) as required by the API."""
+    if len(key) == 8:
+        return key * 3
+    if len(key) == 16:
+        return key + key[:8]
+    return key  # already 24 bytes
 
 
 class ThalesEmulator:
@@ -40,61 +62,50 @@ class ThalesEmulator:
         return self._keys.get(label)
 
     def generate_mac(self, key_label: str, data: bytes, algorithm: str = "des3") -> str:
+        """ISO 9797-1 Retail MAC (Algorithm 3, Padding Method 2) — returns hex string.
+
+        Thales HSMs use this for PIN-block and key-block integrity checks.
+        The MAC is 3DES-CBC over ISO-padded data with an all-zero IV.
+        Result is the last 8 bytes of the ciphertext (the chaining value after
+        the final DES3 block), returned as an uppercase hex string.
+
+        EMVCo Book 2 §A.1.3 specifies this exact construction for ARQC.
+        """
         key = self._keys.get(key_label)
         if key is None:
-            raise KeyError("Unknown key label")
-        # Implement ISO 9797 MAC (Retail MAC / ISO9797-1 MAC Algorithm 3 with DES-EDE)
+            raise KeyError(f"Unknown key label: {key_label!r}")
         if algorithm.lower() not in ("des3", "3des", "iso9797"):
-            raise ValueError("Unsupported algorithm; supported: des3/iso9797")
+            raise ValueError("Unsupported algorithm; use 'des3' or 'iso9797'")
+        if len(key) not in (8, 16, 24):
+            raise ValueError("Key must be 8, 16, or 24 bytes for 3DES MAC")
 
-        if DES3 is None:
-            raise RuntimeError("PyCryptodome is required for 3DES MAC (install pycryptodome)")
-
-        # EMV/Thales often uses Retail MAC: DES3 in CBC mode with zero IV, and final (8-byte) chaining value.
-        # Key length may be 8, 16, or 24 bytes. If 16 bytes, it is DES-EDE2 (K1,K2,K1).
-        klen = len(key)
-        if klen not in (8, 16, 24):
-            raise ValueError("Invalid key length for DES3 MAC; expected 8/16/24 bytes")
-
-        # Pad data per ISO9797-1 Method 2 (bit '1' followed by zeros) then encrypt with 3DES CBC (IV=0)
-        # Build padding
-        pad_len = 8 - (len(data) % 8) if (len(data) % 8) != 0 else 8
-        padded = data + b"\x80" + b"\x00" * (pad_len - 1)
-
-        # Use DES3 from PyCryptodome; DES3 expects a 16 or 24 byte key for EDE2/EDE3. If 8 bytes, expand to 16 (K,K,K)
-        if klen == 8:
-            des3_key = key * 3
-        elif klen == 16:
-            des3_key = key + key[:8]
-        else:
-            des3_key = key
-
-        cipher = DES3.new(des3_key, DES3.MODE_CBC, iv=b"\x00" * 8)
-        mac = cipher.encrypt(padded)[-8:]
+        mac = self._compute_3des_mac_from_key(key, data)
         return mac.hex().upper()
 
     def _compute_3des_mac_from_key(self, key_bytes: bytes, data: bytes) -> bytes:
-        """Compute 3DES Retail MAC directly from key bytes and data. Returns raw 8-byte MAC."""
-        if DES3 is None:
-            raise RuntimeError("PyCryptodome is required for 3DES MAC (install pycryptodome)")
+        """Compute ISO 9797-1 Method 2 / 3DES Retail MAC from raw key + data.
 
-        klen = len(key_bytes)
-        if klen not in (8, 16, 24):
-            raise ValueError("Invalid key length for DES3 MAC; expected 8/16/24 bytes")
+        Steps (per Thales HSM reference manual §3.2):
+          1. Pad data: append 0x80 then 0x00 bytes to next 8-byte boundary
+          2. Expand key to 24 bytes (EDE3 form)
+          3. 3DES-CBC encrypt padded data with IV = 0x00…00
+          4. Return final 8 bytes of ciphertext
 
+        Returns raw 8-byte MAC (not hex).
+        """
+        if len(key_bytes) not in (8, 16, 24):
+            raise ValueError("Key must be 8, 16, or 24 bytes")
+
+        # ISO 9797-1 Padding Method 2: append 0x80, then zero-pad to 8-byte boundary
         pad_len = 8 - (len(data) % 8) if (len(data) % 8) != 0 else 8
         padded = data + b"\x80" + b"\x00" * (pad_len - 1)
 
-        if klen == 8:
-            des3_key = key_bytes * 3
-        elif klen == 16:
-            des3_key = key_bytes + key_bytes[:8]
-        else:
-            des3_key = key_bytes
+        # Expand to 24-byte EDE3 key as required by cryptography library
+        des3_key = _expand_key(key_bytes)
 
-        cipher = DES3.new(des3_key, DES3.MODE_CBC, iv=b"\x00" * 8)
-        mac = cipher.encrypt(padded)[-8:]
-        return mac
+        # 3DES-CBC with zero IV — standard Retail MAC construction
+        ciphertext = _des3_cbc_encrypt(des3_key, b"\x00" * 8, padded)
+        return ciphertext[-8:]
 
     def derive_emv_session_key(self, master_key_label: str, pan: str, atc: int) -> bytes:
         """Derive a simple EMV session key from a stored master key, PAN and ATC.
