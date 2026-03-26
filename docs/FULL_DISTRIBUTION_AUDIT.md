@@ -1,11 +1,11 @@
 # Full Distribution Audit
 
-Generated: `2026-03-26T18:07:53.682Z`
+Generated: `2026-03-26T18:43:47.534Z`
 
 ## Scope
 
 - docs files read first: `74`
-- full repository files read: `3288`
+- full repository files read: `3292`
 
 ## Results
 

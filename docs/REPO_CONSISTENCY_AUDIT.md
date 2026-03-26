@@ -1,6 +1,6 @@
 # Repo Consistency Audit
 
-Generated: `2026-03-26T18:07:53.636Z`
+Generated: `2026-03-26T18:43:47.420Z`
 
 ## Programmed Defaults
 
@@ -23,7 +23,7 @@ Generated: `2026-03-26T18:07:53.636Z`
 
 ```json
 {
-  "generated_at": "2026-03-26T18:07:53.636Z",
+  "generated_at": "2026-03-26T18:43:47.420Z",
   "markdown_count": 66,
   "pdf_count": 39,
   "mismatch_count": 0
