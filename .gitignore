@@ -1,0 +1,21 @@
+# Build artefacts
+build/
+dist/
+*.class
+*.cap
+*.exp
+*.jca
+
+# IDE files
+.idea/
+*.iml
+.eclipse/
+.settings/
+.classpath
+.project
+*.swp
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
