@@ -25,28 +25,63 @@ public final class APDU {
     public static final byte PROTOCOL_MEDIA_CONTACTLESS_TYPE_B = (byte) 0x81;
 
     private final byte[] buffer;
+    private final byte[] responseBuffer;
+    private short responseLength;
 
     private APDU() {
-        buffer = new byte[256];
+        buffer         = new byte[256];
+        responseBuffer = new byte[256];
+        responseLength = 0;
+    }
+
+    /**
+     * Create an APDU pre-loaded with command bytes for simulation / testing.
+     * Not available on a real Java Card runtime.
+     *
+     * @param apduBytes raw command bytes (CLA INS P1 P2 [Lc data])
+     * @return a new APDU whose buffer is populated with {@code apduBytes}
+     */
+    public static APDU createForTest(byte[] apduBytes) {
+        APDU apdu = new APDU();
+        int len = Math.min(apduBytes.length, apdu.buffer.length);
+        System.arraycopy(apduBytes, 0, apdu.buffer, 0, len);
+        return apdu;
     }
 
     public byte[] getBuffer() { return buffer; }
 
-    public byte getProtocol() { return PROTOCOL_T0; }
+    public byte getProtocol() { return PROTOCOL_MEDIA_CONTACTLESS_TYPE_A; }
 
     public short setIncomingAndReceive() { return (short) (buffer[ISO7816.OFFSET_LC] & 0xFF); }
 
     public short receiveBytes(short bOff) { return (short) 0; }
 
-    public void setOutgoing() {}
+    public void setOutgoing() { responseLength = 0; }
 
-    public void setOutgoingNoChaining() {}
+    public void setOutgoingNoChaining() { responseLength = 0; }
 
-    public void setOutgoingLength(short len) {}
+    public void setOutgoingLength(short len) { responseLength = len; }
 
-    public void sendBytes(short bOff, short len) {}
+    public void sendBytes(short bOff, short len) {
+        System.arraycopy(buffer, bOff, responseBuffer, 0, len);
+        responseLength = len;
+    }
 
-    public void sendBytesLong(byte[] outData, short bOff, short len) {}
+    public void sendBytesLong(byte[] outData, short bOff, short len) {
+        System.arraycopy(outData, bOff, responseBuffer, 0, len);
+        responseLength = len;
+    }
+
+    /**
+     * Return the response data captured by {@link #sendBytesLong} /
+     * {@link #sendBytes}.  Only meaningful after applet processing has
+     * completed in a simulation context.
+     */
+    public byte[] getResponseData() {
+        byte[] result = new byte[responseLength];
+        System.arraycopy(responseBuffer, 0, result, 0, responseLength);
+        return result;
+    }
 
     public static APDU getCurrentAPDU() { return new APDU(); }
 

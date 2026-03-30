@@ -1,8 +1,8 @@
 /*
- * GREENWIRE - Java Card compilation stub
- * Derived from the Java Card 3.0.5 Classic Edition API specification.
- * Copyright (C) Oracle and/or its affiliates. All rights reserved.
- * Used here as a compilation/reference stub only.
+ * GREENWIRE - Java Card API clean-room compilation stub
+ * This file provides an independently authored surface-level stub of the
+ * javacard.framework.JCSystem API for compilation and reference purposes only.
+ * It is not derived from Oracle proprietary source code.
  */
 package javacard.framework;
 

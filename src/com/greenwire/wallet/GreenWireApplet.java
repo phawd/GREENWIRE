@@ -21,7 +21,6 @@ import javacard.framework.ISOException;
 import javacard.framework.JCSystem;
 import javacard.framework.OwnerPIN;
 import javacard.framework.Util;
-import javacardx.crypto.Cipher;
 
 /**
  * GREENWIRE Wallet Applet – Java Card applet implementing a subset of the
@@ -48,36 +47,29 @@ import javacardx.crypto.Cipher;
 public final class GreenWireApplet extends Applet implements ISO7816 {
 
     /* ------------------------------------------------------------------ */
-    /*  Applet AID (Proprietary – RID 0xA000000003 + PIX 0x1049 0x10 0x01)*/
-    /* ------------------------------------------------------------------ */
-    private static final byte[] APPLET_AID = {
-        (byte) 0xA0, 0x00, 0x00, 0x00, 0x03,   // RID – Visa
-        0x10, 0x49, 0x10, 0x01                  // PIX
-    };
-
-    /* ------------------------------------------------------------------ */
     /*  EMV instruction codes                                              */
     /* ------------------------------------------------------------------ */
-    private static final byte INS_GPO         = (byte) 0xA8;
-    private static final byte INS_GENERATE_AC = (byte) 0xAE;
+    private static final byte INS_SELECT_APP   = (byte) 0xA4;
+    private static final byte INS_GPO          = (byte) 0xA8;
+    private static final byte INS_GENERATE_AC  = (byte) 0xAE;
     private static final byte INS_GET_DATA_EMV = (byte) 0xCA;
 
     /* ------------------------------------------------------------------ */
     /*  EMV tag constants used in response TLV data                        */
     /* ------------------------------------------------------------------ */
-    /** Application Interchange Profile */
-    private static final byte TAG_AIP_HIGH = (byte) 0x82;
+    /** Response Message Template Format 1 */
+    private static final byte TAG_RMTF1        = (byte) 0x80;
     /** AFL – Application File Locator */
-    private static final byte TAG_AFL      = (byte) 0x94;
+    private static final byte TAG_AFL          = (byte) 0x94;
     /** Cryptogram Information Data */
-    private static final byte TAG_CID      = (byte) 0x9F;
-    private static final byte TAG_CID_LOW  = (byte) 0x27;
+    private static final byte TAG_CID          = (byte) 0x9F;
+    private static final byte TAG_CID_LOW      = (byte) 0x27;
     /** Application Transaction Counter */
-    private static final byte TAG_ATC_HIGH = (byte) 0x9F;
-    private static final byte TAG_ATC_LOW  = (byte) 0x36;
+    private static final byte TAG_ATC_HIGH     = (byte) 0x9F;
+    private static final byte TAG_ATC_LOW      = (byte) 0x36;
     /** Application Cryptogram */
-    private static final byte TAG_AC_HIGH  = (byte) 0x9F;
-    private static final byte TAG_AC_LOW   = (byte) 0x26;
+    private static final byte TAG_AC_HIGH      = (byte) 0x9F;
+    private static final byte TAG_AC_LOW       = (byte) 0x26;
 
     /* ------------------------------------------------------------------ */
     /*  PIN configuration                                                   */
@@ -97,22 +89,15 @@ public final class GreenWireApplet extends Applet implements ISO7816 {
     /** Unpredictable Number from the terminal (transient – cleared on reset). */
     private final byte[] unpredictableNumber;
 
-    /** Cipher for AC generation – allocated once, re-initialised per transaction. */
-    private Cipher acCipher;
-
-    /** Whether the applet has been personalised (keys loaded). */
-    private boolean personalised;
-
     /* ------------------------------------------------------------------ */
     /*  Constructor / install                                               */
     /* ------------------------------------------------------------------ */
 
     private GreenWireApplet(byte[] bArray, short bOffset, byte bLength) {
-        pin                = new OwnerPIN(PIN_TRY_LIMIT, PIN_MAX_LENGTH);
-        atc                = new byte[2];
+        pin                 = new OwnerPIN(PIN_TRY_LIMIT, PIN_MAX_LENGTH);
+        atc                 = new byte[2];
         unpredictableNumber = JCSystem.makeTransientByteArray((short) 4,
-                                JCSystem.CLEAR_ON_RESET);
-        personalised       = false;
+                                  JCSystem.CLEAR_ON_RESET);
 
         // Set default PIN to "0000"
         byte[] defaultPin = { 0x30, 0x30, 0x30, 0x30 };
@@ -130,6 +115,21 @@ public final class GreenWireApplet extends Applet implements ISO7816 {
      */
     public static void install(byte[] bArray, short bOffset, byte bLength) {
         new GreenWireApplet(bArray, bOffset, bLength);
+    }
+
+    /**
+     * Creates a fresh applet instance for simulation and testing.
+     * Not available on a real Java Card runtime.
+     *
+     * @return a new, pre-initialised {@code GreenWireApplet}
+     */
+    public static GreenWireApplet createForTest() {
+        byte[] aidPlusParams = {
+            0x09,                                                           // AID length
+            (byte) 0xA0, 0x00, 0x00, 0x00, 0x03, 0x10, 0x49, 0x10, 0x01, // AID
+            0x00, 0x00                                                      // no inst params
+        };
+        return new GreenWireApplet(aidPlusParams, (short) 0, (byte) aidPlusParams.length);
     }
 
     /* ------------------------------------------------------------------ */
@@ -155,8 +155,8 @@ public final class GreenWireApplet extends Applet implements ISO7816 {
     public void process(APDU apdu) throws ISOException {
         byte[] buf = apdu.getBuffer();
 
-        // Silently swallow SELECT for this applet
-        if (selectingApplet()) return;
+        // Silently swallow the SELECT that caused this applet to be selected
+        if (buf[OFFSET_INS] == INS_SELECT_APP) return;
 
         byte cla = buf[OFFSET_CLA];
         byte ins = buf[OFFSET_INS];
@@ -200,7 +200,7 @@ public final class GreenWireApplet extends Applet implements ISO7816 {
             if (pin.getTriesRemaining() == 0) {
                 ISOException.throwIt(SW_SECURITY_STATUS_NOT_SATISFIED);
             }
-            short sw = (short) (SW_PIN_TRIES_REMAINING | (pin.getTriesRemaining() & 0xFF));
+            short sw = (short) (SW_PIN_TRIES_REMAINING | (pin.getTriesRemaining() & 0x0F));
             ISOException.throwIt(sw);
         }
 
@@ -208,7 +208,9 @@ public final class GreenWireApplet extends Applet implements ISO7816 {
             if (pin.getTriesRemaining() == 0) {
                 ISOException.throwIt(SW_SECURITY_STATUS_NOT_SATISFIED);
             }
-            ISOException.throwIt(SW_WRONG_DATA);
+            // Return 0x63Cx where x = remaining tries (standard EMV / ISO 7816)
+            short sw = (short) (SW_PIN_TRIES_REMAINING | (pin.getTriesRemaining() & 0x0F));
+            ISOException.throwIt(sw);
         }
         // Successful PIN verification – fall through to 9000
     }
@@ -220,13 +222,13 @@ public final class GreenWireApplet extends Applet implements ISO7816 {
     private void processGetProcessingOptions(APDU apdu) {
         apdu.setIncomingAndReceive();
 
-        // AIP: SDA + offline static data authentication supported
-        // AIP byte 1: 0x18 = offline plaintext PIN + SDA
-        // AFL: one record in SFI 1, record 1
+        // Response Message Template Format 1 (tag 0x80):
+        //   AIP (2 bytes): 0x18 00 = SDA + offline plaintext PIN supported
+        //   AFL (4 bytes): SFI=1, first=1, last=1, offline_auth_records=0
         byte[] response = {
-            TAG_AIP_HIGH, 0x02, 0x18, 0x00,   // AIP (2 bytes)
-            TAG_AFL,       0x04,               // AFL (4 bytes)
-                0x08, 0x01, 0x01, 0x00         // SFI=1, first=1, last=1, offline=0
+            TAG_RMTF1, 0x06,          // Format 1 wrapper: 6 bytes of value
+            0x18, 0x00,               // AIP
+            0x08, 0x01, 0x01, 0x00    // AFL: SFI=1, first=1, last=1, offline=0
         };
 
         apdu.setOutgoing();
@@ -248,7 +250,6 @@ public final class GreenWireApplet extends Applet implements ISO7816 {
             ISOException.throwIt(SW_RECORD_NOT_FOUND);
         }
 
-        // Minimal EMV record: PAN, expiry, service code
         byte[] record = buildEmvRecord();
         apdu.setOutgoing();
         apdu.setOutgoingLength((short) record.length);
@@ -265,24 +266,25 @@ public final class GreenWireApplet extends Applet implements ISO7816 {
      */
     private byte[] buildEmvRecord() {
         // 70 (EMV record template) containing:
-        //   5A – PAN (8 bytes, BCD-encoded)
-        //   5F24 – Expiry Date (YYMMDD packed into 3 bytes)
-        //   5F25 – Effective Date
-        //   5F28 – Issuer Country Code
-        //   5F34 – PAN Sequence Number
+        //   5A  – PAN (8 bytes, BCD-encoded)          = 10 bytes
+        //   5F24 – Expiry Date (3 bytes)               =  6 bytes
+        //   5F25 – Effective Date (3 bytes)            =  6 bytes
+        //   5F28 – Issuer Country Code (2 bytes)       =  5 bytes
+        //   5F34 – PAN Sequence Number (1 byte)        =  4 bytes
+        //   Total value = 31 bytes = 0x1F
         return new byte[] {
-            0x70,                                   // record template
-            0x1A,                                   // length = 26 bytes
-            0x5A, 0x08,                             // PAN tag + length
+            0x70,                                    // record template tag
+            0x1F,                                    // value length = 31 bytes
+            0x5A, 0x08,                              // PAN tag + length
                 (byte) 0x40, 0x12, 0x34, 0x56,
-                0x78, (byte) 0x90, 0x12, 0x34,     // placeholder PAN
-            0x5F, 0x24, 0x03,                       // expiry date tag + length
-                0x27, 0x12, 0x31,                   // YY=27, MM=12, DD=31
-            0x5F, 0x25, 0x03,                       // effective date
+                0x78, (byte) 0x90, 0x12, 0x34,      // placeholder PAN
+            0x5F, 0x24, 0x03,                        // expiry date tag + length
+                0x27, 0x12, 0x31,                    // YY=27, MM=12, DD=31
+            0x5F, 0x25, 0x03,                        // effective date
                 0x24, 0x01, 0x01,
-            0x5F, 0x28, 0x02,                       // issuer country code (372=Ireland)
+            0x5F, 0x28, 0x02,                        // issuer country code (372 = Ireland)
                 0x03, 0x72,
-            0x5F, 0x34, 0x01,                       // PAN sequence number
+            0x5F, 0x34, 0x01,                        // PAN sequence number
                 0x01
         };
     }
@@ -292,7 +294,7 @@ public final class GreenWireApplet extends Applet implements ISO7816 {
     /* ------------------------------------------------------------------ */
 
     private void processGenerateAC(APDU apdu) {
-        short lc = apdu.setIncomingAndReceive();
+        short lc   = apdu.setIncomingAndReceive();
         byte[] buf = apdu.getBuffer();
 
         if (lc < 29) {
@@ -306,7 +308,6 @@ public final class GreenWireApplet extends Applet implements ISO7816 {
         // Increment ATC
         incrementATC();
 
-        // Build GENERATE AC response: CID (TC=0x40) + ATC + AC (8 bytes placeholder)
         byte[] acResponse = buildACResponse();
         apdu.setOutgoing();
         apdu.setOutgoingLength((short) acResponse.length);
@@ -314,18 +315,21 @@ public final class GreenWireApplet extends Applet implements ISO7816 {
     }
 
     private byte[] buildACResponse() {
-        // Response Message Template Format 1 (tag 77 / 80)
-        // 77 len  9F27 01 <CID>  9F36 02 <ATC>  9F26 08 <AC>
+        // Response Message Template Format 2 (tag 0x77):
+        //   9F27 01 <CID>          = 4 bytes
+        //   9F36 02 <ATC>          = 5 bytes
+        //   9F26 08 <AC (8 bytes)> = 11 bytes
+        //   Total value = 20 bytes = 0x14
         return new byte[] {
-            0x77,                         // Response Message Template Format 2 (tag 77)
-            0x0F,                         // length
-            TAG_CID, TAG_CID_LOW, 0x01,  // CID tag + len
-                0x40,                     // TC (Transaction Certificate)
-            TAG_ATC_HIGH, TAG_ATC_LOW, 0x02,  // ATC tag + len
+            0x77,                                 // Response Message Template Format 2 (tag 77)
+            0x14,                                 // value length = 20 bytes
+            TAG_CID, TAG_CID_LOW,  0x01,          // CID tag + len
+                0x40,                             // TC (Transaction Certificate)
+            TAG_ATC_HIGH, TAG_ATC_LOW, 0x02,      // ATC tag + len
                 atc[0], atc[1],
-            TAG_AC_HIGH, TAG_AC_LOW, 0x08,    // AC tag + len
-                // Placeholder AC – a real implementation would compute this
-                // using 3DES or AES with the issuer application keys.
+            TAG_AC_HIGH, TAG_AC_LOW, 0x08,        // AC tag + len (8-byte cryptogram)
+                // Placeholder AC – a real implementation must compute this
+                // using 3DES Retail-MAC or AES-CMAC with the issuer session key.
                 (byte) 0xDE, (byte) 0xAD,
                 (byte) 0xBE, (byte) 0xEF,
                 0x00, 0x00, 0x00, 0x00
@@ -337,7 +341,7 @@ public final class GreenWireApplet extends Applet implements ISO7816 {
     /* ------------------------------------------------------------------ */
 
     private void processGetData(APDU apdu) {
-        byte[] buf  = apdu.getBuffer();
+        byte[] buf   = apdu.getBuffer();
         byte tagHigh = buf[OFFSET_P1];
         byte tagLow  = buf[OFFSET_P2];
 
@@ -361,5 +365,10 @@ public final class GreenWireApplet extends Applet implements ISO7816 {
         short val = Util.makeShort(atc[0], atc[1]);
         val++;
         Util.setShort(atc, (short) 0, val);
+    }
+
+    /** Return the current ATC value (for testing/verification). */
+    public short getAtc() {
+        return Util.makeShort(atc[0], atc[1]);
     }
 }

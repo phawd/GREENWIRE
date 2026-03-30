@@ -6,6 +6,9 @@ dist/
 *.exp
 *.jca
 
+# Generated transaction logs
+logs/
+
 # IDE files
 .idea/
 *.iml

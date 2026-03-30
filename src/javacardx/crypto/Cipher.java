@@ -53,7 +53,7 @@ public abstract class Cipher {
     public static final byte ALG_AES_BLOCK_128_ECB_NOPAD = 15;
     /** AES ECB, ISO 9797 M2 padding. */
     public static final byte ALG_AES_BLOCK_128_ECB_ISO9797_M2 = 16;
-    /** AES-CBC 256-bit, no padding. */
+    /** AES CBC, ISO 9797 M2 padding (variable key size). */
     public static final byte ALG_AES_CBC_ISO9797_M2     = 17;
     /** AES-CTR. */
     public static final byte ALG_AES_CTR                = 18;

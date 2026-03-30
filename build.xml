@@ -12,10 +12,14 @@
     <property name="build.dir"   value="build"/>
     <property name="classes.dir" value="${build.dir}/classes"/>
     <property name="dist.dir"    value="dist"/>
+    <property name="logs.dir"    value="logs"/>
 
     <!-- Java source / target version (Java Card 3.0.5 targets Java 1.6+) -->
     <property name="javac.source" value="1.8"/>
     <property name="javac.target" value="1.8"/>
+
+    <!-- Number of stress-test transaction iterations (override with -Diterations=N) -->
+    <property name="iterations" value="250"/>
 
     <!-- ================================================================ -->
     <!--  init                                                             -->
@@ -23,6 +27,7 @@
     <target name="init">
         <mkdir dir="${classes.dir}"/>
         <mkdir dir="${dist.dir}"/>
+        <mkdir dir="${logs.dir}"/>
     </target>
 
     <!-- ================================================================ -->
@@ -42,15 +47,32 @@
     <!-- ================================================================ -->
     <!--  jar                                                              -->
     <!-- ================================================================ -->
+    <!--
+      Note: GreenWireApplet is a Java Card applet and has no main() entry
+      point.  The jar is provided for classpath distribution only; it is
+      not intended to be executed directly with 'java -jar'.
+    -->
     <target name="jar" depends="compile" description="Package compiled classes">
         <jar destfile="${dist.dir}/greenwire.jar"
              basedir="${classes.dir}">
             <manifest>
                 <attribute name="Implementation-Title"   value="GREENWIRE"/>
                 <attribute name="Implementation-Version" value="4.0"/>
-                <attribute name="Main-Class"             value="com.greenwire.wallet.GreenWireApplet"/>
+                <attribute name="Main-Class"             value="com.greenwire.test.StressTest"/>
             </manifest>
         </jar>
+    </target>
+
+    <!-- ================================================================ -->
+    <!--  test  –  run StressTest                                         -->
+    <!-- ================================================================ -->
+    <target name="test" depends="compile" description="Run the EMV stress-test simulator">
+        <java classname="com.greenwire.test.StressTest"
+              classpath="${classes.dir}"
+              fork="true"
+              failonerror="true">
+            <arg value="${iterations}"/>
+        </java>
     </target>
 
     <!-- ================================================================ -->
