@@ -3,6 +3,13 @@
 Comprehensive Merchant/Terminal/ATM/HSM Test Library
 Defines 50+ diverse security tests across 8 categories based on industry research.
 
+IMPORTANT SAFETY NOTICE:
+This software and the tests defined in this library are intended
+FOR USE ONLY IN A CONTROLLED LABORATORY OR TEST ENVIRONMENT. Greenwire
+must NOT be used against live payment systems, production networks,
+or any infrastructure without explicit authorization. Improper use
+may be illegal and will likely cause financial and reputational harm.
+
 Categories:
 1. Protocol Compliance (EMV, ISO 7816, ISO 14443)
 2. Cryptographic Validation (DDA, SDA, CDA, ARQC)
@@ -50,14 +57,16 @@ class MerchantTestLibrary:
     """
     Library of 50+ merchant/terminal/ATM/HSM security tests.
 
-    Each test includes:
+    Each test includes structured metadata used by the test runner:
     - Unique ID and name
-    - Category classification
-    - APDUs or commands to execute
-    - Expected responses
-    - Vulnerability indicators
-    - Severity rating
-    - References to standards
+    - Category classification (TestCategory)
+    - Severity (TestSeverity)
+    - APDU sequence or terminal command
+    - Expected status words and checks
+    - Vulnerability indicators and references
+
+    The data here is intentionally explicit so that automated test
+    runners and human auditors can understand the intent of each test.
     """
 
     def __init__(self):
@@ -65,13 +74,19 @@ class MerchantTestLibrary:
         self.tests = self._define_all_tests()
 
     def _define_all_tests(self) -> Dict[str, Dict]:
-        """Define all 50+ security tests."""
+        """Define all security tests.
+
+        Tests are returned as a dictionary keyed by a canonical test ID.
+        Each entry must be self-contained to support distributed test
+        execution (e.g., on-device or remote orchestrators).
+        """
         tests = {}
 
         # ===================================================================
         # CATEGORY 1: PROTOCOL COMPLIANCE (10 tests)
         # ===================================================================
 
+        # T001: Verify application selection and FCI handling
         tests["T001_APPLICATION_SELECTION"] = {
             "name": "Application Selection Protocol",
             "category": TestCategory.PROTOCOL_COMPLIANCE,
@@ -91,6 +106,7 @@ class MerchantTestLibrary:
             "reference": "EMVCo Book 1 Section 11.3"
         }
 
+        # T002: Validate PDOL/GPO processing and response formatting
         tests["T002_GPO_PDOL_FORMAT"] = {
             "name": "GET PROCESSING OPTIONS PDOL Validation",
             "category": TestCategory.PROTOCOL_COMPLIANCE,
@@ -110,6 +126,7 @@ class MerchantTestLibrary:
             "reference": "EMVCo Book 3 Section 6.5.8"
         }
 
+        # T003: Read record / SFI validation checks
         tests["T003_READ_RECORD_VALIDATION"] = {
             "name": "READ RECORD SFI Validation",
             "category": TestCategory.PROTOCOL_COMPLIANCE,
@@ -129,6 +146,7 @@ class MerchantTestLibrary:
             "reference": "ISO/IEC 7816-4 Section 7.3"
         }
 
+        # T004: PIN verification semantics and retry counter behavior
         tests["T004_VERIFY_PIN_FORMAT"] = {
             "name": "PIN Verification Format Check",
             "category": TestCategory.PROTOCOL_COMPLIANCE,
@@ -149,6 +167,7 @@ class MerchantTestLibrary:
             "reference": "EMVCo Book 3 Section 6.5.10"
         }
 
+        # T005: GENERATE AC / CDOL validation (cryptogram generation)
         tests["T005_GENERATE_AC_CDOL"] = {
             "name": "GENERATE AC CDOL Validation",
             "category": TestCategory.PROTOCOL_COMPLIANCE,
@@ -169,6 +188,7 @@ class MerchantTestLibrary:
             "reference": "EMVCo Book 3 Section 6.5.5"
         }
 
+        # T006: Terminal/issuer External Authenticate flow
         tests["T006_EXTERNAL_AUTHENTICATE"] = {
             "name": "External Authenticate Challenge",
             "category": TestCategory.PROTOCOL_COMPLIANCE,
@@ -189,6 +209,7 @@ class MerchantTestLibrary:
             "reference": "ISO/IEC 7816-4 Section 7.5.8"
         }
 
+        # T007: GET DATA tag protection and access control
         tests["T007_GET_DATA_TAGS"] = {
             "name": "GET DATA Tag Validation",
             "category": TestCategory.PROTOCOL_COMPLIANCE,
@@ -209,6 +230,7 @@ class MerchantTestLibrary:
             "reference": "EMVCo Book 3 Section 6.5.7"
         }
 
+        # T008: Multi-AID selection and priority enforcement
         tests["T008_MULTI_AID_PRIORITY"] = {
             "name": "Multi-Application Selection Priority",
             "category": TestCategory.PROTOCOL_COMPLIANCE,
@@ -229,6 +251,7 @@ class MerchantTestLibrary:
             "reference": "EMVCo Book 1 Section 12.3"
         }
 
+        # T009: Internal Authenticate (DDA / signature checks)
         tests["T009_INTERNAL_AUTHENTICATE"] = {
             "name": "Internal Authenticate Validation",
             "category": TestCategory.PROTOCOL_COMPLIANCE,
@@ -249,6 +272,8 @@ class MerchantTestLibrary:
             "reference": "ISO/IEC 7816-8 Section 5.3"
         }
 
+        # T010: PUT DATA should be restricted; this simulates attempts
+        # to write protected data structures and expects failure.
         tests["T010_PUT_DATA_SECURITY"] = {
             "name": "PUT DATA Security Validation",
             "category": TestCategory.PROTOCOL_COMPLIANCE,
@@ -726,6 +751,9 @@ class MerchantTestLibrary:
             "category": TestCategory.SECURITY_BOUNDARY,
             "severity": TestSeverity.HIGH,
             "description": "Test contactless cumulative amount limits",
+            "required_capabilities": {
+                "contactless": True
+            },
             "apdu": [0x80, 0xAE, 0x40, 0x00],  # Contactless GENERATE AC
             "expected_sw": [0x90, 0x00],
             "checks": [
@@ -1058,6 +1086,9 @@ class MerchantTestLibrary:
             "category": TestCategory.INTERFACE_SECURITY,
             "severity": TestSeverity.CRITICAL,
             "description": "Test relay attack countermeasures",
+            "required_capabilities": {
+                "contactless": True
+            },
             "apdu": [0x80, 0xAE, 0x40, 0x00],  # Contactless transaction
             "expected_sw": [0x90, 0x00],
             "checks": [
@@ -1078,6 +1109,9 @@ class MerchantTestLibrary:
             "category": TestCategory.INTERFACE_SECURITY,
             "severity": TestSeverity.HIGH,
             "description": "Test multi-card collision resistance",
+            "required_capabilities": {
+                "contactless": True
+            },
             "apdu": [0x00, 0xA4, 0x04, 0x00],  # SELECT with collision
             "expected_sw": [0x90, 0x00],
             "checks": [
@@ -1202,6 +1236,9 @@ class MerchantTestLibrary:
             "category": TestCategory.RISK_MANAGEMENT,
             "severity": TestSeverity.HIGH,
             "description": "Test biometric CVM implementation",
+            "required_capabilities": {
+                "biometric": True
+            },
             "apdu": [0x00, 0x21, 0x00, 0x00],  # Biometric VERIFY
             "expected_sw": [0x90, 0x00],
             "checks": [

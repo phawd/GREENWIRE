@@ -3,11 +3,18 @@
 AI Test Generator for Intelligent Card System
 Generates customized test mixes based on learned patterns, merchant profiles, and card capabilities.
 
+IMPORTANT SAFETY NOTICE:
+The AI-driven test selection is intended for controlled lab evaluations
+and red-team style assessments only. Generated test mixes may include
+high-risk operations. Do NOT run tests produced by this generator
+against production systems or without proper authorization and safety
+controls in place.
+
 Uses Machine Learning to:
-- Select optimal tests per merchant
-- Prioritize based on vulnerability history
-- Adapt test mix based on success patterns
-- Learn from ecosystem-wide intelligence (cards ↔ HSM/ATM ↔ merchants)
+ - Select optimal tests per merchant
+ - Prioritize based on vulnerability history
+ - Adapt test mix based on success patterns
+ - Learn from ecosystem-wide intelligence (cards ↔ HSM/ATM ↔ merchants)
 
 Model: Gradient Boosting for multi-class test priority prediction
 Features: merchant_type, terminal_capabilities, vulnerability_history, time_of_day, transaction_amount
@@ -47,7 +54,7 @@ class AITestGenerator:
     6. Return priority-ranked test list
     """
 
-    def __init__(self, db_path: str = "ai_learning_sessions/learning.db"):
+    def __init__(self, db_path: str = "ai_learning_sessions/learning.db", random_seed: Optional[int] = None):
         """
         Initialize AI test generator.
 
@@ -66,6 +73,16 @@ class AITestGenerator:
         # Load or train model
         if ML_AVAILABLE:
             self._load_or_train_model()
+
+        # Randomness seed for reproducibility of rule-based selection and demos
+        self.random_seed = random_seed
+        if random_seed is not None:
+            random.seed(random_seed)
+            try:
+                import numpy as _np
+                _np.random.seed(random_seed)
+            except Exception:
+                pass
 
     def _ensure_database(self):
         """Ensure AI learning database exists with test_effectiveness table."""
@@ -126,6 +143,9 @@ class AITestGenerator:
         """Load existing model or train new one."""
         model_path = "ai_learning_sessions/test_generator_model.json"
 
+        # If a serialized model exists we would load it here. The current
+        # demo stores simple JSON metadata; heavy models should use
+        # joblib/pickle with careful versioning and validation.
         if os.path.exists(model_path):
             try:
                 with open(model_path, "r") as f:
@@ -140,7 +160,13 @@ class AITestGenerator:
             self._train_model()
 
     def _train_model(self):
-        """Train ML model on historical test effectiveness data."""
+        """Train ML model on historical test effectiveness data.
+
+        This method fetches aggregated historical execution records and
+        constructs a feature matrix for training a gradient boosting
+        classifier. If insufficient data is available, the generator
+        falls back to a deterministic rule-based prioritizer.
+        """
         if not ML_AVAILABLE:
             print("[INFO] ML not available, using rule-based generator")
             return
@@ -165,6 +191,8 @@ class AITestGenerator:
         conn.close()
 
         if len(rows) < 10:
+            # Not enough samples to build a reliable model - continue
+            # using rule-based heuristics to avoid overfitting.
             print(f"[INFO] Insufficient training data ({len(rows)} samples), using rule-based generator")
             self.is_trained = False
             return
@@ -197,6 +225,8 @@ class AITestGenerator:
         self.scaler = StandardScaler()
         X_scaled = self.scaler.fit_transform(X)
 
+        # Note: GradientBoostingClassifier expects discrete labels; we
+        # discretize the continuous priority into classes for this demo.
         self.model = GradientBoostingClassifier(
             n_estimators=100,
             learning_rate=0.1,
@@ -257,6 +287,8 @@ class AITestGenerator:
         features.append(np.sin(2 * np.pi * time_of_day / 24))
         features.append(np.cos(2 * np.pi * time_of_day / 24))
 
+        # Infer kernel characteristics from AID/scheme. These features
+        # capture platform-specific behavior (different chips/vendors).
         kernel = infer_kernel_from_aid(aid) if aid else infer_kernel_from_scheme(scheme)
         for kernel_id in range(2, 9):
             features.append(1.0 if kernel.kernel_id == kernel_id else 0.0)
@@ -287,12 +319,14 @@ class AITestGenerator:
         Returns:
             List of test dicts with priority scores, sorted by priority (highest first)
         """
+        # Entry log for visibility in CLI runs
         print(f"\n[AI Test Generator] Generating test mix for merchant {merchant_id}")
 
         # Get merchant profile
         merchant_profile = self._get_merchant_profile(merchant_id)
 
-        # Get all available tests
+        # Get all available tests from the library. We will compute a
+        # compatibility and priority score for each candidate test.
         all_tests = []
         for test_id in self.test_library.get_all_test_ids():
             test = self.test_library.get_test(test_id)
@@ -307,6 +341,9 @@ class AITestGenerator:
         prioritized_tests = []
 
         for test in compatible_tests:
+            # If an ML model is trained, use it; otherwise fall back to a
+            # deterministic rule-based scorer which is robust with limited
+            # telemetry.
             if self.is_trained and ML_AVAILABLE:
                 # ML-based priority
                 priority = self._calculate_ml_priority(
@@ -343,7 +380,10 @@ class AITestGenerator:
         return selected_tests
 
     def _get_merchant_profile(self, merchant_id: str) -> Dict:
-        """Retrieve merchant profile from database."""
+        """Retrieve merchant profile from database.
+
+        Returns a structured dictionary with defaults for new merchants.
+        """
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
@@ -386,7 +426,12 @@ class AITestGenerator:
             }
 
     def _filter_by_capabilities(self, tests: List[Dict], card_capabilities: Dict) -> List[Dict]:
-        """Filter tests based on card and terminal capabilities."""
+        """Filter tests based on card and terminal capabilities.
+
+        Currently a pass-through placeholder. Future enhancements should
+        inspect a test definition's required capabilities and exclude
+        incompatible tests (e.g., contactless-only tests on contact-only cards).
+        """
         compatible = []
 
         for test in tests:
@@ -402,7 +447,12 @@ class AITestGenerator:
         merchant_profile: Dict,
         card_capabilities: Dict
     ) -> float:
-        """Calculate test priority using ML model."""
+        """Calculate test priority using ML model.
+
+        The ML model outputs a discrete class; we convert that class and
+        its probability into a 0-100 priority score and then boost based
+        on severity and merchant history.
+        """
         if not self.is_trained or not ML_AVAILABLE:
             return self._calculate_rule_based_priority(test, merchant_profile, card_capabilities, None)
 
@@ -444,11 +494,9 @@ class AITestGenerator:
         """
         Calculate test priority using rule-based heuristics (fallback).
 
-        Priority factors:
-        1. Test severity (40%)
-        2. Merchant vulnerability history (30%)
-        3. Category focus (20%)
-        4. Randomness for exploration (10%)
+        This deterministic heuristic combines severity, historical
+        merchant data, and optional category focus. A small randomness
+        factor encourages exploration of lower-priority tests.
         """
         priority = 0.0
 
@@ -486,13 +534,10 @@ class AITestGenerator:
         """
         Record test execution result for future learning.
 
-        Args:
-            test_id: Test identifier
-            merchant_id: Merchant identifier
-            success: Whether test found vulnerability
-            severity: Vulnerability severity (0-1)
-            vulnerability_found: Description of vulnerability
-            execution_time_ms: Execution time in milliseconds
+        This writes both a historical row used for analysis (test_history)
+        and updates an aggregated running average (test_effectiveness).
+        The SQL uses an UPSERT pattern to maintain per-merchant/test
+        aggregates efficiently.
         """
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -567,7 +612,12 @@ class AITestGenerator:
         terminal_capabilities: Dict,
         vulnerability_count: int = None
     ):
-        """Update merchant profile in database."""
+        """Update merchant profile in database.
+
+        If vulnerability_count is supplied it will be added to the
+        existing count; otherwise the profile is simply updated with
+        last_tested timestamp and capability information.
+        """
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 
@@ -630,7 +680,10 @@ class AITestGenerator:
         conn.close()
 
     def get_statistics(self) -> Dict:
-        """Get test generation statistics."""
+        """Get test generation statistics.
+
+        Returns basic counters to show system health and data volume.
+        """
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
 

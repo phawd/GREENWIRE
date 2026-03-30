@@ -3,6 +3,12 @@
 Intelligent Card System - Enhanced Integration Module
 Combines AI learning, EMVCo personalization, merchant testing, HSM/ATM operations.
 
+IMPORTANT SAFETY NOTICE:
+This system is provided for controlled laboratory and research use only.
+Do not deploy or run this software against live payment systems or
+production infrastructure without explicit, written authorization. The
+authors are not responsible for misuse.
+
 This module orchestrates the complete intelligent card workflow:
 1. Personalize card with EMVCo-compliant data (production mode support)
 2. Deploy merchant tester applet to card (56 tests)
@@ -59,7 +65,8 @@ class IntelligentCardSystem:
 
     def __init__(self, 
                  knowledge_base_dir: str = "ai_knowledge_base",
-                 production_mode: bool = False):
+                 production_mode: bool = False,
+                 random_seed: Optional[int] = None):
         """
         Initialize enhanced intelligent card system.
 
@@ -75,12 +82,14 @@ class IntelligentCardSystem:
         self.fuzzer = None  # Will be initialized when needed
 
         # New enhanced components
-        self.test_generator = AITestGenerator()
+        # Pass random_seed to test generator for reproducible test mixes
+        self.test_generator = AITestGenerator(random_seed=random_seed)
         self.test_library = get_test_library()
         self.hsm_atm = HSMATMIntegration()
 
         # Production mode settings
         self.production_mode = production_mode
+        self.random_seed = random_seed
 
         # Session management
         self.session_dir = Path("intelligent_card_sessions")
@@ -126,6 +135,8 @@ class IntelligentCardSystem:
         print("=" * 70)
 
         # Step 1: Validate card data
+        # The personalizer enforces EMVCo rules; validation errors are
+        # collected in the personalizer instance for debugging and audit.
         print("\n[1/3] Validating card data against EMVCo specifications...")
         if not self.personalizer._validate_card_data(card_data):
             print("❌ Validation failed:")
@@ -171,8 +182,9 @@ class IntelligentCardSystem:
             success: Whether deployment succeeded
         """
         try:
-            # In real implementation, would use GlobalPlatformPro
-            # to install the CAP file
+            # NOTE: Deployment is simulated here. In production, deployment
+            # should use GlobalPlatform/GPPro or a hardware-backed installer
+            # which authenticates and installs the CAP on the target card.
 
             cap_file = Path("javacard/applet/build/javacard/merchanttest.cap")
 
@@ -226,9 +238,15 @@ class IntelligentCardSystem:
         print(f"⚠️  This card will be fully functional for internal testing")
         print("=" * 70)
 
+        # Local imports to limit module scope and dependencies for CLI
         import uuid
         import hashlib
+        import random
         from datetime import datetime, timedelta
+
+        # "random" is used to generate deterministic-looking PAN bodies
+        # for test cards. In production-grade systems a secure generation
+        # and allocation process must be used.
 
         # Generate unique card ID
         card_id = f"ICS-PROD-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:8].upper()}"
@@ -248,6 +266,7 @@ class IntelligentCardSystem:
         bin_prefix = test_bins.get(card_type, "4000")
 
         # Generate card number with valid Luhn checksum
+        # NOTE: This uses pseudorandom digits for demo/test purposes only.
         card_body = bin_prefix + "".join([str(random.randint(0, 9)) for _ in range(11)])
         checksum = self._calculate_luhn_checksum(card_body)
         card_number = card_body + str(checksum)
@@ -299,6 +318,9 @@ class IntelligentCardSystem:
         print(f"  CVM List: PIN + Signature")
 
         # Step 5: Create audit trail
+        # Audit records record high-level events and cryptographic operations
+        # performed during card generation. In production this file must be
+        # protected and access-controlled.
         print(f"\n[5/6] Creating audit trail...")
         audit_id = f"AUDIT-{datetime.now().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:8].upper()}"
         audit_record = {
@@ -360,7 +382,12 @@ class IntelligentCardSystem:
         }
 
     def _calculate_luhn_checksum(self, card_body: str) -> int:
-        """Calculate Luhn checksum digit for card number validation."""
+        """Calculate Luhn checksum digit for card number validation.
+
+        The Luhn algorithm is used to compute the final check digit for
+        payment card numbers. This helper returns the single checksum
+        digit that makes the full PAN Luhn-valid.
+        """
         digits = [int(d) for d in card_body]
         checksum = 0
 
@@ -392,6 +419,9 @@ class IntelligentCardSystem:
         print("=" * 70)
 
         # Get AI recommendations
+        # The AI engine suggests attack vectors based on prior sessions and
+        # the observed ATR. These are high-level recommendations; execution
+        # is handled by the fuzzer/exploit modules.
         print("\n[AI] Analyzing card and recommending attacks...")
         recommendations = self.ai.get_recommended_attacks(card_atr, limit=5)
 
@@ -465,7 +495,13 @@ class IntelligentCardSystem:
         return session_summary
 
     def _simulate_attack(self, technique: str, card_atr: str) -> Dict:
-        """Simulate an attack for demonstration."""
+        """Simulate an attack for demonstration.
+
+        This helper creates synthetic results to drive the AI learning
+        workflow during demos or when hardware is not available. Real
+        attacks should be performed by specialized modules that record
+        detailed telemetry (timing, power traces, APDU logs).
+        """
         import random
         import hashlib
 
@@ -534,6 +570,9 @@ class IntelligentCardSystem:
         print(f"Test Library: {self.test_library.get_test_count()} available")
 
         # Step 1: Get merchant intelligence from HSM/ATM
+        # Merchant intelligence includes a risk score and aggregated
+        # vulnerabilities discovered by the ecosystem; the AI uses this
+        # to bias test selection toward likely issues.
         print(f"\n[HSM/ATM] Retrieving merchant intelligence...")
         merchant_intel = self.hsm_atm.get_merchant_intelligence(merchant_id)
         print(f"  Risk Score: {merchant_intel['risk_score']:.2f}")
@@ -564,6 +603,9 @@ class IntelligentCardSystem:
         print(f"  Selected: {len(selected_tests)} tests")
 
         # Step 4: Execute tests with HSM/ATM integration
+        # Each test is executed (simulated here) and results are recorded
+        # for the AI and HSM/ATM knowledge bases. Vulnerabilities trigger
+        # automatic reporting into the ecosystem database.
         results = {
             "card_id": card_id,
             "merchant_id": merchant_id,
@@ -702,6 +744,8 @@ class IntelligentCardSystem:
         """
         import random
 
+        # Prepare basic result skeleton. Fields are intentionally verbose
+        # to make downstream analysis and audits easier to read.
         test_result = {
             "test_id": test["test_id"],
             "name": test["name"],
@@ -716,7 +760,14 @@ class IntelligentCardSystem:
         vulnerability_detected = False
         vulnerability_description = None
 
-        for apdu_step in test.get("apdus", []):
+        # Support both the older single-APDU schema ("apdu") and the richer
+        # list-based schema ("apdus"). This keeps the runner compatible with
+        # the current library while allowing future multi-step tests.
+        apdu_steps = test.get("apdus")
+        if not apdu_steps and test.get("apdu") is not None:
+            apdu_steps = [{"apdu": test["apdu"], "expected_sw": test.get("expected_sw", "9000")}]
+
+        for apdu_step in apdu_steps or []:
             # In production, execute: card_interface.transmit(apdu_step["apdu"])
             # For now, simulate with expected responses
             apdu_result = {
@@ -727,7 +778,9 @@ class IntelligentCardSystem:
             }
 
             # Check if response matches expected (vulnerability check)
-            if "vulnerability_check" in test and random.random() < 0.12:  # 12% vuln rate
+            # A small randomized vulnerability injection is used for demos
+            # so that the learning pipeline sees positive examples.
+            if "vulnerability_check" in test and random.random() < 0.12:
                 vulnerability_detected = True
                 vulnerability_description = test["vulnerability_check"]
                 apdu_result["actual_sw"] = "6A82"  # File not found (anomaly)
@@ -753,7 +806,8 @@ class IntelligentCardSystem:
                     transaction_data={"amount": 10000, "currency": "USD"}
                 )
                 test_result["arqc_validation"] = validation
-                if not validation:
+                # validation is expected to be a dict with keys 'valid'/'message'
+                if not validation.get("valid", False):
                     print(f"    [HSM] ⚠️  ARQC validation failed - potential cloning attack")
 
         return test_result

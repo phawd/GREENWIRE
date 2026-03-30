@@ -3,24 +3,32 @@
 HSM/ATM Integration Module
 Simulates HSM and ATM operations with bidirectional learning integration.
 
+IMPORTANT SAFETY NOTICE:
+This module performs sensitive cryptographic and transaction simulation
+operations and is intended for use ONLY within a controlled laboratory
+environment. Do not use these simulations against live payment or
+banking infrastructure. Keys, mock data, and behaviors here are for
+testing and demonstration only and are intentionally insecure for
+local reproducibility.
+
 HSM Operations:
-- PIN translation and validation
-- CVV/CVV2 generation and verification
-- MAC generation (CMAC, HMAC)
-- Cryptogram processing (ARQC validation, ARPC generation)
-- Key management operations
+ - PIN translation and validation
+ - CVV/CVV2 generation and verification
+ - MAC generation (CMAC, HMAC)
+ - Cryptogram processing (ARQC validation, ARPC generation)
+ - Key management operations
 
 ATM Operations:
-- Cash withdrawal testing
-- Balance inquiry testing
-- Card authentication
-- PIN entry security
-- Transaction logging
+ - Cash withdrawal testing
+ - Balance inquiry testing
+ - Card authentication
+ - PIN entry security
+ - Transaction logging
 
 Bidirectional Learning:
-- Cards → HSM/ATM: Report test results, vulnerabilities, timing patterns
-- HSM/ATM → Cards: Updated test recommendations, merchant profiles, known exploits
-- Shared knowledge base for ecosystem-wide intelligence
+ - Cards → HSM/ATM: Report test results, vulnerabilities, timing patterns
+ - HSM/ATM → Cards: Updated test recommendations, merchant profiles, known exploits
+ - Shared knowledge base for ecosystem-wide intelligence
 """
 
 import os
@@ -31,6 +39,7 @@ import hmac
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 from enum import Enum
+import logging
 
 try:
     from Crypto.Cipher import DES3, AES
@@ -73,7 +82,7 @@ class HSMATMIntegration:
     and sharing intelligence back to cards.
     """
 
-    def __init__(self, knowledge_base_path: str = "ai_learning_sessions/hsm_atm_knowledge.db"):
+    def __init__(self, knowledge_base_path: str = "ai_learning_sessions/hsm_atm_knowledge.db", production_mode: bool = False):
         """
         Initialize HSM/ATM integration.
 
@@ -83,7 +92,18 @@ class HSMATMIntegration:
         self.knowledge_base_path = knowledge_base_path
         self._ensure_knowledge_base()
 
+        # Logger for structured messages
+        self.logger = logging.getLogger("greenwire.hsm_atm")
+        if not logging.getLogger().handlers:
+            # Basic configuration for standalone runs (CI/test harnesses
+            # or demos may configure logging externally)
+            logging.basicConfig(level=logging.INFO)
+
+        self.production_mode = production_mode
+
         # Mock HSM keys (in production, these would be hardware-backed)
+        # Keys here are deterministic placeholders to allow local testing
+        # and should NEVER be used in a production environment.
         self.master_keys = {
             "pin_key": b"0123456789ABCDEF0123456789ABCDEF",  # TDES key
             "cvv_key": b"FEDCBA9876543210FEDCBA9876543210",  # TDES key
@@ -91,7 +111,15 @@ class HSMATMIntegration:
             "data_key": b"DEADBEEFCAFEBABE" * 2               # AES-256 key
         }
 
-        print("[HSM/ATM Integration] Initialized")
+        self.logger.info("HSM/ATM Integration initialized (production_mode=%s)", production_mode)
+
+        if production_mode and not CRYPTO_AVAILABLE:
+            # In production mode we expect a cryptography backend / HSM.
+            # Warn loudly so operators do not accidentally use mocked crypto.
+            self.logger.warning(
+                "Production mode enabled but cryptography backend is not available.\n"
+                "This configuration is unsafe for production operations."
+            )
 
     def _ensure_knowledge_base(self):
         """Ensure shared knowledge base database exists."""
@@ -199,17 +227,23 @@ class HSMATMIntegration:
         start_time = datetime.now()
 
         try:
+            # NOTE: This method currently implements a mocked flow when
+            # cryptography backend is not available. Real HSM translation
+            # would require key wrapping/unwrapping using secure key
+            # management APIs and hardware-backed keys.
             if not CRYPTO_AVAILABLE:
-                # Mock operation
+                # Mock operation simply returns same block for testing
                 result = (True, encrypted_pin, "PIN translated (mocked)")
             else:
-                # Decrypt with source key
+                # Decrypt with source key (simplified example)
                 source_key = self.master_keys.get("pin_key")
                 cipher = DES3.new(source_key, DES3.MODE_ECB)
                 plaintext_pin = cipher.decrypt(encrypted_pin)
 
-                # Re-encrypt with destination key
-                dest_key = self.master_keys.get("pin_key")  # In reality, different key
+                # Re-encrypt with destination key (in this demo we reuse
+                # the same pin_key - production systems would use distinct
+                # issuer/acquirer keys and proper key provenance checks).
+                dest_key = self.master_keys.get("pin_key")
                 cipher = DES3.new(dest_key, DES3.MODE_ECB)
                 re_encrypted_pin = cipher.encrypt(plaintext_pin)
 
@@ -246,8 +280,10 @@ class HSMATMIntegration:
         start_time = datetime.now()
 
         try:
-            # Mock verification
-            # In production: decrypt PIN, apply offset, compare with account PAN
+            # Mock verification path for local testing. A real implementation
+            # must: (1) decrypt the PIN block using the correct key, (2)
+            # compute the natural PIN from account data + offset (if used),
+            # and (3) compare securely (constant-time) to avoid timing leaks.
             success = True  # Mock success
 
             exec_time = int((datetime.now() - start_time).total_seconds() * 1000)
@@ -280,23 +316,27 @@ class HSMATMIntegration:
         start_time = datetime.now()
 
         try:
+            # CVV generation: simplified deterministic algorithm for tests.
+            # Real implementations must follow card scheme specifications
+            # (e.g., ISO/IEC 9564 and issuer-defined algorithms) and use
+            # secure HSM procedures.
             if not CRYPTO_AVAILABLE:
-                # Mock CVV
+                # Return a stable mock CVV for offline testing
                 cvv = "123"
                 result = (True, cvv, "CVV generated (mocked)")
             else:
-                # CVV generation algorithm (simplified)
-                # Real: EMV CVV generation per EMV Book 2
+                # Simplified EMV-like CVV derivation using 3DES encryption
                 data = (pan + expiry_date + service_code).encode()
 
                 key = self.master_keys.get("cvv_key")
                 cipher = DES3.new(key, DES3.MODE_ECB)
 
-                # Pad data
+                # Pad/truncate to block size - this is a demo; production
+                # must use the exact scheme-specified padding and truncation
                 padded = data + b'\x00' * (8 - len(data) % 8)
                 encrypted = cipher.encrypt(padded[:8])
 
-                # Extract 3 digits
+                # Extract 3 digits from encrypted bytes
                 cvv = str(int.from_bytes(encrypted[:2], 'big') % 1000).zfill(3)
 
                 result = (True, cvv, "CVV generated successfully")
@@ -358,14 +398,17 @@ class HSMATMIntegration:
         start_time = datetime.now()
 
         try:
+            # MAC generation supports a mocked SHA256-based fallback when
+            # cryptographic dependencies are missing. When available, CMAC
+            # (using 3DES keying here) or HMAC-SHA256 can be used.
             if not CRYPTO_AVAILABLE:
-                # Mock MAC
                 mac = hashlib.sha256(data).digest()[:8]
                 result = (True, mac, "MAC generated (mocked)")
             else:
                 key = self.master_keys.get("mac_key")
 
                 if algorithm == "CMAC":
+                    # CMAC using 3DES cipher module - simplified example
                     cobj = CMAC.new(key, ciphermod=DES3)
                     cobj.update(data)
                     mac = cobj.digest()
@@ -406,8 +449,9 @@ class HSMATMIntegration:
         start_time = datetime.now()
 
         try:
-            # Mock validation
-            # In production: derive card key, generate ARQC, compare
+            # ARQC validation is mocked here. Real validation requires
+            # deriving the session/ICC key, reconstructing the ARQC from
+            # transaction data and comparing it to the supplied ARQC.
             success = True  # Mock success
 
             exec_time = int((datetime.now() - start_time).total_seconds() * 1000)
@@ -443,14 +487,15 @@ class HSMATMIntegration:
         start_time = datetime.now()
 
         try:
+            # Simplified ARPC generation for testing. Production systems use
+            # issuer-provided algorithms within an HSM to sign/verify the
+            # ARQC and produce ARPC values.
             if not CRYPTO_AVAILABLE:
-                # Mock ARPC
                 arpc = hashlib.sha256(arqc + authorization_code.encode()).digest()[:8]
                 result = (True, arpc, "ARPC generated (mocked)")
             else:
-                # ARPC generation (simplified)
-                # Real: EMV ARPC generation per EMV Book 2
                 key = self.master_keys.get("data_key")
+                # Use first 24 bytes for 3DES demonstration (not secure)
                 cipher = DES3.new(key[:24], DES3.MODE_ECB)
 
                 data = arqc + authorization_code.encode() + b'\x00' * 6
@@ -492,12 +537,14 @@ class HSMATMIntegration:
         start_time = datetime.now()
 
         try:
-            # Validate amount
+            # Basic input validation: ensure amount is within test bounds.
+            # Real ATM logic would check account balance, daily limits,
+            # PIN verification, and communicate with authorization network.
             if amount <= 0 or amount > 10000:
                 result = (False, f"Invalid amount: {amount}")
             else:
-                # Mock authorization
-                success = True  # Mock success
+                # Simulated success for demonstration purposes
+                success = True
                 result = (success, f"Withdrawal of ${amount} approved" if success else "Withdrawal declined")
 
             exec_time = int((datetime.now() - start_time).total_seconds() * 1000)
@@ -528,7 +575,8 @@ class HSMATMIntegration:
         start_time = datetime.now()
 
         try:
-            # Mock balance
+            # Return a mocked balance. Real implementation would retrieve
+            # account information securely from the authorization backend.
             balance = 5432.10
             result = (True, balance, "Balance inquiry successful")
 
@@ -560,8 +608,10 @@ class HSMATMIntegration:
         start_time = datetime.now()
 
         try:
-            # Mock authentication
-            success = True  # Mock success
+            # Card authentication is simulated. Real authentication would
+            # validate certificates, signatures (DDA/CDA) or static data (SDA)
+            # and enforce expiration, revocation, and issuer rules.
+            success = True
             result = (success, "Card authenticated successfully" if success else "Card authentication failed")
 
             exec_time = int((datetime.now() - start_time).total_seconds() * 1000)
@@ -719,7 +769,7 @@ class HSMATMIntegration:
         conn.commit()
         conn.close()
 
-        print(f"[HSM/ATM] Received {report_type} report from card {card_id} for merchant {merchant_id}")
+        self.logger.info("Received %s report from card %s for merchant %s", report_type, card_id, merchant_id)
 
     def generate_test_recommendations(
         self,
@@ -796,7 +846,7 @@ class HSMATMIntegration:
         conn.commit()
         conn.close()
 
-        print(f"[HSM/ATM] Generated {len(recommendations)} test recommendations for merchant {merchant_id}")
+        self.logger.info("Generated %d test recommendations for merchant %s", len(recommendations), merchant_id)
 
         return recommendations
 

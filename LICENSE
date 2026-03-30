@@ -24,6 +24,15 @@ This project must never be used to oppress, harm, surveil without consent, explo
 All contributors to this project affirm that their work will honor this ethic.
 De Oppresso Liber — To Free the Oppressed.
 
+USAGE RESTRICTION NOTICE:
+This software and the accompanying test suites and scripts are provided for
+controlled laboratory, research, and authorized testing use only. Operators
+must be explicitly authorized by their institution to run tests, and must not
+execute this software against live production payment systems, financial
+networks, or external infrastructure without prior written approval.
+Improper or unauthorized use may be illegal and is not covered by this
+license or the maintainers.
+
 ---
 
 GNU GENERAL PUBLIC LICENSE  

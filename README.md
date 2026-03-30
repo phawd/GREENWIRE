@@ -6,6 +6,11 @@
 
 **License:** GPL v3
 
+IMPORTANT SAFETY NOTICE: This software and the tests it performs are intended
+for use only within controlled laboratory or authorized testing environments
+by trained personnel. Do NOT run against production payment systems or live
+infrastructure without explicit written authorization from the system owner.
+
 ---
 
 ## Overview
@@ -229,6 +234,13 @@ python greenwire.py config-defaults --stateful-default true
 - JSON artifact output, timing metrics, and dashboard aggregation
 - See `APDU_FUZZING.md` for advanced usage
 
+## Test Library Notes
+
+- Merchant tests may include `required_capabilities` metadata such as
+  `contactless=True` or `biometric=True`.
+- The AI test generator uses this metadata to filter incompatible tests before
+  execution, while still allowing legacy single-APDU test definitions.
+
 ---
 
 ## Security & Safety
@@ -237,6 +249,20 @@ python greenwire.py config-defaults --stateful-default true
 - Use only in authorized lab or red team environments
 - Immutable logs of all test sequences
 - See `SECURITY.md` for policy and best practices
+
+### Reproducibility & Randomness
+
+- For reproducible test runs, pass a deterministic random seed to the modern CLI
+  or set the `--random-seed` option where available. The AI test generator and
+  simulation components will honor this seed for deterministic behavior where
+  possible.
+
+### Production Mode Guarding
+
+- Production-mode operations (real cryptographic key generation, HSM-backed
+  operations, and issuance) must only be run with explicit authorization. The
+  system warns if production mode is enabled but required cryptographic
+  dependencies or HSMs are not available.
 
 ---
 
