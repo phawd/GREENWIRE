@@ -14,7 +14,7 @@ with Google Wallet and similar contactless payment schemes.
   GENERATE AC, and GET DATA instructions.
 - **Cardholder PIN** – `OwnerPIN`-backed PIN verification with configurable
   try-limit and blocking.
-- **ATC tracking** – Application Transaction Counter incremented each
+- **ATC tracking** – Application Transaction Counter incremented on each
   transaction to prevent replay attacks.
 - **Java Card API stubs** – clean-room compilation stubs for
   `javacard.framework`, `javacard.security`, and `javacardx.crypto` so the
