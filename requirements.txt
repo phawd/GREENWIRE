@@ -2,7 +2,7 @@
 # All dependencies pinned to specific versions for reproducible builds
 
 # Core Python dependencies
-cryptography==46.0.1
+cryptography==46.0.5
 pycryptodome==3.23.0
 pycryptodomex==3.23.0
 
@@ -28,8 +28,8 @@ pywin32==311; sys_platform == "win32"
 pywin32-ctypes==0.2.3; sys_platform == "win32"
 
 # Networking and communication
-requests==2.32.5
-urllib3==2.5.0
+requests==2.33.0
+urllib3==2.6.3
 websockets==15.0.1
 paramiko==4.0.0
 pyserial==3.5
@@ -38,7 +38,7 @@ beautifulsoup4==4.12.3
 # Data processing and encoding
 pyyaml==6.0.2
 qrcode==8.2
-pillow==11.3.0
+pillow==12.1.1
 numpy==2.3.2
 
 # Security and encryption
